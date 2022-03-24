@@ -54,23 +54,25 @@ public class MessageRegistryClient extends AbstractNacosClientWrapper {
         ClusterNode node = new ClusterNode();
         node.setNameEn(MicroServiceConstants.MESSAGE_NETTY_SERVICE);
         node.setName("聊天消息服务");
-        node.setUip(uip);
         node.setActuatorNode(ActuatorNodeEnum.CONSUMER);
 
-        //通过配置文件获取socket.io项目的集群信息.
         try {
+            //通过配置文件获取socket.io项目的集群信息.
             boolean enableMultiNodes = Boolean.parseBoolean(ConfigurationContext.getString(ConfigurationContext.YamlEnum.SERVER_YAML,
                     BaseStringConstants.SocketProperties.ENABLE_MULTI_CLUSTER_NODES, "false"));
             int hash = Integer.parseInt(ConfigurationContext.getString(ConfigurationContext.YamlEnum.SERVER_YAML,
                     BaseStringConstants.SocketProperties.MULTI_CLUSTER_THIS_HASH, "0"));
             int countNodes = Integer.parseInt(ConfigurationContext.getString(ConfigurationContext.YamlEnum.SERVER_YAML,
                     BaseStringConstants.SocketProperties.COUNT_MULTI_CLUSTER_NODES, "1"));
-            int port =  Integer.parseInt(ConfigurationContext.getString(ConfigurationContext.YamlEnum.SERVER_YAML,
+            int port = Integer.parseInt(ConfigurationContext.getString(ConfigurationContext.YamlEnum.SERVER_YAML,
                     BaseStringConstants.SocketProperties.SOCKET_IO_PORT, "9007"));
             String contextPath = "/message";
 
             log.info("@@@ socket.io服务[{}]启动. port:{} hash:{}, contextPath:{}, countNodes:{}, enableMultiNodes:{}",
                     MicroServiceConstants.MESSAGE_NETTY_SERVICE, port, hash, contextPath, countNodes, enableMultiNodes);
+
+            uip.setSocketPort(port);
+            node.setUip(uip);
 
             //启动socketIo服务
             EventMessageChatLauncher launcher = new EventMessageChatLauncher();
@@ -80,7 +82,8 @@ public class MessageRegistryClient extends AbstractNacosClientWrapper {
             ProjectContextInfo.setBean(socketIOServer);
 
             //将集群信息注册到redis
-            SocketClusterStatusManager.registry(new SocketClusterStatus(MicroServiceConstants.MESSAGE_NETTY_SERVICE, EnvironmentConfig.getInstance().getEnvironment(), countNodes, enableMultiNodes));
+            SocketClusterStatusManager.registry(new SocketClusterStatus(MicroServiceConstants.MESSAGE_NETTY_SERVICE,
+                    EnvironmentConfig.getInstance().getEnvironment(), countNodes, enableMultiNodes));
             if (enableMultiNodes) {
                 //注册当前的hash值到redis
                 String hashFactor = ThriftRpcHelper.genHashFactor(uip.getIp(), port + "");

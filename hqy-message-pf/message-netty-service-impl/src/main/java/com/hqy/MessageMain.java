@@ -1,5 +1,10 @@
 package com.hqy;
 
+import com.hqy.fundation.common.route.SocketClusterStatus;
+import com.hqy.fundation.common.route.SocketClusterStatusManager;
+import com.hqy.socketio.SocketIOClient;
+import com.hqy.socketio.SocketIOServer;
+import com.hqy.socketio.listener.ConnectListener;
 import com.hqy.util.JsonUtil;
 import com.hqy.util.spring.EnableOrderContext;
 import com.hqy.util.spring.ProjectContextInfo;
@@ -8,6 +13,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+
+import java.util.UUID;
 
 /**
  * 启动类必须放在包com.hqy下 不然很多bean会扫描不到 导致程序启动抛出not found bean
@@ -35,11 +42,28 @@ public class MessageMain {
         System.setProperty("spring.devtools.restart.enabled", "false");
         SpringApplication.run(MessageMain.class, args);
 
+        //初始化客户端上线离线事件
+        SocketIOServer server = ProjectContextInfo.getBean(SocketIOServer.class);
+        initializeOnlineOfflineListener(server);
+
         ProjectContextInfo projectContextInfo = SpringContextHolder.getProjectContextInfo();
+        SocketClusterStatus query = SocketClusterStatusManager.query(projectContextInfo.getEnv(), projectContextInfo.getNameEn());
         log.info("############################## ############### ############### ###############");
         log.info("##### Server Started OK : uip = {} ", JsonUtil.toJson(projectContextInfo.getUip()));
-        log.info("##### Server Started OK.");
+        log.info("##### Server Started OK: listen on {}, contextPath = {}", projectContextInfo.getUip().getSocketPort(), query.getContextPath());
         log.info("############################## ############### ############### ###############");
+    }
+
+    private static void initializeOnlineOfflineListener(SocketIOServer server) {
+        server.addConnectListener(client -> {
+            UUID sessionId = client.getSessionId();
+            log.info("@@@ 新连接上线: sessionId = {}", sessionId);
+        });
+
+        server.addDisconnectListener(client -> {
+            UUID sessionId = client.getSessionId();
+            log.info("@@@ 旧连接断开: sessionId = {}", sessionId);
+        });
     }
 
 
