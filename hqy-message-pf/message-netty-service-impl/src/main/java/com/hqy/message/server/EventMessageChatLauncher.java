@@ -1,7 +1,7 @@
-package com.hqy.server;
+package com.hqy.message.server;
 
-import com.hqy.fundation.common.base.lang.BaseStringConstants;
-import com.hqy.fundation.common.swticher.CommonSwitcher;
+import com.hqy.base.common.base.lang.BaseStringConstants;
+import com.hqy.base.common.swticher.CommonSwitcher;
 import com.hqy.rpc.regist.EnvironmentConfig;
 import com.hqy.socketio.AuthorizationListener;
 import com.hqy.socketio.Configuration;
@@ -60,7 +60,7 @@ public class EventMessageChatLauncher {
 
         final SocketIOServer socketIOServer = new SocketIOServer(config);
         socketIOServer.start();
-        //TODO addEvent
+        //TODO addEventListener
 
         log.info("@@@ SocketIoServer start() OK.");
         return socketIOServer;
