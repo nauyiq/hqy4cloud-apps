@@ -58,15 +58,15 @@ public class MessageRegistryClient extends AbstractNacosClientWrapper {
 
         try {
             //通过配置文件获取socket.io项目的集群信息.
-            boolean enableMultiNodes = Boolean.parseBoolean(ConfigurationContext.getString(ConfigurationContext.YamlEnum.SERVER_YAML,
+            boolean enableMultiNodes = Boolean.parseBoolean(ConfigurationContext.getProperty(ConfigurationContext.PropertiesEnum.SERVER_PROPERTIES,
                     BaseStringConstants.SocketProperties.ENABLE_MULTI_CLUSTER_NODES, "false"));
-            int hash = Integer.parseInt(ConfigurationContext.getString(ConfigurationContext.YamlEnum.SERVER_YAML,
+            int hash = Integer.parseInt(ConfigurationContext.getProperty(ConfigurationContext.PropertiesEnum.SERVER_PROPERTIES,
                     BaseStringConstants.SocketProperties.MULTI_CLUSTER_THIS_HASH, "0"));
-            int countNodes = Integer.parseInt(ConfigurationContext.getString(ConfigurationContext.YamlEnum.SERVER_YAML,
+            int countNodes = Integer.parseInt(ConfigurationContext.getProperty(ConfigurationContext.PropertiesEnum.SERVER_PROPERTIES,
                     BaseStringConstants.SocketProperties.COUNT_MULTI_CLUSTER_NODES, "1"));
-            int port = Integer.parseInt(ConfigurationContext.getString(ConfigurationContext.YamlEnum.SERVER_YAML,
+            int port = Integer.parseInt(ConfigurationContext.getProperty(ConfigurationContext.PropertiesEnum.SERVER_PROPERTIES,
                     BaseStringConstants.SocketProperties.SOCKET_IO_PORT, "9007"));
-            String contextPath = "/message";
+            String contextPath = "/message/websocket";
 
             log.info("@@@ socket.io服务[{}]启动. port:{} hash:{}, contextPath:{}, countNodes:{}, enableMultiNodes:{}",
                     MicroServiceConstants.MESSAGE_NETTY_SERVICE, port, hash, contextPath, countNodes, enableMultiNodes);
