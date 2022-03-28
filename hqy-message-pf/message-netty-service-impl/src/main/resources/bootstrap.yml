@@ -1,12 +1,20 @@
 logging:
   config: classpath:logback.xml
-
 server:
-  port: 8010
-
+  port: 8088
 spring:
+  profiles:
+    active: dev
   application:
     name: message-netty-service
+
+
+---
+#开发环境
+spring:
+  config:
+    activate:
+      on-profile: dev
   cloud:
     nacos:
       config:
@@ -22,16 +30,10 @@ spring:
           data-id: db-config.yaml
           group: DEV_GROUP
           refresh: true
+        extension-configs[2]:
+          data-id: rabbitmq-config.yaml
+          group: DEV_GROUP
+          refresh: true
       discovery:
+        ephemeral: false # false为永久实例，true表示临时实例
         server-addr: 120.76.65.160:8848
-
-mybatis:
-  mapperLocations: classpath:mapper/*.xml
-  configuration:
-    map-underscore-to-camel-case: true
-
-management: #暴露所有
-  endpoints:
-    web:
-      exposure:
-        include: "*"

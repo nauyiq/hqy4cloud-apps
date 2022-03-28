@@ -6,14 +6,14 @@ import com.hqy.base.common.base.lang.BaseStringConstants;
 import com.hqy.base.common.base.project.MicroServiceConstants;
 import com.hqy.base.common.base.project.UsingIpPort;
 import com.hqy.ex.listener.DefaultAuthorizationListener;
+import com.hqy.fundation.common.route.LoadBalanceHashFactorManager;
 import com.hqy.fundation.common.route.SocketClusterStatus;
 import com.hqy.fundation.common.route.SocketClusterStatusManager;
-import com.hqy.fundation.common.route.SocketHashFactorManager;
+import com.hqy.message.server.EventMessageChatLauncher;
 import com.hqy.rpc.nacos.AbstractNacosClientWrapper;
 import com.hqy.rpc.regist.ClusterNode;
 import com.hqy.rpc.regist.EnvironmentConfig;
 import com.hqy.rpc.thrift.ex.ThriftRpcHelper;
-import com.hqy.message.server.EventMessageChatLauncher;
 import com.hqy.socketio.SocketIOServer;
 import com.hqy.util.AssertUtil;
 import com.hqy.util.config.ConfigurationContext;
@@ -89,7 +89,7 @@ public class MessageRegistryClient extends AbstractNacosClientWrapper {
                 String hashFactor = ThriftRpcHelper.genHashFactor(uip.getIp(), port + "");
                 node.setHash(hash);
                 node.setHashFactor(hashFactor);
-                SocketHashFactorManager.registry(MicroServiceConstants.MESSAGE_NETTY_SERVICE, hash, hashFactor);
+                LoadBalanceHashFactorManager.registry(MicroServiceConstants.MESSAGE_NETTY_SERVICE, hash, hashFactor);
             }
         } catch (Exception e) {
             log.error(e.getMessage(), e);
