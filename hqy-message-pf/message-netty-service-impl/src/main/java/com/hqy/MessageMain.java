@@ -25,7 +25,6 @@ import java.util.UUID;
  * @date 2022-03-23 22:08
  */
 @Slf4j
-@EnableOrderContext
 @SpringBootApplication
 @EnableDiscoveryClient
 public class MessageMain {
@@ -48,6 +47,7 @@ public class MessageMain {
 
         ProjectContextInfo projectContextInfo = SpringContextHolder.getProjectContextInfo();
         SocketClusterStatus query = SocketClusterStatusManager.query(projectContextInfo.getEnv(), projectContextInfo.getNameEn());
+
         log.info("############################## ############### ############### ###############");
         log.info("##### Server Started OK : uip = {} ", JsonUtil.toJson(projectContextInfo.getUip()));
         log.info("##### Server Started OK: listen on {}, contextPath = {}", projectContextInfo.getUip().getSocketPort(), query.getContextPath());

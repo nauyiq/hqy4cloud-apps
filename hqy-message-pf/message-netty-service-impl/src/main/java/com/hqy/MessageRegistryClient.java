@@ -18,10 +18,11 @@ import com.hqy.socketio.SocketIOServer;
 import com.hqy.util.AssertUtil;
 import com.hqy.util.config.ConfigurationContext;
 import com.hqy.util.spring.ProjectContextInfo;
-import com.hqy.util.spring.SpringContextHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.Resource;
 
 /**
  * rpc生产者客户端 将rpc、节点数据注册到nacos中
@@ -33,11 +34,15 @@ public class MessageRegistryClient extends AbstractNacosClientWrapper {
 
     private static final Logger log = LoggerFactory.getLogger(MessageRegistryClient.class);
 
+    @Resource
+    private ThriftServer tServer;
+    @Resource
+    private MessageThriftServer messageThriftServer;
+
     @Override
     public ClusterNode setProjectClusterNode() {
 
         //判断RPC服务是否启动
-        ThriftServer tServer = SpringContextHolder.getBean(ThriftServer.class);
         boolean running = tServer.isRunning();
         if (!running) {
             //如果没有扫描到server 手动启动一下
@@ -45,9 +50,7 @@ public class MessageRegistryClient extends AbstractNacosClientWrapper {
         }
         log.info("@@@ Get ThriftServer success, running:{}", running);
 
-        MessageThriftServer messageThriftServer = SpringContextHolder.getBean(MessageThriftServer.class);
         UsingIpPort uip = messageThriftServer.getUsingIpPort();
-
         AssertUtil.notNull(uip, "System error, Bind rpc port fail. please check thrift service");
 
         //定制化节点信息
@@ -83,7 +86,7 @@ public class MessageRegistryClient extends AbstractNacosClientWrapper {
 
             //将集群信息注册到redis
             SocketClusterStatusManager.registry(new SocketClusterStatus(MicroServiceConstants.MESSAGE_NETTY_SERVICE,
-                    EnvironmentConfig.getInstance().getEnvironment(), countNodes, enableMultiNodes));
+                    EnvironmentConfig.getInstance().getEnvironment(), countNodes, enableMultiNodes, contextPath));
             if (enableMultiNodes) {
                 //注册当前的hash值到redis
                 String hashFactor = ThriftRpcHelper.genHashFactor(uip.getIp(), port + "");
