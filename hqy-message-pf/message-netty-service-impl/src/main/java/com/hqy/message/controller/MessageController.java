@@ -1,24 +1,7 @@
 package com.hqy.message.controller;
 
-import com.hqy.base.common.base.lang.BaseStringConstants;
-import com.hqy.base.common.base.project.MicroServiceConstants;
 import com.hqy.base.common.bind.DataResponse;
-import com.hqy.base.common.result.CommonResultCode;
-import com.hqy.base.common.swticher.CommonSwitcher;
-import com.hqy.ex.SocketProjectContext;
-import com.hqy.foundation.common.bind.SocketIoConnection;
-import com.hqy.fundation.common.route.SocketClusterStatus;
-import com.hqy.fundation.common.route.SocketClusterStatusManager;
-import com.hqy.rpc.regist.EnvironmentConfig;
-import com.hqy.socketio.Configuration;
-import com.hqy.socketio.SocketIOServer;
-import com.hqy.util.IpUtil;
-import com.hqy.util.JwtUtil;
-import com.hqy.util.RequestUtil;
-import com.hqy.util.config.ConfigurationContext;
-import com.hqy.util.spring.ProjectContextInfo;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,7 +26,7 @@ public class MessageController {
      */
     @GetMapping("/message/connection")
     public DataResponse genWsMessageConnection(HttpServletRequest request) {
-        try {
+       /* try {
             String bizId = RequestUtil.getBizIdFromHttpRequestHeader(request);
             if (StringUtils.isBlank(bizId)) {
                 return new DataResponse(false, CommonResultCode.INVALID_ACCESS_TOKEN.message, CommonResultCode.INVALID_ACCESS_TOKEN.code);
@@ -78,7 +61,8 @@ public class MessageController {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             return new DataResponse(false, CommonResultCode.SYSTEM_BUSY.message, CommonResultCode.SYSTEM_BUSY.code, null);
-        }
+        }*/
+        return null;
     }
 
 }
