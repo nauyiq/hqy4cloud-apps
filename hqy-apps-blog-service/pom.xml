@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>hqy-apps-modules</artifactId>
+        <groupId>com.hqy.apps</groupId>
+        <version>1.0.0</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.hqy.blog</groupId>
+    <artifactId>hqy-apps-blog-service</artifactId>
+
+    <properties>
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+    </properties>
+
+
+    <dependencies>
+
+        <!--nacos-config-->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.alibaba.nacos</groupId>
+                    <artifactId>nacos-client</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>com.hqy</groupId>
+            <artifactId>hqy-common-foundation</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.bval</groupId>
+                    <artifactId>bval-jsr303</artifactId>
+                </exclusion>
+            </exclusions>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.hqy</groupId>
+            <artifactId>hqy-base-common-dao-api</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.hqy.apps</groupId>
+            <artifactId>hqy-apps-common</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+
+
+        <!-- 实时监控  spring-boot-starter-actuator-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <finalName>apps-blog-service</finalName>
+                <resources>
+                    <resource>
+                        <!-- <targetPath>${project.build.directory}/classes</targetPath> -->
+                        <directory>src/main/resources</directory>
+                        <filtering>false</filtering>
+                        <includes>
+                            <include>*.properties</include>
+                            <include>*.factories</include>
+                            <include>*.yml</include>
+                            <include>*.key</include>
+                            <include>*.xml</include>
+                            <include>static/**</include>
+                            <include>templates/*.html</include>
+                        </includes>
+                    </resource>
+                </resources>
+        <plugins>
+            <!-- 打包jar文件时，配置manifest文件，加入lib包的jar依赖 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>${maven.jar.plugin.version}</version>
+                <configuration>
+                    <classesDirectory>target/classes/</classesDirectory>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.hqy.Main</mainClass>
+                            <!-- 打包时 MANIFEST.MF文件不记录的时间戳版本 -->
+                            <useUniqueVersions>false</useUniqueVersions>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib/</classpathPrefix>
+                            <classpathLayoutType>simple</classpathLayoutType>
+                        </manifest>
+                        <!-- <manifestEntries>
+                             <Class-Path>. lib/tools-1.8.jar</Class-Path>
+                         </manifestEntries>-->
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <type>jar</type>
+                            <includeTypes>jar</includeTypes>
+                            <outputDirectory>
+                                ${project.build.directory}/lib
+                            </outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

@@ -1,0 +1,17 @@
+logging:
+  config: classpath:logback.xml
+
+server:
+  port: 8787
+
+spring:
+  application:
+    name: apps-blog-service
+  profiles:
+    active: dev
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

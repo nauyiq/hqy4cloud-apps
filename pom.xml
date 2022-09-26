@@ -17,6 +17,7 @@
     <modules>
         <module>hqy-message-pf</module>
         <module>hqy-apps-common</module>
+        <module>hqy-apps-blog-service</module>
     </modules>
 
 
