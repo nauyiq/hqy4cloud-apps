@@ -17,13 +17,14 @@ spring:
           group: ${nacos.group}
           refresh: true
         extension-configs[1]:
-          data-id: db-config.yaml
+          data-id: db-apps-blog-config.yaml
           group: ${nacos.group}
           refresh: true
       discovery:
         ephemeral: false # false为永久实例，true表示临时实例
         server-addr: ${nacos.server-addr}
         namespace: ${nacos.namespace}
+        group: ${nacos.group}
 
     sentinel:
       # 取消懒加载

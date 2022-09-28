@@ -45,18 +45,16 @@
         </dependency>
 
         <dependency>
-            <groupId>com.hqy</groupId>
-            <artifactId>hqy-base-common-dao-api</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.hqy.apps</groupId>
             <artifactId>hqy-apps-common</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
-
+        <dependency>
+            <groupId>com.hqy</groupId>
+            <artifactId>hqy-account-auth-service-api</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
 
         <!-- 实时监控  spring-boot-starter-actuator-->
         <dependency>
