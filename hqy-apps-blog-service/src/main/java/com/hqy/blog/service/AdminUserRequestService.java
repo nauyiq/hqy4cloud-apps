@@ -1,6 +1,7 @@
 package com.hqy.blog.service;
 
 import com.hqy.base.common.bind.DataResponse;
+import com.hqy.blog.dto.BlogUserProfileDTO;
 
 /**
  * @author qiyuan.hong
@@ -15,4 +16,11 @@ public interface AdminUserRequestService {
      * @return   DataResponse.
      */
     DataResponse getLoginUserInfo(Long id);
+
+    /**
+     * update login user profile info.
+     * @param profile profile data.
+     * @return        DataResponse.
+     */
+    DataResponse updateLoginUserInfo(BlogUserProfileDTO profile);
 }

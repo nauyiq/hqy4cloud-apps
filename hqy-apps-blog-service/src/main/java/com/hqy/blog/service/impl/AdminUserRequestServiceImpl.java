@@ -4,6 +4,7 @@ import com.hqy.account.dto.AccountInfoDTO;
 import com.hqy.account.service.remote.AccountRemoteService;
 import com.hqy.base.common.bind.DataResponse;
 import com.hqy.base.common.result.CommonResultCode;
+import com.hqy.blog.dto.BlogUserProfileDTO;
 import com.hqy.blog.service.AdminUserRequestService;
 import com.hqy.blog.vo.AccountProfileVO;
 import com.hqy.rpc.nacos.client.starter.RPCClient;
@@ -32,5 +33,12 @@ public class AdminUserRequestServiceImpl implements AdminUserRequestService {
         AccountInfoDTO accountInfoDTO = JsonUtil.toBean(accountInfoJson, AccountInfoDTO.class);
         return CommonResultCode.dataResponse(CommonResultCode.SUCCESS,
                 new AccountProfileVO(accountInfoDTO.getId(), accountInfoDTO.getUsername(), accountInfoDTO.getNickname(), accountInfoDTO.getAvatar(), accountInfoDTO.getIntro(), accountInfoDTO.getBirthday()));
+    }
+
+
+    @Override
+    public DataResponse updateLoginUserInfo(BlogUserProfileDTO profile) {
+
+        return null;
     }
 }
