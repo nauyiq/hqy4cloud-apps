@@ -5,6 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import java.util.Date;
+
 /**
  * AccountProfileVO.
  * @author qiyuan.hong
@@ -21,7 +23,7 @@ public class AccountProfileVO {
     private String nickname;
     private String avatar;
     private String intro;
-    private String birthday;
+    private Date birthday;
 
     @Override
     public String toString() {

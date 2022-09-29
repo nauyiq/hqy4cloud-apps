@@ -56,6 +56,12 @@
             <version>${project.parent.version}</version>
         </dependency>
 
+        <dependency>
+            <groupId>com.hqy</groupId>
+            <artifactId>hqy-common-web-service</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
         <!-- 实时监控  spring-boot-starter-actuator-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
