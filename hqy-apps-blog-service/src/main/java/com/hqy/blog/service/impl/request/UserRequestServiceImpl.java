@@ -1,11 +1,13 @@
-package com.hqy.blog.service.impl;
+package com.hqy.blog.service.impl.request;
 
 import com.hqy.account.dto.AccountInfoDTO;
+import com.hqy.account.service.remote.AccountProfileRemoteService;
 import com.hqy.account.service.remote.AccountRemoteService;
+import com.hqy.account.struct.AccountProfileStruct;
 import com.hqy.base.common.bind.DataResponse;
 import com.hqy.base.common.result.CommonResultCode;
 import com.hqy.blog.dto.BlogUserProfileDTO;
-import com.hqy.blog.service.AdminUserRequestService;
+import com.hqy.blog.service.request.UserRequestService;
 import com.hqy.blog.vo.AccountProfileVO;
 import com.hqy.rpc.nacos.client.starter.RPCClient;
 import com.hqy.util.AssertUtil;
@@ -22,7 +24,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AdminUserRequestServiceImpl implements AdminUserRequestService {
+public class UserRequestServiceImpl implements UserRequestService {
 
     @Override
     public DataResponse getLoginUserInfo(Long id) {
@@ -38,7 +40,11 @@ public class AdminUserRequestServiceImpl implements AdminUserRequestService {
 
     @Override
     public DataResponse updateLoginUserInfo(BlogUserProfileDTO profile) {
-
-        return null;
+        AccountProfileRemoteService accountProfileRemoteService = RPCClient.getRemoteService(AccountProfileRemoteService.class);
+        boolean update = accountProfileRemoteService.uploadAccountProfile(new AccountProfileStruct(profile.getId(), profile.getNickname(), profile.getAvatar(), profile.getAvatar(), profile.getBirthday()));
+        if (!update) {
+            return CommonResultCode.dataResponse(CommonResultCode.SYSTEM_ERROR_UPDATE_FAIL);
+        }
+        return CommonResultCode.dataResponse();
     }
 }

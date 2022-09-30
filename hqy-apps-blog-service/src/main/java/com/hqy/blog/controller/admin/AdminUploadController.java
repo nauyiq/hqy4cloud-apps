@@ -1,11 +1,13 @@
-package com.hqy.blog.controller.admin.upload;
+package com.hqy.blog.controller.admin;
 
+import cn.hutool.core.io.file.FileNameUtil;
 import com.hqy.apps.common.constants.AppsConstants;
 import com.hqy.base.common.bind.DataResponse;
 import com.hqy.base.common.result.CommonResultCode;
 import com.hqy.blog.vo.UploadFileVO;
 import com.hqy.foundation.common.FileResponse;
 import com.hqy.util.AssertUtil;
+import com.hqy.util.file.FileValidateContext;
 import com.hqy.web.service.UploadFileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +24,9 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Slf4j
 @RestController
-@RequestMapping("/upload")
+@RequestMapping("/admin/upload")
 @RequiredArgsConstructor
-public class UploadController {
+public class AdminUploadController {
 
     private final UploadFileService uploadFileService;
 
@@ -39,9 +41,25 @@ public class UploadController {
     }
 
     @PostMapping("/avatar")
-    public DataResponse uploadAvatar(@RequestParam("avatar") MultipartFile avatar) {
+    public DataResponse uploadAvatar(@RequestParam("file") MultipartFile avatar) {
         AssertUtil.notNull(avatar, "Upload avatar file should not be null.");
         FileResponse response = uploadFileService.uploadAvatar(avatar);
+        if (!response.result()) {
+            return CommonResultCode.dataResponse(CommonResultCode.INVALID_UPLOAD_FILE, response.message());
+        }
+        return CommonResultCode.dataResponse(new UploadFileVO(response.path(), response.relativePath()));
+    }
+
+
+    @PostMapping("/music")
+    public DataResponse uploadMusic(@RequestParam("file") MultipartFile musicFile) {
+        AssertUtil.notNull(musicFile, "Upload music file file should not be null.");
+        String originalFilename = musicFile.getOriginalFilename();
+        String extName = FileNameUtil.extName(originalFilename);
+        if (!FileValidateContext.isSupportedFile(FileValidateContext.SUPPORT_MEDIA_FILE_TYPES, extName)) {
+            return CommonResultCode.dataResponse(CommonResultCode.INVALID_FILE_TYPE);
+        }
+        FileResponse response = uploadFileService.uploadFile(AppsConstants.Blog.UPLOAD_IMAGE_MUSIC, musicFile);
         if (!response.result()) {
             return CommonResultCode.dataResponse(CommonResultCode.INVALID_UPLOAD_FILE, response.message());
         }

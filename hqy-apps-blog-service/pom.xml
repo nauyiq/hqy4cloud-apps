@@ -9,7 +9,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.hqy.blog</groupId>
+    <groupId>com.hqy.article</groupId>
     <artifactId>hqy-apps-blog-service</artifactId>
 
     <properties>
@@ -76,7 +76,7 @@
     </dependencies>
 
     <build>
-        <finalName>apps-blog-service</finalName>
+        <finalName>apps-article-service</finalName>
                 <resources>
                     <resource>
                         <!-- <targetPath>${project.build.directory}/classes</targetPath> -->

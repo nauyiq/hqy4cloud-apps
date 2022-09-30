@@ -1,4 +1,4 @@
-package com.hqy.blog.service;
+package com.hqy.blog.service.request;
 
 import com.hqy.base.common.bind.DataResponse;
 import com.hqy.blog.dto.BlogUserProfileDTO;
@@ -8,7 +8,7 @@ import com.hqy.blog.dto.BlogUserProfileDTO;
  * @version 1.0
  * @date 2022/9/27 17:25
  */
-public interface AdminUserRequestService {
+public interface UserRequestService {
 
     /**
      * get login user info.

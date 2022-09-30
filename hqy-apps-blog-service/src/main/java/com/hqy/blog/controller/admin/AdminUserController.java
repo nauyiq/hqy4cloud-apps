@@ -1,9 +1,9 @@
-package com.hqy.blog.controller.admin.user;
+package com.hqy.blog.controller.admin;
 
 import com.hqy.base.common.bind.DataResponse;
 import com.hqy.base.common.result.CommonResultCode;
 import com.hqy.blog.dto.BlogUserProfileDTO;
-import com.hqy.blog.service.AdminUserRequestService;
+import com.hqy.blog.service.request.UserRequestService;
 import com.hqy.util.AssertUtil;
 import com.hqy.util.OauthRequestUtil;
 import lombok.RequiredArgsConstructor;
@@ -18,27 +18,29 @@ import javax.servlet.http.HttpServletRequest;
  * @date 2022/9/26 17:45
  */
 @RestController
-@RequestMapping(("/user"))
+@RequestMapping("/admin")
 @RequiredArgsConstructor
 public class AdminUserController {
 
-    private final AdminUserRequestService adminUserRequestService;
+    private final UserRequestService userRequestService;
 
     /**
      * 获取登录用户信息.
      * @param request request.
      * @return        DataResponse.
      */
-    @GetMapping
+    @GetMapping("/account")
     public DataResponse getLoginUserInfo(HttpServletRequest request) {
         Long id = OauthRequestUtil.idFromOauth2Request(request);
         AssertUtil.notNull(id, CommonResultCode.SYSTEM_BUSY.message);
-        return adminUserRequestService.getLoginUserInfo(id);
+        return userRequestService.getLoginUserInfo(id);
     }
 
-    @PutMapping
-    public DataResponse updateLoginUserInfo(@RequestBody BlogUserProfileDTO profile) {
-        return adminUserRequestService.updateLoginUserInfo(profile);
+    @PutMapping("/account")
+    public DataResponse updateLoginUserInfo(@RequestBody BlogUserProfileDTO profile, HttpServletRequest request) {
+        Long id = OauthRequestUtil.idFromOauth2Request(request);
+        profile.setId(id);
+        return userRequestService.updateLoginUserInfo(profile);
     }
 
 

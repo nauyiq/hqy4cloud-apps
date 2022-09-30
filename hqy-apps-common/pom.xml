@@ -13,4 +13,12 @@
     <artifactId>hqy-apps-common</artifactId>
 
 
+    <dependencies>
+        <dependency>
+            <groupId>com.hqy</groupId>
+            <artifactId>hqy-util</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+    </dependencies>
+
 </project>
