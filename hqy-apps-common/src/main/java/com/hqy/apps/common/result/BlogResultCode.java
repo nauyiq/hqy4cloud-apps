@@ -19,6 +19,11 @@ public enum BlogResultCode {
      */
     INVALID_ARTICLE_TYPE(5001, "Invalid article type."),
 
+    /**
+     * 无效的文章
+     */
+    INVALID_ARTICLE_ID(5002, "Invalid article id."),
+
     ;
 
     public int code;

@@ -65,6 +65,11 @@ public class Article extends BaseEntity<Long> {
      */
     private Boolean status;
 
+    /**
+     * 是否删除
+     */
+    private Boolean deleted;
+
     public Article(Long id, String title, String description, String cover, String content, Integer type, String backgroundMusic, String backgroundMusicName, Long author, Boolean status, Date date) {
         super(id, date);
         this.title = title;
@@ -76,6 +81,7 @@ public class Article extends BaseEntity<Long> {
         this.backgroundMusicName = backgroundMusicName;
         this.author = author;
         this.status = status;
+        this.deleted = false;
     }
 
     @Override

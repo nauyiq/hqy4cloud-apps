@@ -1,4 +1,4 @@
-package com.hqy.blog.controller.admin;
+package com.hqy.blog.controller;
 
 import com.hqy.base.common.bind.DataResponse;
 import com.hqy.blog.service.request.ArticleTypeRequestService;

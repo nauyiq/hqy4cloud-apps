@@ -1,4 +1,4 @@
-package com.hqy.blog.controller.admin;
+package com.hqy.blog.controller;
 
 import cn.hutool.core.io.file.FileNameUtil;
 import com.hqy.apps.common.constants.AppsConstants;

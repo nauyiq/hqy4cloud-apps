@@ -1,8 +1,11 @@
 package com.hqy.blog.dao;
 
 import com.hqy.base.BaseDao;
+import com.hqy.blog.dto.PageArticleDTO;
 import com.hqy.blog.entity.Article;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * BlogDao.
@@ -13,6 +16,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ArticleDao extends BaseDao<Article, Long> {
 
-
+    /**
+     * 查询文章列表
+     * @return {@link PageArticleDTO}
+     */
+    List<PageArticleDTO> articles();
 
 }

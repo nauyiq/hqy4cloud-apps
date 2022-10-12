@@ -16,5 +16,21 @@ public interface ArticleRequestService {
      * @param articleDTO article data.
      * @return           DataResponse.
      */
-    DataResponse ArticleRequestService(ArticleDTO articleDTO);
+    DataResponse AdminArticleRequestService(ArticleDTO articleDTO);
+
+    /**
+     * 分页查询文章列表
+     * @param pageNumber 第几页
+     * @param pageSize   一页几行
+     * @return           DataResponse.
+     */
+    DataResponse pageArticles(Integer pageNumber, Integer pageSize);
+
+    /**
+     * 获取文章详情
+     * @param accessAccountId 账号id
+     * @param id              文章id
+     * @return                DataResponse.
+     */
+    DataResponse articleDetail(Long accessAccountId, Long id);
 }

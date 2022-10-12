@@ -3,6 +3,11 @@
 
 <mapper namespace="com.hqy.blog.dao.ArticleDao">
 
-
+    <select id="articles" resultType="com.hqy.blog.dto.PageArticleDTO">
+        SELECT
+        a.id, a.title, a.description, a.cover, a.`type`, a.created
+        FROM t_article a
+        ORDER BY a.created DESC
+    </select>
 
 </mapper>
