@@ -12,15 +12,14 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * AdminUserController.
+ * UserController.
  * @author qiyuan.hong
  * @version 1.0
  * @date 2022/9/26 17:45
  */
 @RestController
-@RequestMapping("/admin")
 @RequiredArgsConstructor
-public class AdminUserController {
+public class AccountController {
 
     private final UserRequestService userRequestService;
 
@@ -29,14 +28,14 @@ public class AdminUserController {
      * @param request request.
      * @return        DataResponse.
      */
-    @GetMapping("/account")
+    @GetMapping("/admin/account")
     public DataResponse getLoginUserInfo(HttpServletRequest request) {
         Long id = OauthRequestUtil.idFromOauth2Request(request);
         AssertUtil.notNull(id, CommonResultCode.SYSTEM_BUSY.message);
         return userRequestService.getLoginUserInfo(id);
     }
 
-    @PutMapping("/account")
+    @PutMapping("/admin/account")
     public DataResponse updateLoginUserInfo(@RequestBody BlogUserProfileDTO profile, HttpServletRequest request) {
         Long id = OauthRequestUtil.idFromOauth2Request(request);
         profile.setId(id);

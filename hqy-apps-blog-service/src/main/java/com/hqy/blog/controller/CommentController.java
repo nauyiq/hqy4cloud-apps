@@ -15,13 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Service
 @RestController
-@RequestMapping("/admin")
 @RequiredArgsConstructor
-public class AdminCommentController {
+public class CommentController {
 
     private final CommentRequestService commentRequestService;
 
-    @GetMapping("/comments")
+    @GetMapping("/admin/comments")
     public DataResponse comments(Integer pageNumber, Integer pageSize) {
         if (pageNumber == null) {
             pageNumber = 1;

@@ -15,13 +15,12 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @Slf4j
 @RestController
-@RequestMapping("/admin/article")
 @RequiredArgsConstructor
-public class AdminArticleTypeController {
+public class ArticleTypeController {
 
     private final ArticleTypeRequestService articleTypeRequestService;
 
-    @GetMapping("/types")
+    @GetMapping("/admin/article/types")
     public DataResponse articleTypes() {
         return articleTypeRequestService.articleTypes();
     }

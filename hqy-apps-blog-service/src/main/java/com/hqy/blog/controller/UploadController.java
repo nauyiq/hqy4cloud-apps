@@ -24,13 +24,12 @@ import org.springframework.web.multipart.MultipartFile;
  */
 @Slf4j
 @RestController
-@RequestMapping("/admin/upload")
 @RequiredArgsConstructor
-public class AdminUploadController {
+public class UploadController {
 
     private final UploadFileService uploadFileService;
 
-    @PostMapping("/image")
+    @PostMapping("/admin/upload/image")
     public DataResponse uploadImage(@RequestParam("file") MultipartFile file) {
         AssertUtil.notNull(file, "Upload file should not be null.");
         FileResponse response = uploadFileService.uploadImgFile(AppsConstants.Blog.UPLOAD_IMAGE_FOLDER, file);
@@ -40,7 +39,7 @@ public class AdminUploadController {
         return CommonResultCode.dataResponse(new UploadFileVO(response.path(), response.relativePath()));
     }
 
-    @PostMapping("/avatar")
+    @PostMapping("/admin/upload/avatar")
     public DataResponse uploadAvatar(@RequestParam("file") MultipartFile avatar) {
         AssertUtil.notNull(avatar, "Upload avatar file should not be null.");
         FileResponse response = uploadFileService.uploadAvatar(avatar);
