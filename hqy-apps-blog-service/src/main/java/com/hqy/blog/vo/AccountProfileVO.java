@@ -18,7 +18,7 @@ import java.util.Date;
 @AllArgsConstructor
 public class AccountProfileVO {
 
-    private Long id;
+    private String id;
     private String username;
     private String nickname;
     private String avatar;

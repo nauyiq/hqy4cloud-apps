@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class StatisticsHashRedisService<K,T> implements StatisticsRedisService<K,T> {
     private static final Logger log = LoggerFactory.getLogger(StatisticsHashRedisService.class);
-    protected final DefaultKeyGenerator defaultKeyGenerator = new DefaultKeyGenerator(MicroServiceConstants.BLOG_SERVICE);
     protected final String name;
     protected final RedissonClient redissonClient;
     protected final String prefix;
@@ -46,7 +45,7 @@ public abstract class StatisticsHashRedisService<K,T> implements StatisticsRedis
     @PreDestroy
     public void startSync() {
         //同步redis数据只需要一个线程执行即可
-        String key = defaultKeyGenerator.genKey("syncLock", name);
+        String key = DEFAULT_KEY_GENERATOR.genKey("syncLock", name);
         RLock lock = redissonClient.getLock(key);
         if (lock.tryLock()) {
             try {
@@ -64,7 +63,7 @@ public abstract class StatisticsHashRedisService<K,T> implements StatisticsRedis
     }
 
     protected String getPrefix() {
-        return defaultKeyGenerator.genPrefix(prefix);
+        return DEFAULT_KEY_GENERATOR.genPrefix(prefix);
     }
 
     /**

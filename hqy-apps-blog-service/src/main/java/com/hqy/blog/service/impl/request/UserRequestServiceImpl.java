@@ -34,7 +34,7 @@ public class UserRequestServiceImpl implements UserRequestService {
 
         AccountInfoDTO accountInfoDTO = JsonUtil.toBean(accountInfoJson, AccountInfoDTO.class);
         return CommonResultCode.dataResponse(CommonResultCode.SUCCESS,
-                new AccountProfileVO(accountInfoDTO.getId(), accountInfoDTO.getUsername(), accountInfoDTO.getNickname(), accountInfoDTO.getAvatar(), accountInfoDTO.getIntro(), accountInfoDTO.getBirthday()));
+                new AccountProfileVO(accountInfoDTO.getId().toString(), accountInfoDTO.getUsername(), accountInfoDTO.getNickname(), accountInfoDTO.getAvatar(), accountInfoDTO.getIntro(), accountInfoDTO.getBirthday()));
     }
 
 

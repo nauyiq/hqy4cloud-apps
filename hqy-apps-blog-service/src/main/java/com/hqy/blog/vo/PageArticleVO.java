@@ -16,7 +16,7 @@ import lombok.*;
 @AllArgsConstructor
 public class PageArticleVO {
 
-    private Long id;
+    private String id;
     private String title;
     private String description;
     private String cover;
@@ -26,7 +26,7 @@ public class PageArticleVO {
 
 
     public PageArticleVO(PageArticleDTO article) {
-        this.id = article.getId();
+        this.id = article.getId().toString();
         this.title = article.getTitle();
         this.description = article.getDescription();
         this.cover = article.getCover();

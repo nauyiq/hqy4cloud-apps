@@ -121,7 +121,7 @@ public class ArticleStatisticsHashRedisServiceImpl extends StatisticsHashRedisSe
 
     @Override
     public long incrValue(Long id, StatisticsType type, int offset) {
-        RLock lock = redissonClient.getLock(defaultKeyGenerator.genKey(getPrefix(), id.toString()));
+        RLock lock = redissonClient.getLock(DEFAULT_KEY_GENERATOR.genKey(getPrefix(), id.toString()));
         lock.lock();
         try {
             StatisticsDTO statistics = getStatistics(id);
