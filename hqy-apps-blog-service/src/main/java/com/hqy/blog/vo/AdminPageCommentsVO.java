@@ -19,7 +19,7 @@ public class AdminPageCommentsVO {
     private String content;
     private String commentName;
     private String replyName;
-    private Boolean status;
     private String created;
+    private Boolean deleted;
 
 }

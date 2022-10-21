@@ -30,10 +30,10 @@ public class ArticleDetailVO {
     private Integer type;
     private String created;
     private StatisticsVO statistics;
-    private AccountAccessArticleStatusDTO status;
+    private AccountAccessArticleStatusDTO accessStatus;
 
 
-    public ArticleDetailVO(String authorName, Article article, StatisticsDTO statistics, AccountAccessArticleStatusDTO status) {
+    public ArticleDetailVO(String authorName, Article article, StatisticsDTO statistics, AccountAccessArticleStatusDTO accessStatus) {
         this.id = article.getId().toString();
         this.title = article.getTitle();
         this.content = article.getContent();
@@ -45,6 +45,6 @@ public class ArticleDetailVO {
         this.type = article.getType();
         this.created = DateUtil.date(article.getCreated()).toString();
         this.statistics = new StatisticsVO(statistics.getVisits(), statistics.getLikes(), statistics.getComments());
-        this.status = status;
+        this.accessStatus = accessStatus;
     }
 }

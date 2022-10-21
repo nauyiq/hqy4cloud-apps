@@ -29,7 +29,7 @@ public class UploadController {
 
     private final UploadFileService uploadFileService;
 
-    @PostMapping("/admin/upload/image")
+    @PostMapping("/upload/image")
     public DataResponse uploadImage(@RequestParam("file") MultipartFile file) {
         AssertUtil.notNull(file, "Upload file should not be null.");
         FileResponse response = uploadFileService.uploadImgFile(AppsConstants.Blog.UPLOAD_IMAGE_FOLDER, file);
@@ -39,7 +39,7 @@ public class UploadController {
         return CommonResultCode.dataResponse(new UploadFileVO(response.path(), response.relativePath()));
     }
 
-    @PostMapping("/admin/upload/avatar")
+    @PostMapping("/upload/avatar")
     public DataResponse uploadAvatar(@RequestParam("file") MultipartFile avatar) {
         AssertUtil.notNull(avatar, "Upload avatar file should not be null.");
         FileResponse response = uploadFileService.uploadAvatar(avatar);

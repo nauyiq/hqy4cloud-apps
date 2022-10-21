@@ -27,12 +27,12 @@ public class Comment extends BaseEntity<Long> {
     /**
      * 评论id
      */
-    private Long commentId;
+    private Long commenter;
 
     /**
      * 回复谁？
      */
-    private Long replyId;
+    private Long replier;
 
     /**
      * 内容
@@ -45,9 +45,9 @@ public class Comment extends BaseEntity<Long> {
     private Integer level;
 
     /**
-     * 状态
+     * 父级评论id.
      */
-    private Boolean status;
+    private Long parent;
 
     /**
      * 是否删除

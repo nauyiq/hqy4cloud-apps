@@ -4,5 +4,38 @@
 <mapper namespace="com.hqy.blog.dao.CommentDao">
 
 
+    <select id="selectParentComments" resultType="com.hqy.blog.entity.Comment">
+        SELECT
+        id, article_id, content, commenter, deleted, created
+        FROM `t_comment`
+        WHERE article_id = #{articleId} AND `level` = 1
+        ORDER BY created DESC, id DESC
+    </select>
+
+
+    <resultMap id="ArticleCommentResultMap" type="com.hqy.blog.dto.ArticleCommentDTO">
+        <result column="parent" property="parent"/>
+        <collection property="comments" ofType="com.hqy.blog.entity.Comment">
+            <result column="id" property="id"/>
+            <result column="article_id" property="articleId"/>
+            <result column="content" property="content"/>
+            <result column="commenter" property="commenter"/>
+            <result column="replier" property="replier"/>
+            <result column="deleted" property="deleted"/>
+            <result column="created" property="created"/>
+        </collection>
+    </resultMap>
+
+    <select id="selectChildrenComments" resultMap="ArticleCommentResultMap">
+        SELECT
+        id, article_id, content, commenter, replier, parent, deleted, created
+        FROM `t_comment`
+        WHERE article_id = #{articleId} AND parent IN
+        <foreach collection="parents" item="parent" separator="," open="(" close=")">
+            #{parent}
+        </foreach>
+        ORDER BY created ASC, id ASC
+    </select>
+
 
 </mapper>
