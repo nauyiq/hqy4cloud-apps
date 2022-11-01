@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.hqy.blog.statistics.StatisticsType;
 import lombok.*;
 
+import java.io.Serializable;
+
 /**
  * StatisticsDTO.
  * @author qiyuan.hong
@@ -15,7 +17,8 @@ import lombok.*;
 @NoArgsConstructor
 @EqualsAndHashCode
 @AllArgsConstructor
-public class StatisticsDTO {
+public class StatisticsDTO implements Serializable {
+
 
     private Long id;
     private Integer visits;
@@ -66,13 +69,13 @@ public class StatisticsDTO {
     public void updateCount(StatisticsType type, int offset) {
         switch (type) {
             case VISITS:
-                visits = visits + offset;
+                this.visits = getVisits() + offset;
                 break;
             case LIKES:
-                likes = likes + likes;
+                this.likes = getLikes() + offset;
                 break;
             case COMMENTS:
-                comments = comments + offset;
+                this.comments = getComments() + offset;
                 break;
             default:
                 throw new IllegalArgumentException("Unknown statistics type for " + type);

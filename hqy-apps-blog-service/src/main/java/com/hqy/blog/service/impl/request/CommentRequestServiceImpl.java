@@ -11,7 +11,7 @@ import com.hqy.base.common.result.CommonResultCode;
 import com.hqy.base.common.result.PageResult;
 import com.hqy.blog.dto.ArticleCommentDTO;
 import com.hqy.blog.entity.Comment;
-import com.hqy.blog.service.ArticleCommentCompositeService;
+import com.hqy.blog.service.BlogDbOperationService;
 import com.hqy.blog.service.request.CommentRequestService;
 import com.hqy.blog.vo.AdminPageCommentsVO;
 import com.hqy.blog.vo.ArticleCommentVO;
@@ -37,14 +37,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CommentRequestServiceImpl implements CommentRequestService {
 
-    private final ArticleCommentCompositeService articleCommentCompositeService;
+    private final BlogDbOperationService blogDbOperationService;
 
     @Override
     public DataResponse getArticlePageComments(Long articleId, Integer pageNumber, Integer pageSize) {
         PageResult<ArticleCommentVO> pageResult;
         // 先分页获取父级评论
         PageHelper.startPage(pageNumber, pageSize);
-        List<Comment> parentComments = articleCommentCompositeService.commentTkService().selectParentComments(articleId);
+        List<Comment> parentComments = blogDbOperationService.commentTkService().selectParentComments(articleId);
         if (CollectionUtils.isEmpty(parentComments)) {
             pageResult = new PageResult<>();
         } else {
@@ -53,7 +53,7 @@ public class CommentRequestServiceImpl implements CommentRequestService {
             // 获取父级评论ids
             List<Long> parents = parentComments.stream().map(Comment::getId).collect(Collectors.toList());
             // 获取子级评论.
-            List<ArticleCommentDTO> childrenComments = articleCommentCompositeService.commentTkService().selectChildrenComments(parents, articleId);
+            List<ArticleCommentDTO> childrenComments = blogDbOperationService.commentTkService().selectChildrenComments(parents, articleId);
             //构建分页返回结果集
             List<ArticleCommentVO> result = buildArticleCommentVo(parentComments, childrenComments);
             pageResult = new PageResult<>(pageInfo.getPageNum(), pageInfo.getTotal(), pageInfo.getPages(), result);
@@ -108,7 +108,7 @@ public class CommentRequestServiceImpl implements CommentRequestService {
     public DataResponse getPageComments(Integer pageNumber, Integer pageSize) {
         PageHelper.startPage(pageNumber, pageSize);
         PageResult<AdminPageCommentsVO> pageResultComments;
-        List<Comment> comments = articleCommentCompositeService.commentTkService().queryAll();
+        List<Comment> comments = blogDbOperationService.commentTkService().queryAll();
         if (CollectionUtils.isEmpty(comments)) {
             pageResultComments = new PageResult<>();
         } else {

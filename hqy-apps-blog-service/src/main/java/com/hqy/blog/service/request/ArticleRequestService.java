@@ -1,6 +1,7 @@
 package com.hqy.blog.service.request;
 
 import com.hqy.base.common.bind.DataResponse;
+import com.hqy.base.common.bind.MessageResponse;
 import com.hqy.blog.dto.ArticleDTO;
 
 /**
@@ -33,4 +34,19 @@ public interface ArticleRequestService {
      * @return                DataResponse.
      */
     DataResponse articleDetail(Long accessAccountId, Long id);
+
+    /**
+     * 点赞/取消点赞 文章.
+     * @param accessAccountId 用户id
+     * @param articleId       文章id
+     * @return                MessageResponse.
+     */
+    MessageResponse articleLiked(Long accessAccountId, Long articleId);
+
+    /**
+     * 文章阅读数 + 1
+     * @param articleId 文章id
+     * @return          MessageResponse.
+     */
+    MessageResponse articleRead(Long articleId);
 }

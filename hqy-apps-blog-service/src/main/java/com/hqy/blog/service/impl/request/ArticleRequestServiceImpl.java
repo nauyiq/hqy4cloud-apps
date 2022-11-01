@@ -6,6 +6,7 @@ import com.hqy.account.struct.AccountBaseInfoStruct;
 import com.hqy.apps.common.result.BlogResultCode;
 import com.hqy.base.common.base.lang.StringConstants;
 import com.hqy.base.common.bind.DataResponse;
+import com.hqy.base.common.bind.MessageResponse;
 import com.hqy.base.common.result.CommonResultCode;
 import com.hqy.base.common.result.PageResult;
 import com.hqy.blog.dto.AccountAccessArticleStatusDTO;
@@ -13,17 +14,20 @@ import com.hqy.blog.dto.ArticleDTO;
 import com.hqy.blog.dto.PageArticleDTO;
 import com.hqy.blog.dto.StatisticsDTO;
 import com.hqy.blog.entity.Article;
-import com.hqy.blog.service.ArticleCommentCompositeService;
-import com.hqy.blog.service.ArticleTypeTagsCompositeService;
+import com.hqy.blog.entity.Liked;
+import com.hqy.blog.service.BlogDbOperationService;
 import com.hqy.blog.service.request.ArticleRequestService;
 import com.hqy.blog.statistics.AccountAccessArticleServer;
 import com.hqy.blog.statistics.StatisticsRedisService;
+import com.hqy.blog.statistics.StatisticsType;
 import com.hqy.blog.vo.ArticleDetailVO;
 import com.hqy.blog.vo.PageArticleVO;
 import com.hqy.blog.vo.StatisticsVO;
 import com.hqy.util.identity.ProjectSnowflakeIdWorker;
+import com.hqy.util.thread.ParentExecutorService;
 import com.hqy.web.service.account.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
@@ -38,15 +42,14 @@ import java.util.stream.Collectors;
  * @version 1.0
  * @date 2022/9/30 15:47
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ArticleRequestServiceImpl implements ArticleRequestService {
 
     private final StatisticsRedisService<Long, StatisticsDTO> statisticsRedisService;
     private final AccountAccessArticleServer accountAccessArticleServer;
-    private final ArticleCommentCompositeService articleCommentCompositeService;
-    private final ArticleTypeTagsCompositeService articleTypeTagsCompositeService;
-
+    private final BlogDbOperationService blogDbOperationService;
 
     @Override
     public DataResponse AdminArticleRequestService(ArticleDTO articleDTO) {
@@ -59,7 +62,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         Date date = new Date();
         Article article = new Article(id, articleDTO.getTitle(), articleDTO.getDescription(), articleDTO.getCover(), articleDTO.getContent(), articleDTO.getType(),
                 articleDTO.getMusicUrl(), articleDTO.getMusicName(), articleDTO.getAuthor(), true, date);
-        if (!articleTypeTagsCompositeService.articleTkService().insert(article)) {
+        if (!blogDbOperationService.articleTkService().insert(article)) {
             return CommonResultCode.dataResponse(CommonResultCode.SYSTEM_ERROR_INSERT_FAIL);
         }
 
@@ -70,7 +73,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
     public DataResponse pageArticles(Integer pageNumber, Integer pageSize) {
         PageHelper.startPage(pageNumber, pageSize);
         PageResult<PageArticleVO> pageResult;
-        List<PageArticleDTO> pageArticles = articleCommentCompositeService.articleTkService().articles();
+        List<PageArticleDTO> pageArticles = blogDbOperationService.articleTkService().articles();
         if (CollectionUtils.isEmpty(pageArticles)) {
             pageResult = new PageResult<>();
         } else {
@@ -94,7 +97,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
 
     @Override
     public DataResponse articleDetail(Long accessAccountId, Long id) {
-        Article article = articleCommentCompositeService.articleTkService().queryById(id);
+        Article article = blogDbOperationService.articleTkService().queryById(id);
         if (Objects.isNull(article)) {
             return BlogResultCode.dataResponse(BlogResultCode.INVALID_ARTICLE_ID);
         }
@@ -112,6 +115,34 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         return CommonResultCode.dataResponse(articleDetail);
     }
 
+    @Override
+    public MessageResponse articleLiked(Long accessAccountId, Long articleId) {
+        Article article = blogDbOperationService.articleTkService().queryById(articleId);
+        if (article == null) {
+            return BlogResultCode.dataResponse(BlogResultCode.ARTICLE_NOT_FOUND);
+        }
+
+        boolean status = accountAccessArticleServer.accessStatus(accessAccountId, StatisticsType.LIKES, articleId);
+        //修改点赞状态.
+        if (accountAccessArticleServer.changeAccessStatus(accessAccountId, StatisticsType.LIKES, articleId, !status) ) {
+            // 修改统计数据
+            statisticsRedisService.incrValue(articleId, StatisticsType.LIKES, status ? -1 : 1);
+            // 走消息队列异步写表或者直接入库写表
+            // 这里直接入库.
+            // 点赞数据不关心数据一致性. 只需redis数据定时回写到db即可.
+            ParentExecutorService.getInstance().execute(() -> blogDbOperationService.likedTkService().insertOrUpdate(new Liked(articleId, accessAccountId, !status)));
+            return CommonResultCode.messageResponse();
+        } else {
+            return CommonResultCode.messageResponse(CommonResultCode.SYSTEM_BUSY);
+        }
+    }
+
+    @Override
+    public MessageResponse articleRead(Long articleId) {
+        statisticsRedisService.incrValue(articleId, StatisticsType.VISITS, 1);
+        return CommonResultCode.messageResponse();
+    }
+
     private AccountAccessArticleStatusDTO getAccessArticleStatus(Long accessAccountId, Long articleId) {
         AccountAccessArticleStatusDTO status;
         if (accessAccountId == null) {
@@ -126,7 +157,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         if (type == null) {
             return false;
         }
-        return articleTypeTagsCompositeService.typeTkService().queryById(type) != null;
+        return blogDbOperationService.typeTkService().queryById(type) != null;
     }
 
 

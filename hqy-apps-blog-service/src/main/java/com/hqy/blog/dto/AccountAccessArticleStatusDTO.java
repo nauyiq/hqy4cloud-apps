@@ -1,5 +1,6 @@
 package com.hqy.blog.dto;
 
+import com.hqy.blog.statistics.StatisticsType;
 import lombok.*;
 
 /**
@@ -25,6 +26,18 @@ public class AccountAccessArticleStatusDTO {
      * 是否点赞
      */
     private Boolean isLike;
+
+
+    public boolean getStatus(StatisticsType type) {
+        if (type == null) {
+            return false;
+        }
+        if (type == StatisticsType.LIKES) {
+            return isLike;
+        } else {
+            return isRead;
+        }
+    }
 
 
 

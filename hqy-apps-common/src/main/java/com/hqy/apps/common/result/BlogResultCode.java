@@ -24,6 +24,11 @@ public enum BlogResultCode {
      */
     INVALID_ARTICLE_ID(5002, "Invalid article id."),
 
+    /**
+     * 文章不存在
+     */
+    ARTICLE_NOT_FOUND(5003, "Article not exist."),
+
     ;
 
     public int code;

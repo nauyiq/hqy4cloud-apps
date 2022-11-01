@@ -3,7 +3,6 @@ package com.hqy.blog.statistics.support;
 import com.hqy.blog.dto.StatisticsDTO;
 import com.hqy.blog.service.request.StatisticRequestService;
 import com.hqy.blog.statistics.StatisticsType;
-import com.hqy.fundation.cache.redis.LettuceRedis;
 import com.hqy.util.AssertUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
@@ -11,10 +10,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -37,11 +33,14 @@ public class ArticleStatisticsHashRedisServiceImpl extends StatisticsHashRedisSe
         this.statisticRequestService = statisticRequestService;
     }
 
+
+
     private int genKey(Long id) {
-        String prefix = getPrefix();
+//        String prefix = getRedisKey();
         int hash1 = id.hashCode();
         int hash2 = id.hashCode();
-        StatisticsDTO o = LettuceRedis.getInstance().hGet(prefix, hash1);
+        StatisticsDTO o = getRedissonMapCache().get((long)hash1);
+//        StatisticsDTO o = LettuceRedis.getInstance().hGet(prefix, hash1);
         if (o == null) {
             return hash1;
         } else {
@@ -53,7 +52,8 @@ public class ArticleStatisticsHashRedisServiceImpl extends StatisticsHashRedisSe
         int depth = 1;
         do {
             int newKey = hash1 + hash2 * depth;
-            o = LettuceRedis.getInstance().hGet(prefix, newKey);
+            o = getRedissonMapCache().get((long)newKey);
+//            o = LettuceRedis.getInstance().hGet(prefix, newKey);
             if (o == null) {
                 return newKey;
             } else {
@@ -70,10 +70,11 @@ public class ArticleStatisticsHashRedisServiceImpl extends StatisticsHashRedisSe
     @Override
     public StatisticsDTO getStatistics(Long id) {
         AssertUtil.notNull(id, "Id should not be null.");
-        String prefix = getPrefix();
+//        String prefix = getRedisKey();
         int hash1 = id.hashCode();
         int hash2 = id.hashCode();
-        StatisticsDTO o = LettuceRedis.getInstance().hGet(prefix, hash1);
+        StatisticsDTO o = getRedissonMapCache().get((long)hash1);
+//        StatisticsDTO o = LettuceRedis.getInstance().hGet(prefix, hash1);
         if (o == null) {
             return new StatisticsDTO(id, hash1);
         } else if (o.getId().equals(id)) {
@@ -83,7 +84,8 @@ public class ArticleStatisticsHashRedisServiceImpl extends StatisticsHashRedisSe
             int depth = 1;
             do {
                 int newKey = hash1 + hash2 * depth;
-                o = LettuceRedis.getInstance().hGet(prefix, newKey);
+                o = getRedissonMapCache().get((long)newKey);
+//                o = LettuceRedis.getInstance().hGet(prefix, newKey);
                 if (o == null) {
                     return new StatisticsDTO(id, newKey);
                 } else if (o.getId().equals(id)) {
@@ -99,16 +101,25 @@ public class ArticleStatisticsHashRedisServiceImpl extends StatisticsHashRedisSe
     @Override
     public List<StatisticsDTO> getStatistics(List<Long> keys) {
         AssertUtil.notEmpty(keys, "Id collection should not be empty.");
-        List<Integer> hashKeys = keys.stream().map(Object::hashCode).collect(Collectors.toList());
-        List<StatisticsDTO> hmGet = LettuceRedis.getInstance().hmGet(getPrefix(), hashKeys);
-        List<StatisticsDTO> resultList = new ArrayList<>();
-        for (int i = 0; i < hmGet.size(); i++) {
-            StatisticsDTO statisticsDTO = hmGet.get(i);
-            Long id = keys.get(i);
-            if (statisticsDTO == null || !statisticsDTO.getId().equals(id)) {
-                resultList.add(i, getStatistics(id));
-            }
+//        Set<Integer> hashKeys = keys.stream().map(Object::hashCode).collect(Collectors.toSet());
+//        List<StatisticsDTO> hmGet = LettuceRedis.getInstance().hmGet(getRedisKey(), hashKeys);
+
+        //第一次hash获取key集合
+        Set<Long> hashKeys = keys.stream().map(e -> (long)e.hashCode()).collect(Collectors.toSet());
+        //查询redis
+        Map<Long, StatisticsDTO> statisticsDTOMap = getRedissonMapCache().getAll(hashKeys);
+        //结果集
+        List<StatisticsDTO> resultList = new LinkedList<>(statisticsDTOMap.values());
+
+        //获取第一次hash查询后查询不到的id集合， 之后单独查询
+        Set<Long> ids = new HashSet<>(keys);
+        Set<Long> statisticsIdCollection = statisticsDTOMap.values().stream().map(StatisticsDTO::getId).collect(Collectors.toSet());
+        ids.removeAll(statisticsIdCollection);
+
+        for (Long id : ids) {
+            resultList.add(getStatistics(id));
         }
+
         return resultList;
     }
 
@@ -121,12 +132,13 @@ public class ArticleStatisticsHashRedisServiceImpl extends StatisticsHashRedisSe
 
     @Override
     public long incrValue(Long id, StatisticsType type, int offset) {
-        RLock lock = redissonClient.getLock(DEFAULT_KEY_GENERATOR.genKey(getPrefix(), id.toString()));
+        RLock lock = redissonClient.getLock(DEFAULT_KEY_GENERATOR.genKey(getRedisKey(), id.toString()));
         lock.lock();
         try {
             StatisticsDTO statistics = getStatistics(id);
             statistics.updateCount(type, offset);
-            LettuceRedis.getInstance().hSet(getPrefix(), statistics.getKey(), statistics);
+            getRedissonMapCache().put((long)statistics.getKey(), statistics);
+//            LettuceRedis.getInstance().hSet(getRedisKey(), statistics.getKey(), statistics);
             return statistics.getCount(type);
         } catch (Throwable cause) {
             log.error("Failed executed to incrValue. id {}, cause {}.", id, cause.getMessage());
@@ -139,7 +151,7 @@ public class ArticleStatisticsHashRedisServiceImpl extends StatisticsHashRedisSe
     }
 
     @Override
-    protected void loadRedisStatisticsData2Db(Map<?, StatisticsDTO> statisticsFromRedis) {
+    protected void loadRedisStatisticsData2Db(Map<Long, StatisticsDTO> statisticsFromRedis) {
         if (MapUtils.isEmpty(statisticsFromRedis)) {
             log.warn("Statistics map from redis is empty.");
             return;

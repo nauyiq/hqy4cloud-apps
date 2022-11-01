@@ -65,6 +65,12 @@
 
         <dependency>
             <groupId>com.hqy</groupId>
+            <artifactId>hqy-base-common-dao-api</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.hqy</groupId>
             <artifactId>hqy-common-web-service</artifactId>
             <version>${project.parent.version}</version>
         </dependency>

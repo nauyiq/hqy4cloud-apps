@@ -3,7 +3,7 @@ package com.hqy.blog.service.impl.request;
 import com.hqy.base.common.bind.DataResponse;
 import com.hqy.base.common.result.CommonResultCode;
 import com.hqy.blog.entity.Type;
-import com.hqy.blog.service.ArticleTypeTagsCompositeService;
+import com.hqy.blog.service.BlogDbOperationService;
 import com.hqy.blog.service.TypeTkService;
 import com.hqy.blog.service.request.ArticleTypeRequestService;
 import com.hqy.blog.vo.ArticleTypeVO;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ArticleTypeRequestServiceImpl implements ArticleTypeRequestService {
 
-    private final ArticleTypeTagsCompositeService service;
+    private final BlogDbOperationService service;
 
     @Override
     public DataResponse articleTypes() {

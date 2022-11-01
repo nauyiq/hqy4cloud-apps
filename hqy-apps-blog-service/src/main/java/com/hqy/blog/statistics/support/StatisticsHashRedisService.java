@@ -1,12 +1,10 @@
 package com.hqy.blog.statistics.support;
 
 import com.hqy.base.common.base.lang.StringConstants;
-import com.hqy.base.common.base.project.MicroServiceConstants;
 import com.hqy.blog.statistics.StatisticsRedisService;
-import com.hqy.fundation.cache.redis.LettuceRedis;
-import com.hqy.fundation.cache.redis.key.support.DefaultKeyGenerator;
 import com.hqy.util.thread.NamedThreadFactory;
 import org.apache.commons.collections4.MapUtils;
+import org.redisson.RedissonMapCache;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
@@ -29,6 +27,7 @@ public abstract class StatisticsHashRedisService<K,T> implements StatisticsRedis
     protected final String name;
     protected final RedissonClient redissonClient;
     protected final String prefix;
+    protected final RedissonMapCache<K, T> redissonMapCache;
 
     public StatisticsHashRedisService(int syncIntervalSeconds, String name, RedissonClient redissonClient) {
         this(syncIntervalSeconds, syncIntervalSeconds, name, redissonClient);
@@ -38,6 +37,7 @@ public abstract class StatisticsHashRedisService<K,T> implements StatisticsRedis
         this.name = name;
         this.redissonClient = redissonClient;
         this.prefix = StatisticsHashRedisService.class.getSimpleName() + StringConstants.Symbol.COLON + name;
+        this.redissonMapCache = (RedissonMapCache<K, T>)redissonClient.getMapCache(getRedisKey());
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory(name));
         executorService.scheduleAtFixedRate(this::startSync, syncDelaySeconds, syncIntervalSeconds, TimeUnit.SECONDS);
     }
@@ -49,7 +49,7 @@ public abstract class StatisticsHashRedisService<K,T> implements StatisticsRedis
         RLock lock = redissonClient.getLock(key);
         if (lock.tryLock()) {
             try {
-                Map<?, T> statisticsFromRedis = LettuceRedis.getInstance().hGetAll(getPrefix());
+                Map<K, T> statisticsFromRedis = redissonMapCache.readAllMap();
                 if (MapUtils.isEmpty(statisticsFromRedis)) {
                     log.info("{}-executor sync redis key {}, result map is empty.", prefix, name);
                 } else {
@@ -62,14 +62,18 @@ public abstract class StatisticsHashRedisService<K,T> implements StatisticsRedis
 
     }
 
-    protected String getPrefix() {
+    protected String getRedisKey() {
         return DEFAULT_KEY_GENERATOR.genPrefix(prefix);
+    }
+
+    public RedissonMapCache<K, T> getRedissonMapCache() {
+        return redissonMapCache;
     }
 
     /**
      * 加载redis中的统计数据到db
      * @param statisticsFromRedis redis statistic data.
      */
-    protected abstract void loadRedisStatisticsData2Db(Map<?, T> statisticsFromRedis);
+    protected abstract void loadRedisStatisticsData2Db(Map<K, T> statisticsFromRedis);
 
 }

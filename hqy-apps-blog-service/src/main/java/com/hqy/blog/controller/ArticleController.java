@@ -2,6 +2,8 @@ package com.hqy.blog.controller;
 
 import com.hqy.apps.common.result.BlogResultCode;
 import com.hqy.base.common.bind.DataResponse;
+import com.hqy.base.common.bind.MessageResponse;
+import com.hqy.base.common.result.CommonResultCode;
 import com.hqy.blog.dto.ArticleDTO;
 import com.hqy.blog.service.request.ArticleRequestService;
 import com.hqy.util.AssertUtil;
@@ -48,6 +50,26 @@ public class ArticleController extends BaseController {
         }
         Long accessAccountId = getAccessAccountId(request);
         return articleRequestService.articleDetail(accessAccountId, id);
+    }
+
+    @PostMapping("/article/like/{articleId}")
+    public MessageResponse articleLiked(HttpServletRequest request, @PathVariable Long articleId) {
+        if (articleId == null) {
+            return BlogResultCode.dataResponse(BlogResultCode.INVALID_ARTICLE_ID);
+        }
+        Long accessAccountId = getAccessAccountId(request);
+        if (accessAccountId == null) {
+            return CommonResultCode.messageResponse(CommonResultCode.INVALID_ACCESS_TOKEN);
+        }
+        return articleRequestService.articleLiked(accessAccountId, articleId);
+    }
+
+    @PostMapping("/article/read/{articleId}")
+    public MessageResponse articleRead(@PathVariable Long articleId) {
+        if (articleId == null) {
+            return BlogResultCode.dataResponse(BlogResultCode.INVALID_ARTICLE_ID);
+        }
+        return articleRequestService.articleRead(articleId);
     }
 
 
