@@ -21,11 +21,12 @@ public interface ArticleRequestService {
 
     /**
      * 分页查询文章列表
+     * @param type       类型
      * @param pageNumber 第几页
      * @param pageSize   一页几行
      * @return           DataResponse.
      */
-    DataResponse pageArticles(Integer pageNumber, Integer pageSize);
+    DataResponse pageArticles(Integer type, Integer pageNumber, Integer pageSize);
 
     /**
      * 获取文章详情

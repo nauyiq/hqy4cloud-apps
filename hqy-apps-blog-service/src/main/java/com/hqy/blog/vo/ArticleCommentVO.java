@@ -2,33 +2,42 @@ package com.hqy.blog.vo;
 
 import cn.hutool.core.date.DateUtil;
 import com.hqy.blog.entity.Comment;
-import lombok.*;
-
-import java.util.List;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * ArticleCommentVO.
  * @author qiyuan.hong
  * @version 1.0
- * @date 2022/10/13 13:27
+ * @date 2022/10/13 13:38
  */
 @Data
-@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class ArticleCommentVO extends ParentArticleCommentVO {
+public class ArticleCommentVO {
 
-    private List<ChildArticleCommentVO> children;
+    private String id;
+    private String content;
+    private String created;
+    private Boolean deleted;
+    private User commenter;
 
-    public ArticleCommentVO(Comment comment, User user, List<ChildArticleCommentVO> childArticleCommentVOS) {
-        setId(comment.getId().toString());
-        setContent(comment.getContent());
-        setCreated(DateUtil.formatDateTime(comment.getCreated()));
-        setDeleted(comment.getDeleted());
-        setCommenter(user);
-        this.children = childArticleCommentVOS;
+    public ArticleCommentVO(Comment comment, User user) {
+        this.id = comment.getId().toString();
+        this.content = comment.getContent();
+        this.created = DateUtil.formatDateTime(comment.getCreated());
+        this.deleted = comment.getDeleted();
+        this.commenter = user;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class User {
+        private String id;
+        private String avatar;
+        private String nickname;
+    }
+
+
 }
-
-
-

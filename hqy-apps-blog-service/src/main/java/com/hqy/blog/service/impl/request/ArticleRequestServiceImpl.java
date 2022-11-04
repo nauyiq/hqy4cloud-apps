@@ -70,10 +70,10 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
     }
 
     @Override
-    public DataResponse pageArticles(Integer pageNumber, Integer pageSize) {
+    public DataResponse pageArticles(Integer type, Integer pageNumber, Integer pageSize) {
         PageHelper.startPage(pageNumber, pageSize);
         PageResult<PageArticleVO> pageResult;
-        List<PageArticleDTO> pageArticles = blogDbOperationService.articleTkService().articles();
+        List<PageArticleDTO> pageArticles = blogDbOperationService.articleTkService().articles(type);
         if (CollectionUtils.isEmpty(pageArticles)) {
             pageResult = new PageResult<>();
         } else {

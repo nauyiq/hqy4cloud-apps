@@ -7,6 +7,10 @@
         SELECT
         a.id, a.title, a.description, a.cover, a.`type`, a.created
         FROM t_article a
+        WHERE `status` = 1
+        <if test="type != null">
+            AND `type` = #{type}
+        </if>
         ORDER BY a.created DESC
     </select>
 

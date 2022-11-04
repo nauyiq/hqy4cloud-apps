@@ -30,7 +30,7 @@ public class ArticleTkServiceImpl extends BaseTkServiceImpl<Article, Long> imple
     }
 
     @Override
-    public List<PageArticleDTO> articles() {
-        return articleDao.articles();
+    public List<PageArticleDTO> articles(Integer type) {
+        return articleDao.articles(type);
     }
 }

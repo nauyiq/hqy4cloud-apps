@@ -20,6 +20,8 @@ public class BlogDbOperationServiceImpl implements BlogDbOperationService {
     private final CommentTkService commentTkService;
     private final TagsTkService tagsTkService;
     private final TypeTkService typeTkService;
+    private final ConfigTkService configTkService;
+
 
 
     @Override
@@ -30,6 +32,11 @@ public class BlogDbOperationServiceImpl implements BlogDbOperationService {
     @Override
     public ArticleTkService articleTkService() {
         return articleTkService;
+    }
+
+    @Override
+    public ConfigTkService configTkService() {
+        return configTkService;
     }
 
     @Override

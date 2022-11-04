@@ -25,6 +25,10 @@ public class ArticleTypeController {
         return articleTypeRequestService.articleTypes();
     }
 
+    @GetMapping("/article/types")
+    public DataResponse enableArticleTypes() {
+        return articleTypeRequestService.enableArticleTypes();
+    }
 
 
 }

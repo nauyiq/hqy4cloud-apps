@@ -16,8 +16,9 @@ public interface ArticleTkService extends BaseTkService<Article, Long> {
 
     /**
      * 查询文章列表
+     * @param type 文章类型
      * @return {@link PageArticleDTO}
      */
-    List<PageArticleDTO> articles();
+    List<PageArticleDTO> articles(Integer type);
 
 }

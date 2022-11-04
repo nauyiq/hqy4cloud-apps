@@ -23,7 +23,7 @@ public class ArticleCommentDTO {
     private Long parent;
 
     /**
-     * 自己评论列表
+     * 子集评论列表
      */
     private List<Comment> comments;
 

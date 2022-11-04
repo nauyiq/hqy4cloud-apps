@@ -37,10 +37,10 @@ public class ArticleController extends BaseController {
 
 
     @GetMapping("/articles")
-    public DataResponse pageArticles(Integer pageNumber, Integer pageSize) {
+    public DataResponse pageArticles(Integer type, Integer pageNumber, Integer pageSize) {
         pageNumber = pageNumber == null ? 1 : pageNumber;
         pageSize = pageSize == null ? 5 :pageSize;
-        return articleRequestService.pageArticles(pageNumber, pageSize);
+        return articleRequestService.pageArticles(type, pageNumber, pageSize);
     }
 
     @GetMapping("/article/{id}")

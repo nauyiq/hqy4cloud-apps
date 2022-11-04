@@ -16,4 +16,11 @@ public interface ArticleTypeRequestService {
      */
     DataResponse articleTypes();
 
+    /**
+     * 获取能够使用的文章类型
+     * @return DataResponse.
+     */
+    DataResponse enableArticleTypes();
+
+
 }

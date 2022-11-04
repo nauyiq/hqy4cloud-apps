@@ -29,6 +29,11 @@ public enum BlogResultCode {
      */
     ARTICLE_NOT_FOUND(5003, "Article not exist."),
 
+    /**
+     * 评论不存在
+     */
+    COMMENT_NOT_FOUND(5004, "Comment not exist."),
+
     ;
 
     public int code;

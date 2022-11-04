@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 @AllArgsConstructor
-public class ChildArticleCommentVO extends ParentArticleCommentVO {
+public class ChildArticleCommentVO extends ArticleCommentVO {
 
     private User replier;
 

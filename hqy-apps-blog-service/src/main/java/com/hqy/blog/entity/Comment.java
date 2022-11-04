@@ -4,6 +4,7 @@ import com.hqy.base.BaseEntity;
 import lombok.*;
 
 import javax.persistence.Table;
+import java.util.Date;
 
 /**
  * entity for t_comment.
@@ -49,9 +50,20 @@ public class Comment extends BaseEntity<Long> {
      */
     private Long parent;
 
+
     /**
      * 是否删除
      */
     private Boolean deleted;
 
+    public Comment(Long id, Long articleId, Long commenter, Long replier, String content, Integer level, Long parent) {
+        super(id, new Date());
+        this.articleId = articleId;
+        this.commenter = commenter;
+        this.replier = replier;
+        this.content = content;
+        this.level = level;
+        this.parent = parent;
+        this.deleted = false;
+    }
 }

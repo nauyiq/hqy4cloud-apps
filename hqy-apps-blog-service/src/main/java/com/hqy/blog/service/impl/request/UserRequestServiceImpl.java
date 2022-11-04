@@ -54,7 +54,7 @@ public class UserRequestServiceImpl implements UserRequestService {
     @Override
     public DataResponse updateLoginUserInfo(BlogUserProfileDTO profile) {
         AccountProfileRemoteService accountProfileRemoteService = RPCClient.getRemoteService(AccountProfileRemoteService.class);
-        boolean update = accountProfileRemoteService.uploadAccountProfile(new AccountProfileStruct(profile.getId(), profile.getNickname(), profile.getAvatar(), profile.getAvatar(), profile.getBirthday()));
+        boolean update = accountProfileRemoteService.uploadAccountProfile(new AccountProfileStruct(profile.getId(), profile.getNickname(), profile.getAvatar(), profile.getIntro(), profile.getBirthday()));
         if (!update) {
             return CommonResultCode.dataResponse(CommonResultCode.SYSTEM_ERROR_UPDATE_FAIL);
         }

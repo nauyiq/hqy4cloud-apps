@@ -4,7 +4,6 @@ import com.hqy.base.common.bind.DataResponse;
 import com.hqy.base.common.result.CommonResultCode;
 import com.hqy.blog.entity.Type;
 import com.hqy.blog.service.BlogDbOperationService;
-import com.hqy.blog.service.TypeTkService;
 import com.hqy.blog.service.request.ArticleTypeRequestService;
 import com.hqy.blog.vo.ArticleTypeVO;
 import lombok.RequiredArgsConstructor;
@@ -28,15 +27,30 @@ public class ArticleTypeRequestServiceImpl implements ArticleTypeRequestService 
 
     @Override
     public DataResponse articleTypes() {
-        TypeTkService typeTkService = service.typeTkService();
-        List<Type> types = typeTkService.queryList(new Type(true));
-        List<ArticleTypeVO> articleTypes;
-        if (CollectionUtils.isEmpty(types)) {
-            articleTypes = Collections.emptyList();
-        } else {
-            articleTypes = types.stream().map(type -> new ArticleTypeVO(type.getId(), type.getName())).collect(Collectors.toList());
-        }
-        return CommonResultCode.dataResponse(articleTypes);
+        return CommonResultCode.dataResponse(getArticleTypes(true));
     }
+
+    @Override
+    public DataResponse enableArticleTypes() {
+        return CommonResultCode.dataResponse(getArticleTypes(false));
+    }
+
+    private List<ArticleTypeVO> getArticleTypes(boolean queryAll) {
+        List<Type> allTypes;
+        List<ArticleTypeVO> result;
+        if (queryAll) {
+            allTypes = service.typeTkService().queryAll();
+        } else {
+            allTypes = service.typeTkService().queryList(new Type(true));
+        }
+
+        if (CollectionUtils.isEmpty(allTypes)) {
+            result = Collections.emptyList();
+        } else {
+            result = allTypes.stream().map(type -> new ArticleTypeVO(type.getId(), type.getName())).collect(Collectors.toList());
+        }
+        return result;
+    }
+
 
 }

@@ -18,4 +18,6 @@ public interface BlogDbOperationService {
 
     ArticleTkService articleTkService();
 
+    ConfigTkService configTkService();
+
 }

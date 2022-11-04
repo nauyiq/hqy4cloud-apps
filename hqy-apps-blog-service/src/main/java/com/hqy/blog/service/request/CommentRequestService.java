@@ -1,6 +1,8 @@
 package com.hqy.blog.service.request;
 
 import com.hqy.base.common.bind.DataResponse;
+import com.hqy.base.common.bind.MessageResponse;
+import com.hqy.blog.dto.PublishCommentDTO;
 
 /**
  * CommentRequestService.
@@ -26,4 +28,20 @@ public interface CommentRequestService {
      * @return
      */
     DataResponse getArticlePageComments(Long articleId, Integer pageNumber, Integer pageSize);
+
+    /**
+     * 发表评论
+     * @param publishComment  {@link PublishCommentDTO}
+     * @param accessAccountId commenter id.
+     * @return
+     */
+    MessageResponse publishComment(PublishCommentDTO publishComment, Long accessAccountId);
+
+    /**
+     * 删除评论
+     * @param accessAccountId 用户id
+     * @param commentId       评论id.
+     * @return                MessageResponse.
+     */
+    MessageResponse deleteComment(Long accessAccountId, Long commentId);
 }

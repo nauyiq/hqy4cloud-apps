@@ -8,7 +8,7 @@
         SELECT
         id, article_id, content, commenter, deleted, created
         FROM `t_comment`
-        WHERE article_id = #{articleId} AND `level` = 1
+        WHERE article_id = #{articleId} AND `level` = 1 AND `deleted` = 0
         ORDER BY created DESC, id DESC
     </select>
 
@@ -30,7 +30,7 @@
         SELECT
         id, article_id, content, commenter, replier, parent, deleted, created
         FROM `t_comment`
-        WHERE article_id = #{articleId} AND parent IN
+        WHERE article_id = #{articleId} AND deleted = 0 AND parent IN
         <foreach collection="parents" item="parent" separator="," open="(" close=")">
             #{parent}
         </foreach>
