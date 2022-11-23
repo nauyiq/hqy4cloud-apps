@@ -22,7 +22,7 @@ public class StatisticsTkServiceImpl extends BaseTkServiceImpl<Statistics, Long>
     private final StatisticsDao statisticsDao;
 
     @Override
-    public BaseDao<Statistics, Long> selectDao() {
+    public BaseDao<Statistics, Long> getTkDao() {
         return statisticsDao;
     }
 

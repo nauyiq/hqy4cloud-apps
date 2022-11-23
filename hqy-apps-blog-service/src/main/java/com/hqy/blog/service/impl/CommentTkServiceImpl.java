@@ -43,7 +43,7 @@ public class CommentTkServiceImpl extends BaseTkServiceImpl<Comment, Long> imple
     }
 
     @Override
-    public BaseDao<Comment, Long> selectDao() {
+    public BaseDao<Comment, Long> getTkDao() {
         return commentDao;
     }
 }

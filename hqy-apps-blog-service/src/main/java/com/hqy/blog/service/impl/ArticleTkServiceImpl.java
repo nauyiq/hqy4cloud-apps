@@ -25,7 +25,7 @@ public class ArticleTkServiceImpl extends BaseTkServiceImpl<Article, Long> imple
     private final ArticleDao articleDao;
 
     @Override
-    public BaseDao<Article, Long> selectDao() {
+    public BaseDao<Article, Long> getTkDao() {
         return articleDao;
     }
 

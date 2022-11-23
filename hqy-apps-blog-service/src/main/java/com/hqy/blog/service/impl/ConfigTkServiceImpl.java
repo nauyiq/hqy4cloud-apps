@@ -22,7 +22,7 @@ public class ConfigTkServiceImpl extends BaseTkServiceImpl<Config, Integer> impl
     private final ConfigDao configDao;
 
     @Override
-    public BaseDao<Config, Integer> selectDao() {
+    public BaseDao<Config, Integer> getTkDao() {
         return configDao;
     }
 }

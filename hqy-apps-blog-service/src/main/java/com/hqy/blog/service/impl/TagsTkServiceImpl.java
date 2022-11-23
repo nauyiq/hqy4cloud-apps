@@ -25,7 +25,7 @@ public class TagsTkServiceImpl extends BaseTkServiceImpl<Tags, Integer> implemen
     private final TagsDao tagsDao;
 
     @Override
-    public BaseDao<Tags, Integer> selectDao() {
+    public BaseDao<Tags, Integer> getTkDao() {
         return tagsDao;
     }
 }

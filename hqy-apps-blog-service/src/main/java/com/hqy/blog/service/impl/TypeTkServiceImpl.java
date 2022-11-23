@@ -22,7 +22,7 @@ public class TypeTkServiceImpl extends BaseTkServiceImpl<Type, Integer> implemen
     private final TypeDao typeDao;
 
     @Override
-    public BaseDao<Type, Integer> selectDao() {
+    public BaseDao<Type, Integer> getTkDao() {
         return typeDao;
     }
 }

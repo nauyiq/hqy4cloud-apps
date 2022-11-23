@@ -20,7 +20,7 @@ public class LikedTkServiceImpl extends BaseTkServiceImpl<Liked, Long> implement
     private final LikedDao likedDao;
 
     @Override
-    public BaseDao<Liked, Long> selectDao() {
+    public BaseDao<Liked, Long> getTkDao() {
         return likedDao;
     }
 
