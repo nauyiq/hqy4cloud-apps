@@ -89,7 +89,7 @@
     </dependencies>
 
     <build>
-        <finalName>apps-article-service</finalName>
+        <finalName>apps-blog-service</finalName>
 <!--                <resources>-->
 <!--                    <resource>-->
 <!--                        &lt;!&ndash; <targetPath>${project.build.directory}/classes</targetPath> &ndash;&gt;-->
