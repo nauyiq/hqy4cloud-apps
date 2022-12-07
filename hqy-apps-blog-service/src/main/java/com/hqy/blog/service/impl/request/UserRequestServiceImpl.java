@@ -6,6 +6,7 @@ import com.hqy.account.service.remote.AccountRemoteService;
 import com.hqy.account.struct.AccountProfileStruct;
 import com.hqy.account.struct.AccountStruct;
 import com.hqy.account.struct.RegistryAccountStruct;
+import com.hqy.base.common.base.lang.StringConstants;
 import com.hqy.base.common.bind.DataResponse;
 import com.hqy.base.common.bind.MessageResponse;
 import com.hqy.base.common.result.CommonResultCode;
@@ -25,6 +26,7 @@ import com.hqy.util.JsonUtil;
 import com.hqy.util.ValidationUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 /**
@@ -53,8 +55,15 @@ public class UserRequestServiceImpl implements UserRequestService {
 
     @Override
     public DataResponse updateLoginUserInfo(BlogUserProfileDTO profile) {
+        String avatar = profile.getAvatar();
+        if (StringUtils.isNotBlank(avatar)) {
+            if (avatar.startsWith(StringConstants.HTTP)) {
+                avatar = avatar.substring(avatar.indexOf("/files"));
+            }
+        }
+
         AccountProfileRemoteService accountProfileRemoteService = RPCClient.getRemoteService(AccountProfileRemoteService.class);
-        boolean update = accountProfileRemoteService.uploadAccountProfile(new AccountProfileStruct(profile.getId(), profile.getNickname(), profile.getAvatar(), profile.getIntro(), profile.getBirthday()));
+        boolean update = accountProfileRemoteService.uploadAccountProfile(new AccountProfileStruct(profile.getId(), profile.getNickname(), avatar, profile.getIntro(), profile.getBirthday()));
         if (!update) {
             return CommonResultCode.dataResponse(CommonResultCode.SYSTEM_ERROR_UPDATE_FAIL);
         }
