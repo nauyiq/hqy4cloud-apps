@@ -70,6 +70,10 @@ public class Article extends BaseEntity<Long> {
      */
     private Boolean deleted;
 
+    public Article(Integer type) {
+        this.type = type;
+    }
+
     public Article(Long id, String title, String description, String cover, String content, Integer type, String backgroundMusic, String backgroundMusicName, Long author, Boolean status, Date date) {
         super(id, date);
         this.title = title;

@@ -14,11 +14,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AdminPageCommentsVO {
 
-    private Long id;
-    private Long articleId;
+    private String id;
+    private String articleId;
     private String content;
     private String commentName;
     private String replyName;
+    private Integer level;
     private String created;
     private Boolean deleted;
 

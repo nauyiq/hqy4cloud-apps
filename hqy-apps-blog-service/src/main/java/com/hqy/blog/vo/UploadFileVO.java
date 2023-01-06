@@ -14,6 +14,7 @@ public class UploadFileVO {
 
     private String path;
     private String relativePath;
+    private String fileName;
 
     public UploadFileVO(String path, String relativePath) {
         this.path = path;

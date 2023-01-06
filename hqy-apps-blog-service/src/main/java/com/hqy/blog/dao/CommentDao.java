@@ -31,4 +31,11 @@ public interface CommentDao extends BaseDao<Comment, Long> {
      * @return          ArticleCommentDTO.
      */
     List<ArticleCommentDTO> selectChildrenComments(@Param("parents") List<Long> parents, @Param("articleId") Long articleId);
+
+    /**
+     * 伪删除评论列表
+     * @param ids id集合
+     * @return    行数
+     */
+    long deleteComments(@Param("ids") List<Long> ids);
 }

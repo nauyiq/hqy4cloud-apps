@@ -1,5 +1,7 @@
 package com.hqy.blog.service.impl;
 
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.hqy.base.BaseDao;
 import com.hqy.base.impl.BaseTkServiceImpl;
 import com.hqy.blog.dao.TypeDao;
@@ -7,7 +9,14 @@ import com.hqy.blog.entity.Type;
 import com.hqy.blog.service.TypeTkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import tk.mybatis.mapper.entity.Example;
+
+import java.util.List;
+
+import static com.hqy.base.common.base.lang.StringConstants.Symbol.PERCENT;
 
 /**
  * @author qiyuan.hong
@@ -24,5 +33,21 @@ public class TypeTkServiceImpl extends BaseTkServiceImpl<Type, Integer> implemen
     @Override
     public BaseDao<Type, Integer> getTkDao() {
         return typeDao;
+    }
+
+    @Override
+    public PageInfo<Type> queryPageTypes(String name, Integer current, Integer size) {
+        Example example = new Example(Type.class);
+        Example.Criteria criteria = example.createCriteria();
+        criteria.andEqualTo("deleted", false);
+        if (StringUtils.isNotBlank(name)) {
+            criteria.andLike("name", PERCENT + name + PERCENT);
+        }
+        PageHelper.startPage(current, size);
+        List<Type> types = typeDao.selectByExample(example);
+        if (CollectionUtils.isEmpty(types)) {
+            return new PageInfo<>();
+        }
+        return new PageInfo<>(types);
     }
 }

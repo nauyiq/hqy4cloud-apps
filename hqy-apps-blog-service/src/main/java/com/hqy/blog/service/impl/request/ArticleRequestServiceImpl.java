@@ -1,5 +1,6 @@
 package com.hqy.blog.service.impl.request;
 
+import cn.hutool.core.map.MapUtil;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.hqy.account.struct.AccountBaseInfoStruct;
@@ -9,12 +10,14 @@ import com.hqy.base.common.bind.DataResponse;
 import com.hqy.base.common.bind.MessageResponse;
 import com.hqy.base.common.result.CommonResultCode;
 import com.hqy.base.common.result.PageResult;
+import com.hqy.blog.converter.ArticleConverter;
 import com.hqy.blog.dto.AccountAccessArticleStatusDTO;
 import com.hqy.blog.dto.ArticleDTO;
 import com.hqy.blog.dto.PageArticleDTO;
 import com.hqy.blog.dto.StatisticsDTO;
 import com.hqy.blog.entity.Article;
 import com.hqy.blog.entity.Liked;
+import com.hqy.blog.entity.Type;
 import com.hqy.blog.service.BlogDbOperationService;
 import com.hqy.blog.service.request.ArticleRequestService;
 import com.hqy.blog.statistics.AccountAccessArticleServer;
@@ -23,6 +26,7 @@ import com.hqy.blog.statistics.StatisticsType;
 import com.hqy.blog.vo.ArticleDetailVO;
 import com.hqy.blog.vo.PageArticleVO;
 import com.hqy.blog.vo.StatisticsVO;
+import com.hqy.util.AssertUtil;
 import com.hqy.util.identity.ProjectSnowflakeIdWorker;
 import com.hqy.util.thread.ParentExecutorService;
 import com.hqy.web.service.account.AccountRpcUtil;
@@ -31,11 +35,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.hqy.apps.common.result.BlogResultCode.*;
+import static com.hqy.base.common.result.CommonResultCode.*;
 
 /**
  * @author qiyuan.hong
@@ -52,28 +56,85 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
     private final BlogDbOperationService blogDbOperationService;
 
     @Override
-    public DataResponse AdminArticleRequestService(ArticleDTO articleDTO) {
+    public DataResponse publishArticle(ArticleDTO articleDTO) {
         boolean exist = checkTypeExist(articleDTO.getType());
         if (!exist) {
-            return BlogResultCode.dataResponse(BlogResultCode.INVALID_ARTICLE_TYPE);
+            return BlogResultCode.dataResponse(INVALID_ARTICLE_TYPE);
         }
         //insert article to db.
         long id = ProjectSnowflakeIdWorker.getInstance().nextId();
         Date date = new Date();
         Article article = new Article(id, articleDTO.getTitle(), articleDTO.getDescription(), articleDTO.getCover(), articleDTO.getContent(), articleDTO.getType(),
-                articleDTO.getMusicUrl(), articleDTO.getMusicName(), articleDTO.getAuthor(), true, date);
+                articleDTO.getMusicUrl(), articleDTO.getMusicName(), articleDTO.getAuthor(), articleDTO.getStatus(), date);
         if (!blogDbOperationService.articleTkService().insert(article)) {
-            return CommonResultCode.dataResponse(CommonResultCode.SYSTEM_ERROR_INSERT_FAIL);
+            return CommonResultCode.dataResponse(SYSTEM_ERROR_INSERT_FAIL);
         }
-
         return CommonResultCode.dataResponse();
     }
 
     @Override
-    public DataResponse pageArticles(Integer type, Integer pageNumber, Integer pageSize) {
+    public DataResponse editArticle(ArticleDTO articleDTO) {
+        if (!checkTypeExist(articleDTO.getType())) {
+            return BlogResultCode.dataResponse(INVALID_ARTICLE_TYPE);
+        }
+        Article article = blogDbOperationService.articleTkService().queryById(articleDTO.getId());
+        if (Objects.isNull(article)) {
+            return BlogResultCode.dataResponse(INVALID_ARTICLE_ID);
+        }
+        ArticleConverter.CONVERTER.updateByDTO(articleDTO, article);
+        if (!blogDbOperationService.articleTkService().update(article)) {
+            return CommonResultCode.dataResponse(SYSTEM_ERROR_UPDATE_FAIL);
+        }
+        return CommonResultCode.dataResponse();
+    }
+
+    @Override
+    public DataResponse deleteArticle(Long id) {
+        Article article = blogDbOperationService.articleTkService().queryById(id);
+        if (Objects.isNull(article)) {
+            return BlogResultCode.dataResponse(INVALID_ARTICLE_ID);
+        }
+        article.setDeleted(true);
+        if (!blogDbOperationService.articleTkService().update(article)) {
+            return CommonResultCode.dataResponse(SYSTEM_BUSY);
+        }
+        return CommonResultCode.dataResponse();
+    }
+
+    @Override
+    public DataResponse adminPageArticles(String title, String describe, Integer current, Integer size) {
+        PageInfo<Article> pageInfo = blogDbOperationService.articleTkService().pageArticles(title, describe, current, size);
+        List<Article> articles = pageInfo.getList();
+        if (CollectionUtils.isEmpty(articles)) {
+            return CommonResultCode.dataResponse(new PageResult<>());
+        }
+        Map<Integer, Type> typesMap = getTypesMap();
+        List<PageArticleVO> articleVOS = articles.stream().map(ArticleConverter.CONVERTER::convert)
+                .peek(vo -> settingTypeName(vo, typesMap)).collect(Collectors.toList());
+        PageResult<PageArticleVO> pageResult = new PageResult<>(pageInfo.getPageNum(), pageInfo.getTotal(), pageInfo.getPages(), articleVOS);
+        return CommonResultCode.dataResponse(pageResult);
+    }
+
+    private void settingTypeName(PageArticleVO vo, Map<Integer, Type> typesMap) {
+        Type type = typesMap.get(vo.getType());
+        AssertUtil.notNull(type, "Type should not be null.");
+        vo.setTypeName(type.getName());
+    }
+
+    private Map<Integer, Type> getTypesMap() {
+        List<Type> types = blogDbOperationService.typeTkService().queryList(new Type());
+        if (CollectionUtils.isEmpty(types)) {
+            return MapUtil.newHashMap(0);
+        } else {
+            return types.stream().collect(Collectors.toMap(Type::getId, type -> type));
+        }
+    }
+
+    @Override
+    public DataResponse pageArticles(Integer type, Integer pageNumber, Integer pageSize, Integer status) {
         PageHelper.startPage(pageNumber, pageSize);
         PageResult<PageArticleVO> pageResult;
-        List<PageArticleDTO> pageArticles = blogDbOperationService.articleTkService().articles(type);
+        List<PageArticleDTO> pageArticles = blogDbOperationService.articleTkService().articles(type, status);
         if (CollectionUtils.isEmpty(pageArticles)) {
             pageResult = new PageResult<>();
         } else {

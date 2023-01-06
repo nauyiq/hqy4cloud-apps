@@ -16,7 +16,7 @@ public class WebAutoConfiguration {
 
     @Bean
     public UploadFileService uploadFileService() {
-        return new DefaultUploadFileService(StringConstants.Host.HTTPS +  StringConstants.Host.FILE_HQY_HOST);
+        return new DefaultUploadFileService(StringConstants.Host.HTTPS +  StringConstants.Host.FILE_HQY_HOST, 10 * 1000 * 1024);
     }
 
 }

@@ -34,6 +34,16 @@ public enum BlogResultCode {
      */
     COMMENT_NOT_FOUND(5004, "Comment not exist."),
 
+    /**
+     * 文章类型名已经存在
+     */
+    TYPE_EXIST(5005, "Type name already exist."),
+
+    /**
+     * 文章类型不存在.
+     */
+    NOT_FOUND_TYPE(5006, "Type not exist."),
+
     ;
 
     public int code;

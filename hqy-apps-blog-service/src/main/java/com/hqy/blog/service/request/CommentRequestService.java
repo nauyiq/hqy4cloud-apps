@@ -14,11 +14,13 @@ public interface CommentRequestService {
 
     /**
      * 获取分页评论列表
+     * @param articleId  模糊查询-文章id
+     * @param content    模糊查询-评论内容
      * @param pageNumber 第几页？
      * @param pageSize   一页几行？
      * @return           DataResponse.
      */
-    DataResponse getPageComments(Integer pageNumber, Integer pageSize);
+    DataResponse getPageComments(Long articleId, String content, Integer pageNumber, Integer pageSize);
 
     /**
      * 根据文章id 分页获取评论列表

@@ -1,6 +1,7 @@
 package com.hqy.blog.service.request;
 
 import com.hqy.base.common.bind.DataResponse;
+import com.hqy.blog.dto.TypeDTO;
 
 /**
  * ArticleTypeRequestService.
@@ -11,10 +12,13 @@ import com.hqy.base.common.bind.DataResponse;
 public interface ArticleTypeRequestService {
 
     /**
-     * 获取所有文章的类型.
-     * @return DataResponse.
+     * 分页获取文章类型
+     * @param name    类型名-模糊查询
+     * @param current 当前页
+     * @param size    页行数
+     * @return        DataResponse
      */
-    DataResponse articleTypes();
+    DataResponse adminPageTypes(String name, Integer current, Integer size);
 
     /**
      * 获取能够使用的文章类型
@@ -22,5 +26,24 @@ public interface ArticleTypeRequestService {
      */
     DataResponse enableArticleTypes();
 
+    /**
+     * 新增文章类型
+     * @param typeDTO {@link TypeDTO}
+     * @return        DataResponse.
+     */
+    DataResponse addType(TypeDTO typeDTO);
 
+    /**
+     * 修改文章类型
+     * @param typeDTO {@link TypeDTO}
+     * @return        DataResponse.
+     */
+    DataResponse editType(TypeDTO typeDTO);
+
+    /**
+     * 删除文章类型 -> 包括删除对应的文章、评论
+     * @param id 类型id
+     * @return   DataResponse.
+     */
+    DataResponse deleteType(Integer id);
 }
