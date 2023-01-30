@@ -16,14 +16,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/blog")
 public class ArticleTypeController {
 
     private final ArticleTypeRequestService articleTypeRequestService;
 
-    @GetMapping("/admin/article/types")
-    public DataResponse articleTypes() {
-        return articleTypeRequestService.articleTypes();
-    }
 
     @GetMapping("/article/types")
     public DataResponse enableArticleTypes() {

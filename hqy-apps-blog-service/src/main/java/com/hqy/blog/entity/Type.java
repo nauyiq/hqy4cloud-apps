@@ -31,6 +31,15 @@ public class Type extends BaseEntity<Integer> {
      */
     private Boolean status;
 
+    /**
+     * 是否删除
+     */
+    private Boolean deleted = false;
+
+    public Type(String name) {
+        this.name = name;
+    }
+
     public Type(Boolean status) {
         this.status = status;
     }

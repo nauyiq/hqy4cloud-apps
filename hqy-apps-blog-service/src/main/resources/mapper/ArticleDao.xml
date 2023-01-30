@@ -3,14 +3,26 @@
 
 <mapper namespace="com.hqy.blog.dao.ArticleDao">
 
+    <update id="deleteArticles">
+        UPDATE t_article SET `deleted` = 1, `updated` = now()
+        WHERE id IN
+        <foreach collection="ids" separator="," open="(" close=")" item="id">
+            #{id}
+        </foreach>
+    </update>
+
     <select id="articles" resultType="com.hqy.blog.dto.PageArticleDTO">
         SELECT
-        a.id, a.title, a.description, a.cover, a.`type`, a.created
+        a.id, a.title, a.description, a.cover, a.`type`, a.created, a.status
         FROM t_article a
-        WHERE `status` = 1
-        <if test="type != null">
-            AND `type` = #{type}
-        </if>
+        <where>
+            <if test="status != null">
+                `status` = 1
+            </if>
+            <if test="type != null">
+                AND `type` = #{type}
+            </if>
+        </where>
         ORDER BY a.created DESC
     </select>
 

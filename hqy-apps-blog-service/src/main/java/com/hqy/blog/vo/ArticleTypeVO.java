@@ -14,8 +14,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ArticleTypeVO {
 
+    private Integer id;
     private Integer code;
+    private String status;
     private String name;
+    private String created;
 
 
 

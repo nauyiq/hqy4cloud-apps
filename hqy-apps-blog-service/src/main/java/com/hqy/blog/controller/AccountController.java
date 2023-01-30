@@ -26,6 +26,7 @@ import javax.validation.Valid;
  */
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/blog")
 public class AccountController extends BaseController {
 
     private final UserRequestService userRequestService;

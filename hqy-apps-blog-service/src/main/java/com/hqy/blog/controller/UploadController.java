@@ -29,7 +29,7 @@ public class UploadController {
 
     private final UploadFileService uploadFileService;
 
-    @PostMapping("/upload/image")
+    @PostMapping("/admin/blog/upload/image")
     public DataResponse uploadImage(@RequestParam("file") MultipartFile file) {
         AssertUtil.notNull(file, "Upload file should not be null.");
         FileResponse response = uploadFileService.uploadImgFile(AppsConstants.Blog.UPLOAD_IMAGE_FOLDER, file);
@@ -37,9 +37,10 @@ public class UploadController {
             return CommonResultCode.dataResponse(CommonResultCode.INVALID_UPLOAD_FILE, response.message());
         }
         return CommonResultCode.dataResponse(new UploadFileVO(response.path(), response.relativePath()));
+//        return CommonResultCode.dataResponse(response.path());
     }
 
-    @PostMapping("/upload/avatar")
+    @PostMapping("/blog/upload/avatar")
     public DataResponse uploadAvatar(@RequestParam("file") MultipartFile avatar) {
         AssertUtil.notNull(avatar, "Upload avatar file should not be null.");
         FileResponse response = uploadFileService.uploadAvatar(avatar);
@@ -50,7 +51,7 @@ public class UploadController {
     }
 
 
-    @PostMapping("/music")
+    @PostMapping("/admin/blog/upload/music")
     public DataResponse uploadMusic(@RequestParam("file") MultipartFile musicFile) {
         AssertUtil.notNull(musicFile, "Upload music file file should not be null.");
         String originalFilename = musicFile.getOriginalFilename();

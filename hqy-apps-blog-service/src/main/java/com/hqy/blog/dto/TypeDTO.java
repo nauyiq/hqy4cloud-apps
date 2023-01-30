@@ -11,28 +11,18 @@ import javax.validation.constraints.NotNull;
 /**
  * @author qiyuan.hong
  * @version 1.0
- * @date 2022/9/30 15:49
+ * @date 2023/1/4 15:38
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ArticleDTO {
+public class TypeDTO {
 
-    private Long id;
+    private Integer id;
     @NotEmpty(message = StringConstants.SHOULD_NOT_BE_EMPTY)
-    private String title;
-    @NotEmpty(message = StringConstants.SHOULD_NOT_BE_EMPTY)
-    private String description;
+    private String name;
     @NotNull(message = StringConstants.SHOULD_NOT_BE_NULL)
-    private Integer type;
-    private String cover;
-    private String musicName;
-    private String musicUrl;
-    @NotEmpty(message = StringConstants.SHOULD_NOT_BE_EMPTY)
-    private String content;
-    private Long author;
     private Boolean status;
-
 
 
 }

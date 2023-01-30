@@ -15,10 +15,10 @@ import tk.mybatis.spring.annotation.MapperScan;
 @EnableDiscoveryClient
 @SpringBootApplication
 @MapperScan(basePackages = "com.hqy.blog.dao")
-public class Main {
+public class BlogServiceMain {
 
     public static void main(String[] args) {
-        SpringApplication.run(Main.class, args);
+        SpringApplication.run(BlogServiceMain.class, args);
         ProjectContextInfo.startPrintf();
     }
 

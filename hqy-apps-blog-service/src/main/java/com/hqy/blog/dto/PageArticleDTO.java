@@ -22,5 +22,6 @@ public class PageArticleDTO {
     private String cover;
     private Integer type;
     private Date created;
+    private Boolean status;
 
 }

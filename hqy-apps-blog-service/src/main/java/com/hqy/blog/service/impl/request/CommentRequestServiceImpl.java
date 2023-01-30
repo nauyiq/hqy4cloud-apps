@@ -50,6 +50,22 @@ public class CommentRequestServiceImpl implements CommentRequestService {
     private final StatisticsRedisService<Long, StatisticsDTO> statisticsRedisService;
 
     @Override
+    public DataResponse getPageComments(Long articleId, String content, Integer pageNumber, Integer pageSize) {
+        PageInfo<Comment> pageInfo = blogDbOperationService.commentTkService().queryPageComments(articleId, content, pageNumber, pageSize);
+        PageResult<AdminPageCommentsVO> pageResult;
+        List<Comment> comments = pageInfo.getList();
+        if (CollectionUtils.isEmpty(comments)) {
+            pageResult = new PageResult<>();
+        } else {
+            Map<Long, AccountBaseInfoStruct> accountBaseInfoMap = AccountRpcUtil.getAccountBaseInfoMap(comments.stream().map(Comment::getCommenter).distinct().collect(Collectors.toList()));
+            List<AdminPageCommentsVO> pageComments = comments.stream().map(comment -> convert(comment, accountBaseInfoMap)).collect(Collectors.toList());
+            pageResult = new PageResult<>(pageInfo.getPageNum(), pageInfo.getTotal(), pageInfo.getPages(), pageComments);
+        }
+
+        return CommonResultCode.dataResponse(pageResult);
+    }
+
+    @Override
     public DataResponse getArticlePageComments(Long articleId, Integer pageNumber, Integer pageSize) {
         PageResult<ParentArticleCommentVO> pageResult;
         // 先分页获取父级评论
@@ -117,21 +133,7 @@ public class CommentRequestServiceImpl implements CommentRequestService {
         return accountBaseInfos.stream().collect(Collectors.toMap(AccountBaseInfoStruct::getId, e -> new ArticleCommentVO.User(e.id.toString(), e.avatar, e.nickname)));
     }
 
-    @Override
-    public DataResponse getPageComments(Integer pageNumber, Integer pageSize) {
-        PageHelper.startPage(pageNumber, pageSize);
-        PageResult<AdminPageCommentsVO> pageResultComments;
-        List<Comment> comments = blogDbOperationService.commentTkService().queryAll();
-        if (CollectionUtils.isEmpty(comments)) {
-            pageResultComments = new PageResult<>();
-        } else {
-            PageInfo<Comment> pageInfo = new PageInfo<>(comments);
-            Map<Long, AccountBaseInfoStruct> accountBaseInfoMap = AccountRpcUtil.getAccountBaseInfoMap(comments.stream().map(Comment::getCommenter).distinct().collect(Collectors.toList()));
-            List<AdminPageCommentsVO> pageComments = comments.stream().map(comment -> convert(comment, accountBaseInfoMap)).collect(Collectors.toList());
-            pageResultComments = new PageResult<>(pageInfo.getPageNum(), pageInfo.getTotal(), pageInfo.getPages(), pageComments);
-        }
-        return CommonResultCode.dataResponse(pageResultComments);
-    }
+
 
 
     @Override
@@ -159,8 +161,12 @@ public class CommentRequestServiceImpl implements CommentRequestService {
     @Override
     public MessageResponse deleteComment(Long accessAccountId, Long commentId) {
         Comment comment = blogDbOperationService.commentTkService().queryById(commentId);
-        if (comment == null || !comment.getCommenter().equals(accessAccountId)) {
+        if (comment == null) {
             return BlogResultCode.dataResponse(BlogResultCode.COMMENT_NOT_FOUND);
+        }
+
+        if (accessAccountId != null && !comment.getCommenter().equals(accessAccountId)) {
+            return CommonResultCode.messageResponse(CommonResultCode.LIMITED_AUTHORITY);
         }
 
         // 修改库
@@ -176,8 +182,8 @@ public class CommentRequestServiceImpl implements CommentRequestService {
     }
 
     private AdminPageCommentsVO convert(Comment comment, Map<Long, AccountBaseInfoStruct> map) {
-        return new AdminPageCommentsVO(comment.getId(), comment.getArticleId(), comment.getContent(), getShowName(comment.getCommenter(), map),
-                getShowName(comment.getReplier(), map), DateUtil.date(comment.getCreated()).toString(), comment.getDeleted());
+        return new AdminPageCommentsVO(comment.getId().toString(), comment.getArticleId().toString(), comment.getContent(), getShowName(comment.getCommenter(), map),
+                getShowName(comment.getReplier(), map), comment.getLevel() ,DateUtil.date(comment.getCreated()).toString(), comment.getDeleted());
     }
 
     private String getShowName(Long id, Map<Long, AccountBaseInfoStruct> map) {

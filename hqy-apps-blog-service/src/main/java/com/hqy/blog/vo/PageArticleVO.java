@@ -4,6 +4,8 @@ import cn.hutool.core.date.DateUtil;
 import com.hqy.blog.dto.PageArticleDTO;
 import lombok.*;
 
+import java.util.List;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -21,8 +23,13 @@ public class PageArticleVO {
     private String description;
     private String cover;
     private Integer type;
-    private String created;
+    private String typeName;
+    private String backgroundMusic;
+    private String backgroundMusicName;
+    private String content;
+    private String status;
     private StatisticsVO statistics;
+    private String created;
 
 
     public PageArticleVO(PageArticleDTO article) {

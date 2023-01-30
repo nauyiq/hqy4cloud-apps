@@ -22,16 +22,10 @@ import javax.validation.Valid;
  */
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/blog")
 public class CommentController extends BaseController {
 
     private final CommentRequestService commentRequestService;
-
-    @GetMapping("/admin/comments")
-    public DataResponse adminComments(Integer pageNumber, Integer pageSize) {
-        pageNumber = pageNumber == null ? 1 : pageNumber;
-        pageSize = pageSize == null ? 10 : pageSize;
-        return commentRequestService.getPageComments(pageNumber, pageSize);
-    }
 
     @GetMapping("/comments/{articleId}")
     public DataResponse getArticleComments(@PathVariable("articleId") Long articleId, Integer pageNumber, Integer pageSize) {
