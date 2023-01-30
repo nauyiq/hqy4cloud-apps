@@ -25,11 +25,11 @@ import java.util.UUID;
 @Slf4j
 @SpringBootApplication
 @EnableDiscoveryClient
-public class Main {
+public class MessageServiceMain {
 
     public static void main(String[] args) {
 
-        SpringApplication.run(Main.class, args);
+        SpringApplication.run(MessageServiceMain.class, args);
         ProjectContextInfo.startPrintf();
 
         //初始化客户端上线离线事件
