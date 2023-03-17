@@ -26,6 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 import static com.hqy.cloud.common.result.ResultCode.*;
 
 /**
@@ -67,6 +69,20 @@ public class UserRequestServiceImpl implements UserRequestService {
         if (!update) {
             return R.failed();
         }
+        return R.ok();
+    }
+
+    @Override
+    public R<Boolean> sendEmailCode(String email) {
+        RemoteAccountService remoteService = RPCClient.getRemoteService(RemoteAccountService.class);
+        AccountStruct struct = remoteService.getAccountStructByUsernameOrEmail(email);
+        if (Objects.isNull(struct) || Objects.isNull(struct.id)) {
+            return R.failed(USER_NOT_FOUND);
+        }
+
+        String code = randomCodeServer.randomCode(struct.getUsername(), email, 6);
+        EmailRemoteService emailRemoteService = RPCClient.getRemoteService(EmailRemoteService.class);
+        emailRemoteService.sendVerifyCodeEmail(email, code);
         return R.ok();
     }
 

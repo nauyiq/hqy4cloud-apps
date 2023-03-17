@@ -40,7 +40,7 @@ public class ArticleDetailVO {
         this.backgroundMusic = article.getBackgroundMusic();
         this.backgroundMusicName = article.getBackgroundMusicName();
         this.author = authorName;
-        this.description = article.getDescription();
+        this.description = article.getIntro();
         this.cover = article.getCover();
         this.type = article.getType();
         this.created = DateUtil.date(article.getCreated()).toString();

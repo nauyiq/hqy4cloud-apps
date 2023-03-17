@@ -13,7 +13,7 @@
 
     <select id="articles" resultType="com.hqy.cloud.apps.blog.dto.PageArticleDTO">
         SELECT
-        a.id, a.title, a.description, a.cover, a.`type`, a.created, a.status
+        a.id, a.title, a.intro description, a.cover, a.`type`, a.created, a.status
         FROM t_article a
         <where>
             <if test="status != null">

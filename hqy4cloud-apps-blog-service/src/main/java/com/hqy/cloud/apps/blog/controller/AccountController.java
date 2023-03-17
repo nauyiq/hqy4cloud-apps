@@ -1,5 +1,6 @@
 package com.hqy.cloud.apps.blog.controller;
 
+import cn.hutool.core.lang.Validator;
 import com.hqy.cloud.apps.blog.dto.AccountBaseRegistryDTO;
 import com.hqy.cloud.apps.blog.dto.AccountRegistryDTO;
 import com.hqy.cloud.apps.blog.dto.BlogUserProfileDTO;
@@ -30,6 +31,14 @@ import java.util.Objects;
 public class AccountController extends BaseController {
 
     private final UserRequestService userRequestService;
+
+    @PostMapping("/email/{email}")
+    public R<Boolean> sendEmailCode(@PathVariable("email") String email) {
+        if (!Validator.isEmail(email)) {
+            return R.failed(ResultCode.INVALID_EMAIL);
+        }
+        return userRequestService.sendEmailCode(email);
+    }
 
     @PostMapping("/account/registry/email")
     public R<Boolean> sendRegistryEmail(@RequestBody @Valid AccountBaseRegistryDTO registry) {

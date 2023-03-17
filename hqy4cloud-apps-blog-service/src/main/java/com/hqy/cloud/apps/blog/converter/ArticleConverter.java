@@ -27,6 +27,7 @@ public interface ArticleConverter {
      */
     @Mapping(source = "created", target = "created", qualifiedByName = "dateConvertString")
     @Mapping(source = "status", target = "status", qualifiedByName = "statusConvertString")
+    @Mapping(source = "intro", target = "description")
     PageArticleVO convert(Article article);
 
     /**
@@ -36,6 +37,7 @@ public interface ArticleConverter {
      */
     @Mapping(source = "musicName", target = "backgroundMusicName")
     @Mapping(source = "musicUrl", target = "backgroundMusic")
+    @Mapping(source = "description", target = "intro")
     void updateByDTO(ArticleDTO articleDTO, @MappingTarget Article article);
 
 

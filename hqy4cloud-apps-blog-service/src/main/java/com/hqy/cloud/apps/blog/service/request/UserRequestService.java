@@ -29,6 +29,13 @@ public interface UserRequestService {
     R<Boolean> updateLoginUserInfo(BlogUserProfileDTO profile);
 
     /**
+     * 发送邮箱验证码
+     * @param email 邮箱
+     * @return      R.
+     */
+    R<Boolean> sendEmailCode(String email);
+
+    /**
      * 发送注册邮件
      * @param registry AccountBaseRegistryDTO.
      * @return         R.
@@ -64,5 +71,6 @@ public interface UserRequestService {
      * @return            R.
      */
     R<Boolean> updatePassword(Long accountId, String oldPassword, String newPassword);
+
 
 }

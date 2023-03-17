@@ -6,9 +6,11 @@ import com.hqy.cloud.apps.blog.vo.PageArticleVO;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
+import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.web.global.BaseController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -49,6 +51,9 @@ public class ArticleController extends BaseController {
             return R.failed(AppsResultCode.INVALID_ARTICLE_ID);
         }
         Long accessAccountId = getAccessAccountId(request);
+        if (Objects.isNull(accessAccountId)) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
         return articleRequestService.articleLiked(accessAccountId, articleId);
     }
 

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import javax.persistence.Column;
 import javax.persistence.Table;
 import java.util.Date;
 
@@ -28,7 +29,7 @@ public class Article extends BaseEntity<Long> {
     /**
      * 简介
      */
-    private String description;
+    private String intro;
 
     /**
      * 封面
@@ -43,6 +44,7 @@ public class Article extends BaseEntity<Long> {
     /**
      * 类型
      */
+    @Column(name = "'type'")
     private Integer type;
 
     /**
@@ -63,6 +65,7 @@ public class Article extends BaseEntity<Long> {
     /**
      * 状态
      */
+    @Column(name = "'status'")
     private Boolean status;
 
     /**
@@ -74,10 +77,10 @@ public class Article extends BaseEntity<Long> {
         this.type = type;
     }
 
-    public Article(Long id, String title, String description, String cover, String content, Integer type, String backgroundMusic, String backgroundMusicName, Long author, Boolean status, Date date) {
+    public Article(Long id, String title, String intro, String cover, String content, Integer type, String backgroundMusic, String backgroundMusicName, Long author, Boolean status, Date date) {
         super(id, date);
         this.title = title;
-        this.description = description;
+        this.intro = intro;
         this.cover = cover;
         this.content = content;
         this.type = type;
@@ -92,7 +95,7 @@ public class Article extends BaseEntity<Long> {
     public String toString() {
         return new ToStringBuilder(this)
                 .append("title", title)
-                .append("description", description)
+                .append("description", intro)
                 .append("cover", cover)
                 .append("content", content)
                 .append("type", type)
@@ -109,11 +112,11 @@ public class Article extends BaseEntity<Long> {
         if (o == null || getClass() != o.getClass()) return false;
         if (!super.equals(o)) return false;
         Article article = (Article) o;
-        return Objects.equal(title, article.title) && Objects.equal(description, article.description) && Objects.equal(cover, article.cover) && Objects.equal(content, article.content) && Objects.equal(type, article.type) && Objects.equal(backgroundMusic, article.backgroundMusic) && Objects.equal(backgroundMusicName, article.backgroundMusicName) && Objects.equal(author, article.author) && Objects.equal(status, article.status);
+        return Objects.equal(title, article.title) && Objects.equal(intro, article.intro) && Objects.equal(cover, article.cover) && Objects.equal(content, article.content) && Objects.equal(type, article.type) && Objects.equal(backgroundMusic, article.backgroundMusic) && Objects.equal(backgroundMusicName, article.backgroundMusicName) && Objects.equal(author, article.author) && Objects.equal(status, article.status);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(super.hashCode(), title, description, cover, content, type, backgroundMusic, backgroundMusicName, author, status);
+        return Objects.hashCode(super.hashCode(), title, intro, cover, content, type, backgroundMusic, backgroundMusicName, author, status);
     }
 }
