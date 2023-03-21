@@ -1,12 +1,13 @@
 package com.hqy.cloud.apps.blog.service.impl.request;
 
+import cn.hutool.core.lang.Validator;
+import cn.hutool.core.util.StrUtil;
 import com.hqy.account.dto.AccountInfoDTO;
 import com.hqy.account.service.RemoteAccountProfileService;
 import com.hqy.account.service.RemoteAccountService;
 import com.hqy.account.struct.AccountProfileStruct;
 import com.hqy.account.struct.AccountStruct;
 import com.hqy.account.struct.RegistryAccountStruct;
-import com.hqy.cloud.apps.blog.dto.AccountBaseRegistryDTO;
 import com.hqy.cloud.apps.blog.dto.AccountRegistryDTO;
 import com.hqy.cloud.apps.blog.dto.BlogUserProfileDTO;
 import com.hqy.cloud.apps.blog.dto.ForgetPasswordDTO;
@@ -14,11 +15,10 @@ import com.hqy.cloud.apps.blog.service.request.UserRequestService;
 import com.hqy.cloud.apps.blog.vo.AccountProfileVO;
 import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.common.bind.R;
+import com.hqy.cloud.foundation.common.account.AccountAuthRandomCodeServer;
 import com.hqy.cloud.foundation.common.account.AccountRandomCodeServer;
-import com.hqy.cloud.foundation.common.account.AccountRegistryAccountRandomCodeServer;
 import com.hqy.cloud.service.EmailRemoteService;
 import com.hqy.cloud.util.JsonUtil;
-import com.hqy.cloud.util.ValidationUtil;
 import com.hqy.rpc.nacos.client.starter.RPCClient;
 import com.hqy.rpc.thrift.struct.CommonResultStruct;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ import static com.hqy.cloud.common.result.ResultCode.*;
 @RequiredArgsConstructor
 public class UserRequestServiceImpl implements UserRequestService {
 
-    private final AccountRandomCodeServer randomCodeServer = new AccountRegistryAccountRandomCodeServer();
+    private final AccountRandomCodeServer randomCodeServer = new AccountAuthRandomCodeServer();
 
     @Override
     public R<AccountProfileVO> getLoginUserInfo(Long id) {
@@ -73,80 +73,64 @@ public class UserRequestServiceImpl implements UserRequestService {
     }
 
     @Override
-    public R<Boolean> sendEmailCode(String email) {
+    public R<Boolean> sendEmailCode(String usernameOrEmail) {
         RemoteAccountService remoteService = RPCClient.getRemoteService(RemoteAccountService.class);
-        AccountStruct struct = remoteService.getAccountStructByUsernameOrEmail(email);
+        AccountStruct struct = remoteService.getAccountStructByUsernameOrEmail(usernameOrEmail);
         if (Objects.isNull(struct) || Objects.isNull(struct.id)) {
             return R.failed(USER_NOT_FOUND);
         }
 
-        String code = randomCodeServer.randomCode(struct.getUsername(), email, 6);
+        String code = randomCodeServer.randomCode(StrUtil.EMPTY, struct.email, 6);
         EmailRemoteService emailRemoteService = RPCClient.getRemoteService(EmailRemoteService.class);
-        emailRemoteService.sendVerifyCodeEmail(email, code);
+        emailRemoteService.sendVerifyCodeEmail(usernameOrEmail, code);
         return R.ok();
     }
 
-    @Override
-    public R<Boolean> sendRegistryEmail(AccountBaseRegistryDTO registry) {
-        String email = registry.getEmail();
-        if (!ValidationUtil.validateEmail(email)) {
-            return R.failed(INVALID_EMAIL);
-        }
-        //check registry info.
-        RemoteAccountService service = RPCClient.getRemoteService(RemoteAccountService.class);
-        CommonResultStruct result = service.checkRegistryInfo(registry.getUsername(), email);
-        if (!result.result) {
-            return R.failed(result.message, result.code);
-        }
-        //get email code.
-        String code = randomCodeServer.randomCode(registry.getUsername(), email, 6);
-        //send email.
-        EmailRemoteService emailRemoteService = RPCClient.getRemoteService(EmailRemoteService.class);
-        emailRemoteService.sendRegistryEmail(email, registry.getUsername(), code);
-
-        return R.ok();
-    }
 
     @Override
     public R<Boolean> registryAccount(AccountRegistryDTO registry) {
         //校验邮箱验证码
-        if (!randomCodeServer.isExist(registry.getUsername(), registry.getEmail(), registry.getCode())) {
+        if (!randomCodeServer.isExist(StrUtil.EMPTY, registry.getEmail(), registry.getCode())) {
             return R.failed(VERIFY_CODE_ERROR);
         }
         //RPC注册账号
         RemoteAccountService accountRemoteService = RPCClient.getRemoteService(RemoteAccountService.class);
         CommonResultStruct commonResultStruct = accountRemoteService.registryAccount(new RegistryAccountStruct(registry.getUsername(), registry.getEmail(), registry.getPassword()));
         if (!commonResultStruct.isResult()) {
-            return R.failed();
+            return R.failed(commonResultStruct.message, commonResultStruct.code);
         }
         return R.ok();
     }
 
     @Override
-    public R<Boolean> sendForgetPasswordEmail(String usernameOrEmail) {
-        //校验用户名或者邮箱是否存在
-        RemoteAccountService service = RPCClient.getRemoteService(RemoteAccountService.class);
-        AccountStruct struct = service.getAccountStructByUsernameOrEmail(usernameOrEmail);
-        if (struct == null || struct.id == null) {
-            return R.failed(USER_NOT_FOUND);
-        }
-        //生成邮箱校验码
-        String code = randomCodeServer.randomCode(usernameOrEmail, usernameOrEmail, 6);
-        //send email.
+    public R<Boolean> sendRegistryEmail(String email) {
+        // 生成验证码
+        String code = randomCodeServer.randomCode(StrUtil.EMPTY, email, 6);
+        //RPC 发送验证码
         EmailRemoteService emailRemoteService = RPCClient.getRemoteService(EmailRemoteService.class);
-        emailRemoteService.sendRegistryEmail(struct.email, struct.getUsername(), code);
+        emailRemoteService.sendRegistryEmail(email, code);
+        if (log.isDebugEnabled()) {
+            log.debug("Send registry email code: {} to {}.", code, email);
+        }
         return R.ok();
     }
 
     @Override
     public R<Boolean> resetPassword(ForgetPasswordDTO passwordDTO) {
+        RemoteAccountService remoteService = RPCClient.getRemoteService(RemoteAccountService.class);
         String usernameOrEmail = passwordDTO.getUsernameOrEmail();
+        if (!Validator.isEmail(usernameOrEmail)) {
+            AccountStruct struct = remoteService.getAccountStructByUsernameOrEmail(usernameOrEmail);
+            if (Objects.isNull(struct)) {
+                return R.failed(USER_NOT_FOUND);
+            }
+            usernameOrEmail = struct.email;
+        }
         //校验邮箱验证码是否准确
-        if (!randomCodeServer.isExist(usernameOrEmail, usernameOrEmail, passwordDTO.getCode())) {
+        if (!randomCodeServer.isExist(StrUtil.EMPTY, usernameOrEmail, passwordDTO.getCode())) {
             return R.failed(VERIFY_CODE_ERROR);
         }
         //修改用户密码
-        RemoteAccountService remoteService = RPCClient.getRemoteService(RemoteAccountService.class);
         CommonResultStruct commonResultStruct = remoteService.updateAccountPassword(usernameOrEmail, passwordDTO.getPassword());
         if (!commonResultStruct.isResult()) {
             return R.failed(commonResultStruct.message, commonResultStruct.code);

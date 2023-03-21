@@ -1,6 +1,5 @@
 package com.hqy.cloud.apps.blog.service.request;
 
-import com.hqy.cloud.apps.blog.dto.AccountBaseRegistryDTO;
 import com.hqy.cloud.apps.blog.dto.AccountRegistryDTO;
 import com.hqy.cloud.apps.blog.dto.BlogUserProfileDTO;
 import com.hqy.cloud.apps.blog.dto.ForgetPasswordDTO;
@@ -36,11 +35,11 @@ public interface UserRequestService {
     R<Boolean> sendEmailCode(String email);
 
     /**
-     * 发送注册邮件
-     * @param registry AccountBaseRegistryDTO.
-     * @return         R.
+     * 发送注册邮箱验证码
+     * @param email 邮箱
+     * @return      R.
      */
-    R<Boolean> sendRegistryEmail(AccountBaseRegistryDTO registry);
+    R<Boolean> sendRegistryEmail(String email);
 
     /**
      * 注册账号.
@@ -49,12 +48,6 @@ public interface UserRequestService {
      */
     R<Boolean> registryAccount(AccountRegistryDTO registry);
 
-    /**
-     * 发送忘记密码邮件
-     * @param usernameOrEmail 用户名或者邮箱
-     * @return                R
-     */
-    R<Boolean> sendForgetPasswordEmail(String usernameOrEmail);
 
     /**
      * 重设密码
@@ -71,6 +64,7 @@ public interface UserRequestService {
      * @return            R.
      */
     R<Boolean> updatePassword(Long accountId, String oldPassword, String newPassword);
+
 
 
 }

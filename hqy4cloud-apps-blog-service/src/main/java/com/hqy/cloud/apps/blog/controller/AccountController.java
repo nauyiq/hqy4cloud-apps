@@ -1,7 +1,6 @@
 package com.hqy.cloud.apps.blog.controller;
 
 import cn.hutool.core.lang.Validator;
-import com.hqy.cloud.apps.blog.dto.AccountBaseRegistryDTO;
 import com.hqy.cloud.apps.blog.dto.AccountRegistryDTO;
 import com.hqy.cloud.apps.blog.dto.BlogUserProfileDTO;
 import com.hqy.cloud.apps.blog.dto.ForgetPasswordDTO;
@@ -34,27 +33,19 @@ public class AccountController extends BaseController {
 
     @PostMapping("/email/{email}")
     public R<Boolean> sendEmailCode(@PathVariable("email") String email) {
-        if (!Validator.isEmail(email)) {
-            return R.failed(ResultCode.INVALID_EMAIL);
-        }
         return userRequestService.sendEmailCode(email);
     }
 
-    @PostMapping("/account/registry/email")
-    public R<Boolean> sendRegistryEmail(@RequestBody @Valid AccountBaseRegistryDTO registry) {
-        AssertUtil.notNull(registry, "Registry data should not be null.");
-        return userRequestService.sendRegistryEmail(registry);
-    }
-
-    @PostMapping("/account/password/email")
-    public R<Boolean> sendForgetPasswordEmail(@RequestParam("usernameOrEmail") String usernameOrEmail) {
-        if (StringUtils.isBlank(usernameOrEmail)) {
-            return R.failed("username or email should not be empty.", ResultCode.ERROR_PARAM.code);
+    @PostMapping("/email/registry/{email}")
+    public R<Boolean> sendRegistryEmail(@PathVariable("email") String email) {
+        if (!Validator.isEmail(email)) {
+            return R.failed(ResultCode.INVALID_EMAIL);
         }
-        return userRequestService.sendForgetPasswordEmail(usernameOrEmail);
+        return userRequestService.sendRegistryEmail(email);
     }
 
-    @PostMapping("/account/password/reset")
+
+    @PostMapping("/account/password/forget")
     public R<Boolean> resetPassword(@RequestBody @Valid ForgetPasswordDTO passwordDTO) {
         AssertUtil.notNull(passwordDTO, "Reset password data should not be null.");
         return userRequestService.resetPassword(passwordDTO);
