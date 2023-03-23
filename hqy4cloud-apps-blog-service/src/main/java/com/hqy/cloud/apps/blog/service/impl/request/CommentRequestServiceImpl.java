@@ -22,7 +22,7 @@ import com.hqy.cloud.apps.blog.vo.ParentArticleCommentVO;
 import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
-import com.hqy.cloud.util.identity.ProjectSnowflakeIdWorker;
+import com.hqy.cloud.foundation.id.DistributedIdGen;
 import com.hqy.web.service.account.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -142,7 +142,7 @@ public class CommentRequestServiceImpl implements CommentRequestService {
             return R.failed(ARTICLE_NOT_FOUND);
         }
         // 入库
-        long id = ProjectSnowflakeIdWorker.getInstance().nextId();
+        long id = DistributedIdGen.getSnowflakeId();
         Comment comment = new Comment(id, articleId, accessAccountId, Convert.toLong(publishComment.getReplier()),
                 publishComment.getContent(), publishComment.getLevel(), Convert.toLong(publishComment.getParentId()));
         if (!blogDbOperationService.commentTkService().insert(comment)) {

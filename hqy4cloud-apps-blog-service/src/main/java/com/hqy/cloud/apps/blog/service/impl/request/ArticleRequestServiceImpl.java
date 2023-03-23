@@ -24,8 +24,8 @@ import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
+import com.hqy.cloud.foundation.id.DistributedIdGen;
 import com.hqy.cloud.util.AssertUtil;
-import com.hqy.cloud.util.identity.ProjectSnowflakeIdWorker;
 import com.hqy.cloud.util.thread.ParentExecutorService;
 import com.hqy.web.service.account.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +60,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
             return R.failed(INVALID_ARTICLE_TYPE);
         }
         //insert article to db.
-        long id = ProjectSnowflakeIdWorker.getInstance().nextId();
+        long id = DistributedIdGen.getSnowflakeId();
         Date date = new Date();
         Article article = new Article(id, articleDTO.getTitle(), articleDTO.getDescription(), articleDTO.getCover(), articleDTO.getContent(), articleDTO.getType(),
                 articleDTO.getMusicUrl(), articleDTO.getMusicName(), articleDTO.getAuthor(), articleDTO.getStatus(), date);
