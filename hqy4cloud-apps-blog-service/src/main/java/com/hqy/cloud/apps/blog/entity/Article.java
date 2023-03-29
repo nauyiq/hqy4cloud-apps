@@ -17,8 +17,8 @@ import java.util.Date;
  * @date 2022/9/30 11:16
  */
 @Data
-@Table(name = "t_article")
 @NoArgsConstructor
+@Table(name = "t_article")
 public class Article extends BaseEntity<Long> {
 
     /**

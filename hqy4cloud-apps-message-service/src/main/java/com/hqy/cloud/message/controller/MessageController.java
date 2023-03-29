@@ -11,12 +11,12 @@ import com.hqy.cloud.common.swticher.CommonSwitcher;
 import com.hqy.cloud.foundation.common.authentication.AuthenticationRequestContext;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatus;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatusManager;
+import com.hqy.cloud.rpc.core.Environment;
 import com.hqy.cloud.util.IpUtil;
 import com.hqy.cloud.util.JwtUtil;
 import com.hqy.cloud.util.config.ConfigurationContext;
 import com.hqy.cloud.util.spring.ProjectContextInfo;
 import com.hqy.foundation.common.bind.SocketIoConnection;
-import com.hqy.rpc.common.config.EnvironmentConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -51,7 +51,7 @@ public class MessageController {
             SocketProjectContext wTokenPayload = new SocketProjectContext(new SocketProjectContext.App(MicroServiceConstants.MESSAGE_NETTY_SERVICE), bizId);
             //access host
             String host = ConfigurationContext.getProperty(ConfigurationContext.PropertiesEnum.SERVER_PROPERTIES, HOST);
-            if (StringUtils.isBlank(host) && EnvironmentConfig.getInstance().isDevEnvironment()) {
+            if (StringUtils.isBlank(host) && Environment.getInstance().isDevEnvironment()) {
                 String hostAddress = IpUtil.getHostAddress();
                 String port = CommonSwitcher.ENABLE_CUSTOMER_GATEWAY_LOAD_BALANCE.isOn() ? "9527" : configuration.getPort() + "";
                 host = "http://" + hostAddress  + StringConstants.Symbol.COLON + port;
@@ -62,7 +62,7 @@ public class MessageController {
             String wtoken = JwtUtil.sign(wTokenPayload);
 
             //判断是否集群启动
-            SocketClusterStatus query = SocketClusterStatusManager.query(EnvironmentConfig.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+            SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
             if (query.isEnableMultiWsNode()) {
                 int hash = query.getSocketIoPathHashMod(bizId);
                 wtoken = wtoken + "&hash=" + hash;

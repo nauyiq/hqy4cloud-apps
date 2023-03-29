@@ -2,22 +2,16 @@ package com.hqy.cloud.message;
 
 import com.corundumstudio.socketio.SocketIOServer;
 import com.hqy.cloud.message.service.SocketIoMessagePushService;
+import com.hqy.cloud.rpc.service.RPCService;
+import com.hqy.cloud.rpc.thrift.service.ThriftServerLauncher;
 import com.hqy.cloud.util.spring.ProjectContextInfo;
 import com.hqy.cloud.util.spring.SpringContextHolder;
-import com.hqy.rpc.api.service.RPCService;
-import com.hqy.rpc.thrift.service.ThriftServerLauncher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.ApplicationArguments;
-import org.springframework.boot.ApplicationRunner;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;

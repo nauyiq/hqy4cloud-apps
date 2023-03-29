@@ -17,10 +17,10 @@ import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.foundation.common.account.AccountAuthRandomCodeServer;
 import com.hqy.cloud.foundation.common.account.AccountRandomCodeServer;
+import com.hqy.cloud.rpc.nacos.client.RPCClient;
+import com.hqy.cloud.rpc.thrift.struct.CommonResultStruct;
 import com.hqy.cloud.service.EmailRemoteService;
 import com.hqy.cloud.util.JsonUtil;
-import com.hqy.rpc.nacos.client.starter.RPCClient;
-import com.hqy.rpc.thrift.struct.CommonResultStruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -28,7 +28,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.Objects;
 
-import static com.hqy.cloud.common.result.ResultCode.*;
+import static com.hqy.cloud.common.result.ResultCode.USER_NOT_FOUND;
+import static com.hqy.cloud.common.result.ResultCode.VERIFY_CODE_ERROR;
 
 /**
  * @author qiyuan.hong

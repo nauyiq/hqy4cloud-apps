@@ -3,7 +3,7 @@ package com.hqy.cloud.message.service;
 
 import com.facebook.swift.service.ThriftService;
 import com.hqy.cloud.common.base.project.MicroServiceConstants;
-import com.hqy.rpc.thrift.service.ThriftSocketIoPushService;
+import com.hqy.cloud.rpc.thrift.service.ThriftSocketIoPushService;
 
 /**
  * 消息服务： 对外提供的rpc 接口发送socket.io事件
