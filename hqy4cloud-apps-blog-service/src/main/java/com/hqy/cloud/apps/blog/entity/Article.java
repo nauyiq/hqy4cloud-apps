@@ -44,7 +44,7 @@ public class Article extends BaseEntity<Long> {
     /**
      * 类型
      */
-    @Column(name = "'type'")
+//    @Column(name = "'type'")
     private Integer type;
 
     /**
@@ -65,7 +65,7 @@ public class Article extends BaseEntity<Long> {
     /**
      * 状态
      */
-    @Column(name = "'status'")
+//    @Column(name = "'status'")
     private Boolean status;
 
     /**

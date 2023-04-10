@@ -16,6 +16,13 @@ import java.util.List;
 public interface ArticleTkService extends BaseTkService<Article, Long> {
 
     /**
+     * 根据id查找文章 不返回内容content字段数据
+     * @param id 文章id
+     * @return   文章
+     */
+    Article queryNotContentById(Long id);
+
+    /**
      * 查询文章列表
      * @param type   文章类型
      * @param status 文章状态

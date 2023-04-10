@@ -37,6 +37,14 @@ public class ArticleTkServiceImpl extends BaseTkServiceImpl<Article, Long> imple
     }
 
     @Override
+    public Article queryNotContentById(Long id) {
+        Example example = new Example(Article.class);
+        example.excludeProperties("content");
+        example.createCriteria().andEqualTo("id", id);
+        return getTkMapper().selectOneByExample(example);
+    }
+
+    @Override
     public List<PageArticleDTO> articles(Integer type, Integer status) {
         return articleMapper.articles(type, status);
     }

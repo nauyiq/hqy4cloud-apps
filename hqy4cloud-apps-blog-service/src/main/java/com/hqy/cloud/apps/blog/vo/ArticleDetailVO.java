@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateUtil;
 import com.hqy.cloud.apps.blog.dto.AccountAccessArticleStatusDTO;
 import com.hqy.cloud.apps.blog.dto.StatisticsDTO;
 import com.hqy.cloud.apps.blog.entity.Article;
+import com.hqy.cloud.apps.blog.es.document.ArticleDoc;
 import lombok.*;
 
 /**
@@ -33,8 +34,8 @@ public class ArticleDetailVO {
     private AccountAccessArticleStatusDTO accessStatus;
 
 
-    public ArticleDetailVO(String authorName, Article article, StatisticsDTO statistics, AccountAccessArticleStatusDTO accessStatus) {
-        this.id = article.getId().toString();
+    public ArticleDetailVO(String authorName, ArticleDoc article, StatisticsDTO statistics, AccountAccessArticleStatusDTO accessStatus) {
+        this.id = article.getId();
         this.title = article.getTitle();
         this.content = article.getContent();
         this.backgroundMusic = article.getBackgroundMusic();

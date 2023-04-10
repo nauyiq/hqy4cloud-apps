@@ -12,6 +12,9 @@ import com.hqy.cloud.apps.blog.dto.StatisticsDTO;
 import com.hqy.cloud.apps.blog.entity.Article;
 import com.hqy.cloud.apps.blog.entity.Liked;
 import com.hqy.cloud.apps.blog.entity.Type;
+import com.hqy.cloud.apps.blog.es.EsConstants;
+import com.hqy.cloud.apps.blog.es.document.ArticleDoc;
+import com.hqy.cloud.apps.blog.es.service.ArticleEsService;
 import com.hqy.cloud.apps.blog.service.BlogDbOperationService;
 import com.hqy.cloud.apps.blog.service.request.ArticleRequestService;
 import com.hqy.cloud.apps.blog.statistics.AccountAccessArticleServer;
@@ -32,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -52,6 +56,8 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
     private final StatisticsRedisService<Long, StatisticsDTO> statisticsRedisService;
     private final AccountAccessArticleServer accountAccessArticleServer;
     private final BlogDbOperationService blogDbOperationService;
+    private final ArticleEsService articleEsService;
+    private final TransactionTemplate transactionTemplate;
 
     @Override
     public R<Boolean> publishArticle(ArticleDTO articleDTO) {
@@ -64,10 +70,14 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         Date date = new Date();
         Article article = new Article(id, articleDTO.getTitle(), articleDTO.getDescription(), articleDTO.getCover(), articleDTO.getContent(), articleDTO.getType(),
                 articleDTO.getMusicUrl(), articleDTO.getMusicName(), articleDTO.getAuthor(), articleDTO.getStatus(), date);
-        if (!blogDbOperationService.articleTkService().insert(article)) {
-            return R.failed();
+
+        boolean result = blogDbOperationService.articleTkService().insert(article);
+        if (result) {
+            final ArticleDoc articleDoc = ArticleConverter.CONVERTER.convertDoc(article);
+            ParentExecutorService.getInstance().execute(() -> articleEsService.getMapper().insert(articleDoc));
         }
-        return R.ok();
+
+        return result ? R.ok() : R.failed();
     }
 
     @Override
@@ -75,21 +85,49 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         if (!checkTypeExist(articleDTO.getType())) {
             return R.failed(INVALID_ARTICLE_TYPE);
         }
-        Article article = blogDbOperationService.articleTkService().queryById(articleDTO.getId());
+        Article article = blogDbOperationService.articleTkService().queryNotContentById(articleDTO.getId());
         if (Objects.isNull(article)) {
             return R.failed(INVALID_ARTICLE_ID);
         }
         ArticleConverter.CONVERTER.updateByDTO(articleDTO, article);
-        return blogDbOperationService.articleTkService().update(article) ? R.ok() : R.failed();
+
+        Boolean result = transactionTemplate.execute(status -> {
+            try {
+                AssertUtil.isTrue(blogDbOperationService.articleTkService().update(article), "Failed execute to update article from db.");
+                ArticleDoc articleDoc = ArticleConverter.CONVERTER.convertDoc(article);
+                if (articleEsService.getMapper().selectById(articleDoc.getId()) != null) {
+                    AssertUtil.isTrue(articleEsService.getMapper().updateById(articleDoc) > 0, "Failed execute to update article from es.");
+                } else {
+                    AssertUtil.isTrue(articleEsService.getMapper().insert(articleDoc) > 0, "Failed execute to insert article from es.");
+                }
+                return true;
+            } catch (Throwable cause) {
+                status.setRollbackOnly();
+                return false;
+            }
+        });
+        return Boolean.TRUE.equals(result) ? R.ok() : R.failed();
     }
 
     @Override
     public R<Boolean> deleteArticle(Long id) {
-        Article article = blogDbOperationService.articleTkService().queryById(id);
+        Article article = blogDbOperationService.articleTkService().queryNotContentById(id);
         if (Objects.isNull(article)) {
             return R.failed(INVALID_ARTICLE_ID);
         }
-        return blogDbOperationService.deleteArticle(article) ? R.ok() : R.failed();
+
+        Boolean result = transactionTemplate.execute(status -> {
+            try {
+                AssertUtil.isTrue(blogDbOperationService.deleteArticle(article), "Failed execute to delete article, id = " + id);
+                AssertUtil.isTrue(articleEsService.getMapper().deleteById(id.toString()) > 0, "Failed execute to delete article by es, id =" + id);
+                return true;
+            } catch (Throwable cause) {
+                status.setRollbackOnly();
+                return false;
+            }
+        });
+
+        return Boolean.TRUE.equals(result) ? R.ok() : R.failed();
     }
 
     @Override
@@ -100,9 +138,9 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
             return R.ok(new PageResult<>());
         }
         Map<Integer, Type> typesMap = getTypesMap();
-        List<PageArticleVO> articleVOS = articles.stream().map(ArticleConverter.CONVERTER::convert)
+        List<PageArticleVO> articleVoList = articles.stream().map(ArticleConverter.CONVERTER::convert)
                 .peek(vo -> settingTypeName(vo, typesMap)).collect(Collectors.toList());
-        PageResult<PageArticleVO> pageResult = new PageResult<>(pageInfo.getPageNum(), pageInfo.getTotal(), pageInfo.getPages(), articleVOS);
+        PageResult<PageArticleVO> pageResult = new PageResult<>(pageInfo.getPageNum(), pageInfo.getTotal(), pageInfo.getPages(), articleVoList);
         return R.ok(pageResult);
     }
 
@@ -149,12 +187,19 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
 
     @Override
     public  R<ArticleDetailVO> articleDetail(Long accessAccountId, Long id) {
-        Article article = blogDbOperationService.articleTkService().queryById(id);
-        if (Objects.isNull(article)) {
-            return R.failed(AppsResultCode.INVALID_ARTICLE_ID);
+        ArticleDoc articleDoc = articleEsService.getMapper().selectById(id);
+        if (Objects.isNull(articleDoc)) {
+            Article article = blogDbOperationService.articleTkService().queryById(id);
+            if (Objects.isNull(article)) {
+                return R.failed(AppsResultCode.INVALID_ARTICLE_ID);
+            }
+            articleDoc = ArticleConverter.CONVERTER.convertDoc(article);
+            ArticleDoc finalArticleDoc = articleDoc;
+            ParentExecutorService.getInstance().execute(() -> articleEsService.getMapper().insert(finalArticleDoc));
         }
+
         //获取Article Author NAME.
-        Long author = article.getAuthor();
+        Long author = articleDoc.getAuthor();
         AccountBaseInfoStruct accountBaseInfo = AccountRpcUtil.getAccountBaseInfo(author);
         String authorName = accountBaseInfo == null ? StringConstants.EMPTY : accountBaseInfo.nickname;
 
@@ -163,7 +208,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         //获取当前用户的状态对文章当前文章的统计状态 -> 是否点赞等 | 是否已读.
         AccountAccessArticleStatusDTO status = getAccessArticleStatus(accessAccountId, id);
         //Build Article VO
-        ArticleDetailVO articleDetail = new ArticleDetailVO(authorName, article, statistics, status);
+        ArticleDetailVO articleDetail = new ArticleDetailVO(authorName, articleDoc, statistics, status);
         return R.ok(articleDetail);
     }
 

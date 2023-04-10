@@ -7,7 +7,7 @@ package com.hqy.cloud.apps.blog.es;
  */
 public interface EsConstants {
 
-
+    String ARTICLE_INDEX_NAME = "article";
 
 
 

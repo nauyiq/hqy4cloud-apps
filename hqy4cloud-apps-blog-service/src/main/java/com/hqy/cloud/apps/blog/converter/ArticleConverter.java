@@ -2,6 +2,7 @@ package com.hqy.cloud.apps.blog.converter;
 
 import com.hqy.cloud.apps.blog.dto.ArticleDTO;
 import com.hqy.cloud.apps.blog.entity.Article;
+import com.hqy.cloud.apps.blog.es.document.ArticleDoc;
 import com.hqy.cloud.apps.blog.vo.PageArticleVO;
 import com.hqy.cloud.common.base.converter.CommonConverter;
 import org.mapstruct.Mapper;
@@ -39,6 +40,13 @@ public interface ArticleConverter {
     @Mapping(source = "musicUrl", target = "backgroundMusic")
     @Mapping(source = "description", target = "intro")
     void updateByDTO(ArticleDTO articleDTO, @MappingTarget Article article);
+
+    /**
+     * Article convert to ArticleDoc
+     * @param article {@link Article}
+     * @return        {@link ArticleDoc}
+     */
+    ArticleDoc convertDoc(Article article);
 
 
 }

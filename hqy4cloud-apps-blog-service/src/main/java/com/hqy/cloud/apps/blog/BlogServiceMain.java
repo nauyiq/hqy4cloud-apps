@@ -15,7 +15,7 @@ import tk.mybatis.spring.annotation.MapperScan;
  */
 @EnableDiscoveryClient
 @SpringBootApplication
-@MapperScan(basePackages = {"com.hqy.cloud.**.mapper"})
+@MapperScan(basePackages = {"com.hqy.cloud.apps.blog.mapper"})
 @EsMapperScan("com.hqy.cloud.apps.blog.es.mapper")
 public class BlogServiceMain {
 
