@@ -1,0 +1,22 @@
+server:
+  port: 8787
+
+spring:
+  application:
+    name: @artifactId@
+  cloud:
+    nacos:
+      username: @nacos.username@
+      password: @nacos.password@
+      discovery:
+        server-addr: @nacos.host@:@nacos.port@
+        group: @nacos.group@
+        namespace: @nacos.namespace@
+      config:
+        server-addr: @nacos.host@:@nacos.port@
+        group: @nacos.group@
+        namespace: @nacos.namespace@
+  config:
+    import:
+      - nacos:application-@profiles.active@.yaml
+      - nacos:@artifactId@-@profiles.active@.yaml
