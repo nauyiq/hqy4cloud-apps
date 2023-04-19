@@ -1,6 +1,5 @@
 package com.hqy.cloud.apps.blog;
 
-import cn.easyes.starter.register.EsMapperScan;
 import com.hqy.cloud.util.spring.ProjectContextInfo;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -16,7 +15,6 @@ import tk.mybatis.spring.annotation.MapperScan;
 @EnableDiscoveryClient
 @SpringBootApplication
 @MapperScan(basePackages = {"com.hqy.cloud.apps.blog.mapper"})
-@EsMapperScan("com.hqy.cloud.apps.blog.es.mapper")
 public class BlogServiceMain {
 
     public static void main(String[] args) {

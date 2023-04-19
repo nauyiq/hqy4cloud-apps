@@ -58,8 +58,9 @@ public class ArticleController extends BaseController {
     }
 
     @PostMapping("/article/read/{articleId}")
-    public R<Boolean> articleRead(@PathVariable Long articleId) {
-        return articleRequestService.articleRead(articleId);
+    public R<Boolean> articleRead(@PathVariable Long articleId, HttpServletRequest request) {
+        Long accessAccountId = getAccessAccountId(request);
+        return articleRequestService.articleRead(articleId, accessAccountId);
     }
 
 

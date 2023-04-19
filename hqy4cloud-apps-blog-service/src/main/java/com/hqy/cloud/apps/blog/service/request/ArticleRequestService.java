@@ -74,10 +74,11 @@ public interface ArticleRequestService {
 
     /**
      * 文章阅读数 + 1
-     * @param articleId 文章id
+     * @param articleId       文章id
+     * @param accessAccountId 账号id
      * @return          R.
      */
-    R<Boolean> articleRead(Long articleId);
+    R<Boolean> articleRead(Long articleId, Long accessAccountId);
 
 
 

@@ -35,7 +35,7 @@ public class ArticleDetailVO {
 
 
     public ArticleDetailVO(String authorName, ArticleDoc article, StatisticsDTO statistics, AccountAccessArticleStatusDTO accessStatus) {
-        this.id = article.getId();
+        this.id = article.getId().toString();
         this.title = article.getTitle();
         this.content = article.getContent();
         this.backgroundMusic = article.getBackgroundMusic();

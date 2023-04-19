@@ -32,6 +32,16 @@ public interface ArticleConverter {
     PageArticleVO convert(Article article);
 
     /**
+     * ArticleDoc convert to PageArticleVO.
+     * @param article {@link ArticleDoc}
+     * @return        {@link PageArticleVO}
+     */
+    @Mapping(source = "created", target = "created", qualifiedByName = "dateConvertString")
+    @Mapping(source = "status", target = "status", qualifiedByName = "statusConvertString")
+    @Mapping(source = "intro", target = "description")
+    PageArticleVO convert(ArticleDoc article);
+
+    /**
      * update article from articleDTO， not set null property.
      * @param articleDTO {@link ArticleDTO}
      * @param article    {@link Article}

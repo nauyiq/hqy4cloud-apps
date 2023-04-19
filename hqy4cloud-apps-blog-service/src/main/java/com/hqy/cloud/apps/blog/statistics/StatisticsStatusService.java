@@ -3,19 +3,20 @@ package com.hqy.cloud.apps.blog.statistics;
 import com.hqy.cloud.apps.blog.dto.AccountAccessArticleStatusDTO;
 
 /**
- * AccountAccessArticleService。
+ * StatisticsStatusService。
  * @author qiyuan.hong
  * @version 1.0
  * @date 2022/10/13 9:14
  */
-public interface AccountAccessArticleServer {
+public interface StatisticsStatusService {
+
 
     /**
      * 是否点赞或访问（读）
      * @param accountId 账号id
      * @param type      类型
      * @param articleId 文章id
-     * @return
+     * @return          result
      */
     boolean accessStatus(Long accountId, StatisticsType type, Long articleId);
 
@@ -23,7 +24,7 @@ public interface AccountAccessArticleServer {
      * 用户对文章的状态
      * @param accountId 账号id
      * @param articleId 文章id
-     * @return
+     * @return          result
      */
     AccountAccessArticleStatusDTO accessStatus(Long accountId, Long articleId);
 
