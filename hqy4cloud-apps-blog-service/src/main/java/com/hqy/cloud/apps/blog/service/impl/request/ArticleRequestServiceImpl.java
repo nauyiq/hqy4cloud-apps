@@ -25,7 +25,6 @@ import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
-import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.foundation.id.DistributedIdGen;
 import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.util.thread.ParentExecutorService;

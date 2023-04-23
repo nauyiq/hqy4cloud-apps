@@ -80,11 +80,11 @@ public enum AppsResultCode implements Result {
 
     @Override
     public String getMessage() {
-        return null;
+        return this.message;
     }
 
     @Override
     public int getCode() {
-        return 0;
+        return this.code;
     }
 }

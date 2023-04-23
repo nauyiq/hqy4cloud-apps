@@ -6,13 +6,9 @@ import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.elasticsearch.mapper.ElasticMapper;
 import com.hqy.cloud.elasticsearch.service.impl.ElasticServiceImpl;
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.sort.FieldSortBuilder;
-import org.elasticsearch.search.sort.SortBuilders;
-import org.elasticsearch.search.sort.SortOrder;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
-import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -29,20 +25,14 @@ public class ArticleElasticServiceImpl extends ElasticServiceImpl<Long, ArticleD
 
     @Override
     public PageResult<ArticleDoc> queryPage(String title, String describe, Integer current, Integer size) {
-        //构建查询条件
-        BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+        NativeQueryBuilder queryBuilder = new NativeQueryBuilder();
         if (StringUtils.isNotBlank(title)) {
-            boolQueryBuilder.must(QueryBuilders.matchPhraseQuery("title", title));
+            queryBuilder.withQuery(q -> q.matchPhrase(m -> m.field("title").query(title)));
         }
         if (StringUtils.isNotBlank(describe)) {
-            boolQueryBuilder.must(QueryBuilders.matchPhraseQuery("intro", describe));
+            queryBuilder.withQuery(q -> q.matchPhrase(m -> m.field("intro").query(describe)));
         }
-
-        //根据id倒叙
-        FieldSortBuilder sortBuilder = SortBuilders.fieldSort("id").order(SortOrder.DESC);
-        NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder()
-                .withQuery(boolQueryBuilder)
-                .withSorts(sortBuilder);
+        queryBuilder.withSort(Sort.by(Sort.Direction.DESC,"id"));
         return this.pageQueryByBuilder(current, size, queryBuilder);
     }
 
