@@ -28,7 +28,7 @@ import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.foundation.id.DistributedIdGen;
 import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.util.thread.ParentExecutorService;
-import com.hqy.web.service.account.AccountRpcUtil;
+import com.hqy.cloud.web.common.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;

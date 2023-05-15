@@ -1,6 +1,7 @@
 package com.hqy.cloud.apps.blog.controller;
 
 import cn.hutool.core.lang.Validator;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.hqy.cloud.apps.blog.dto.AccountRegistryDTO;
 import com.hqy.cloud.apps.blog.dto.BlogUserProfileDTO;
 import com.hqy.cloud.apps.blog.dto.ForgetPasswordDTO;
@@ -9,7 +10,7 @@ import com.hqy.cloud.apps.blog.vo.AccountProfileVO;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.util.AssertUtil;
-import com.hqy.web.global.BaseController;
+import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -32,11 +33,13 @@ public class AccountController extends BaseController {
     private final UserRequestService userRequestService;
 
     @PostMapping("/email/{email}")
+    @SentinelResource(value = "sendEmailCode")
     public R<Boolean> sendEmailCode(@PathVariable("email") String email) {
         return userRequestService.sendEmailCode(email);
     }
 
     @PostMapping("/email/registry/{email}")
+    @SentinelResource(value = "sendRegistryEmail")
     public R<Boolean> sendRegistryEmail(@PathVariable("email") String email) {
         if (!Validator.isEmail(email)) {
             return R.failed(ResultCode.INVALID_EMAIL);

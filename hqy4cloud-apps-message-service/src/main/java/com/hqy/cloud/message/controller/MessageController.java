@@ -13,8 +13,8 @@ import com.hqy.cloud.foundation.common.route.SocketClusterStatus;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatusManager;
 import com.hqy.cloud.rpc.core.Environment;
 import com.hqy.cloud.util.IpUtil;
-import com.hqy.cloud.util.JwtUtil;
 import com.hqy.cloud.util.config.ConfigurationContext;
+import com.hqy.cloud.util.crypto.symmetric.JWT;
 import com.hqy.cloud.util.spring.ProjectContextInfo;
 import com.hqy.foundation.common.bind.SocketIoConnection;
 import lombok.extern.slf4j.Slf4j;
@@ -59,7 +59,7 @@ public class MessageController {
             //构建SocketIoConnection
             String context = configuration.getContext();
             SocketIoConnection socketIoConnection = new SocketIoConnection(host, context);
-            String wtoken = JwtUtil.sign(wTokenPayload);
+            String wtoken = JWT.getInstance().encrypt(wTokenPayload);
 
             //判断是否集群启动
             SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);

@@ -15,6 +15,7 @@ import com.hqy.cloud.apps.blog.service.request.UserRequestService;
 import com.hqy.cloud.apps.blog.vo.AccountProfileVO;
 import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.common.bind.R;
+import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.foundation.common.account.AccountAuthRandomCodeServer;
 import com.hqy.cloud.foundation.common.account.AccountRandomCodeServer;
 import com.hqy.cloud.rpc.nacos.client.RPCClient;
@@ -105,6 +106,12 @@ public class UserRequestServiceImpl implements UserRequestService {
 
     @Override
     public R<Boolean> sendRegistryEmail(String email) {
+        //判断邮箱是否被注册
+        RemoteAccountService service = RPCClient.getRemoteService(RemoteAccountService.class);
+        Long id = service.getAccountIdByUsernameOrEmail(email);
+        if (Objects.nonNull(id)) {
+            return R.failed(ResultCode.EMAIL_EXIST);
+        }
         // 生成验证码
         String code = randomCodeServer.randomCode(StrUtil.EMPTY, email, 6);
         //RPC 发送验证码

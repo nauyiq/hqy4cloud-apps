@@ -1,8 +1,8 @@
 package com.hqy.cloud.apps.blog.config;
 
 import com.hqy.cloud.common.base.lang.StringConstants;
-import com.hqy.web.service.UploadFileService;
-import com.hqy.web.service.support.DefaultUploadFileService;
+import com.hqy.cloud.web.service.UploadFileService;
+import com.hqy.cloud.web.service.support.DefaultUploadFileService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
