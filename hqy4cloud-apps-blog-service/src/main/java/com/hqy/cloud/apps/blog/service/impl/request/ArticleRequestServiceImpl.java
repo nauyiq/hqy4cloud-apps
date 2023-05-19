@@ -16,9 +16,9 @@ import com.hqy.cloud.apps.blog.es.document.ArticleDoc;
 import com.hqy.cloud.apps.blog.es.service.ArticleElasticService;
 import com.hqy.cloud.apps.blog.service.BlogDbOperationService;
 import com.hqy.cloud.apps.blog.service.request.ArticleRequestService;
-import com.hqy.cloud.apps.blog.statistics.StatisticsRedisService;
-import com.hqy.cloud.apps.blog.statistics.StatisticsStatusService;
-import com.hqy.cloud.apps.blog.statistics.StatisticsType;
+import com.hqy.cloud.apps.blog.service.statistics.ArticleStatisticsServer;
+import com.hqy.cloud.apps.blog.service.statistics.StatisticsType;
+import com.hqy.cloud.apps.blog.service.statistics.StatisticsTypeHashCache;
 import com.hqy.cloud.apps.blog.vo.ArticleDetailVO;
 import com.hqy.cloud.apps.blog.vo.PageArticleVO;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
@@ -33,7 +33,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -50,12 +49,10 @@ import static com.hqy.cloud.apps.commom.result.AppsResultCode.INVALID_ARTICLE_TY
 @Service
 @RequiredArgsConstructor
 public class ArticleRequestServiceImpl implements ArticleRequestService {
-
-    private final StatisticsRedisService<Long, StatisticsDTO> statisticsRedisService;
-    private final StatisticsStatusService statisticsStatusService;
+    private final ArticleStatisticsServer articleStatisticsServer;
     private final BlogDbOperationService blogDbOperationService;
-    private final TransactionTemplate transactionTemplate;
     private final ArticleElasticService articleElasticService;
+    private final StatisticsTypeHashCache<Long, StatisticsDTO> statisticsTypeHashCache;
 
     @Override
     public R<Boolean> publishArticle(ArticleDTO articleDTO) {
@@ -68,12 +65,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         Date date = new Date();
         Article article = new Article(id, articleDTO.getTitle(), articleDTO.getDescription(), articleDTO.getCover(), articleDTO.getContent(), articleDTO.getType(),
                 articleDTO.getMusicUrl(), articleDTO.getMusicName(), articleDTO.getAuthor(), articleDTO.getStatus(), date);
-
         boolean result = blogDbOperationService.articleTkService().insert(article);
-        if (result) {
-            final ArticleDoc articleDoc = ArticleConverter.CONVERTER.convertDoc(article);
-            articleElasticService.save(articleDoc);
-        }
         return result ? R.ok() : R.failed();
     }
 
@@ -87,21 +79,10 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
             return R.failed(INVALID_ARTICLE_ID);
         }
 
-        //更新db和es.
+        //更新db
         ArticleConverter.CONVERTER.updateByDTO(articleDTO, article);
-        Boolean execute = transactionTemplate.execute(status -> {
-            try {
-                AssertUtil.isTrue(blogDbOperationService.articleTkService().update(article), "Failed execute to update article, id: " + article.getId());
-                ArticleDoc articleDoc = ArticleConverter.CONVERTER.convertDoc(article);
-                articleElasticService.save(articleDoc);
-                return true;
-            } catch (Throwable cause) {
-                status.setRollbackOnly();
-                log.error(cause.getMessage(), cause);
-                return false;
-            }
-        });
-        return Boolean.TRUE.equals(execute) ? R.ok() : R.failed();
+        boolean update = blogDbOperationService.articleTkService().update(article);
+        return update ? R.ok() : R.failed();
     }
 
     @Override
@@ -110,26 +91,17 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         if (Objects.isNull(article)) {
             return R.failed(INVALID_ARTICLE_ID);
         }
-
-        //更新db和es.
-        Boolean result = transactionTemplate.execute(status -> {
-            try {
-                AssertUtil.isTrue(blogDbOperationService.deleteArticle(article), "Failed execute to delete article, id = " + id);
-                articleElasticService.deleteById(id);
-                return true;
-            } catch (Throwable cause) {
-                status.setRollbackOnly();
-                return false;
-            }
-        });
-        return Boolean.TRUE.equals(result) ? R.ok() : R.failed();
+        boolean result = blogDbOperationService.deleteArticle(article);
+        return result? R.ok() : R.failed();
     }
 
     @Override
     public R<PageResult<PageArticleVO>> adminPageArticles(String title, String describe, Integer current, Integer size) {
+        // 优先从ES中取出.
         PageResult<ArticleDoc> result = articleElasticService.queryPage(title, describe, current, size);
         List<ArticleDoc> resultList = result.getResultList();
         if (CollectionUtils.isEmpty(resultList)) {
+            // es为空时尝试从db去取
             PageInfo<Article> pageInfo = blogDbOperationService.articleTkService().pageArticles(title, describe, current, size);
             if (CollectionUtils.isEmpty(pageInfo.getList())) {
                 return R.ok(new PageResult<>());
@@ -138,6 +110,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
             result = new PageResult<>(pageInfo.getPageNum(), pageInfo.getTotal(), pageInfo.getPages(), resultList);
         }
 
+        //转换VO
         Map<Integer, Type> typesMap = getTypesMap();
         List<PageArticleVO> articleVoList = resultList.stream().map(ArticleConverter.CONVERTER::convert)
                 .peek(vo -> settingTypeName(vo, typesMap)).collect(Collectors.toList());
@@ -169,7 +142,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
             pageResult = new PageResult<>();
         } else {
             //获取每个文章的统计数据.
-            List<StatisticsDTO> statistics = statisticsRedisService.getStatistics(pageArticles.stream().map(PageArticleDTO::getId).collect(Collectors.toList()));
+            List<StatisticsDTO> statistics = articleStatisticsServer.getStatistics(pageArticles.stream().map(PageArticleDTO::getId).collect(Collectors.toList()));
             Map<Long, StatisticsDTO> map = statistics.stream().collect(Collectors.toMap(StatisticsDTO::getId, e -> e));
             PageInfo<PageArticleDTO> pageInfo = new PageInfo<>(pageArticles);
             List<PageArticleVO> articleVOList = pageArticles.stream().map(e -> new PageArticleVO(e, map.get(e.getId()))).collect(Collectors.toList());
@@ -202,7 +175,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         String authorName = accountBaseInfo == null ? StringConstants.EMPTY : accountBaseInfo.nickname;
 
         //获取当前文章的统计数据.
-        StatisticsDTO statistics = statisticsRedisService.getStatistics(id);
+        StatisticsDTO statistics = articleStatisticsServer.getStatistics(id);
         //获取当前用户的状态对文章当前文章的统计状态 -> 是否点赞等 | 是否已读.
         AccountAccessArticleStatusDTO status = getAccessArticleStatus(accessAccountId, id);
         //Build Article VO
@@ -217,15 +190,8 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
             return R.failed(AppsResultCode.ARTICLE_NOT_FOUND);
         }
 
-        boolean status = statisticsStatusService.accessStatus(accessAccountId, StatisticsType.LIKES, articleId);
-        //修改点赞状态.
-        if (statisticsStatusService.changeAccessStatus(accessAccountId, StatisticsType.LIKES, articleId, !status) ) {
-            // 修改统计数据
-            statisticsRedisService.incrValue(articleId, StatisticsType.LIKES, status ? -1 : 1);
+        if (articleStatisticsServer.updateStatus(accessAccountId, StatisticsType.LIKES, articleId)) {
             // 走消息队列异步写表或者直接入库写表
-            // 这里直接入库.
-            // 点赞数据不关心数据一致性. 只需redis数据定时回写到db即可.
-            ParentExecutorService.getInstance().execute(() -> blogDbOperationService.likedTkService().insertOrUpdate(new Liked(articleId, accessAccountId, !status)));
             return R.ok();
         } else {
             return R.failed();
@@ -235,11 +201,11 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
     @Override
     public R<Boolean> articleRead(Long articleId, Long accountId) {
         if (Objects.nonNull(accountId)) {
-            if (statisticsStatusService.changeAccessStatus(accountId, StatisticsType.VISITS, articleId, true)) {
-                statisticsRedisService.incrValue(articleId, StatisticsType.VISITS, 1);
-            }
+            return articleStatisticsServer.updateStatus(accountId, StatisticsType.VISITS, articleId) ? R.ok() : R.failed();
+        } else {
+            statisticsTypeHashCache.incrAndGet(articleId, StatisticsType.VISITS, 1);
+            return R.ok();
         }
-        return R.ok();
     }
 
     private AccountAccessArticleStatusDTO getAccessArticleStatus(Long accessAccountId, Long articleId) {
@@ -247,7 +213,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         if (accessAccountId == null) {
             status = new AccountAccessArticleStatusDTO(true, false);
         } else {
-            status = statisticsStatusService.accessStatus(accessAccountId, articleId);
+            status = articleStatisticsServer.status(accessAccountId, articleId);
         }
         return status;
     }

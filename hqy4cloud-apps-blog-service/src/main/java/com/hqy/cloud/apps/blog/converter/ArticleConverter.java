@@ -1,5 +1,6 @@
 package com.hqy.cloud.apps.blog.converter;
 
+import com.hqy.cloud.apps.blog.entity.CanalArticleModel;
 import com.hqy.cloud.apps.blog.dto.ArticleDTO;
 import com.hqy.cloud.apps.blog.entity.Article;
 import com.hqy.cloud.apps.blog.es.document.ArticleDoc;
@@ -57,6 +58,16 @@ public interface ArticleConverter {
      * @return        {@link ArticleDoc}
      */
     ArticleDoc convertDoc(Article article);
+
+
+    /**
+     * ArticleModel convert to ArticleDoc
+     * @param article {@link CanalArticleModel}
+     * @return        {@link ArticleDoc}
+     */
+    @Mapping(source = "status", target = "status", qualifiedByName = "IntegerToBoolean")
+    @Mapping(source = "deleted", target = "deleted", qualifiedByName = "IntegerToBoolean")
+    ArticleDoc convertDoc(CanalArticleModel article);
 
 
 }

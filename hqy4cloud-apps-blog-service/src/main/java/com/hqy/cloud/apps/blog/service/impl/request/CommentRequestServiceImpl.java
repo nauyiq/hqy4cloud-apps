@@ -13,8 +13,8 @@ import com.hqy.cloud.apps.blog.entity.Article;
 import com.hqy.cloud.apps.blog.entity.Comment;
 import com.hqy.cloud.apps.blog.service.BlogDbOperationService;
 import com.hqy.cloud.apps.blog.service.request.CommentRequestService;
-import com.hqy.cloud.apps.blog.statistics.StatisticsRedisService;
-import com.hqy.cloud.apps.blog.statistics.StatisticsType;
+import com.hqy.cloud.apps.blog.service.statistics.StatisticsTypeHashCache;
+import com.hqy.cloud.apps.blog.service.statistics.StatisticsType;
 import com.hqy.cloud.apps.blog.vo.AdminPageCommentsVO;
 import com.hqy.cloud.apps.blog.vo.ArticleCommentVO;
 import com.hqy.cloud.apps.blog.vo.ChildArticleCommentVO;
@@ -48,7 +48,7 @@ import static com.hqy.cloud.common.result.ResultCode.LIMITED_AUTHORITY;
 public class CommentRequestServiceImpl implements CommentRequestService {
 
     private final BlogDbOperationService blogDbOperationService;
-    private final StatisticsRedisService<Long, StatisticsDTO> statisticsRedisService;
+    private final StatisticsTypeHashCache<Long, StatisticsDTO> statisticsTypeHashCache;
 
     @Override
     public R<PageResult<AdminPageCommentsVO>> getPageComments(Long articleId, String content, Integer pageNumber, Integer pageSize) {
@@ -105,9 +105,9 @@ public class CommentRequestServiceImpl implements CommentRequestService {
             if (CollectionUtils.isEmpty(comments)) {
                 return new ParentArticleCommentVO(comment, commentReplierMap.get(comment.getCommenter()), new ArrayList<>());
             }
-            List<ChildArticleCommentVO> childArticleCommentVOS = comments.stream()
+            List<ChildArticleCommentVO> childArticleComments = comments.stream()
                     .map(e -> new ChildArticleCommentVO(e, commentReplierMap.get(e.getCommenter()), commentReplierMap.get(e.getReplier()))).collect(Collectors.toList());
-            return new ParentArticleCommentVO(comment, commentReplierMap.get(comment.getCommenter()), childArticleCommentVOS);
+            return new ParentArticleCommentVO(comment, commentReplierMap.get(comment.getCommenter()), childArticleComments);
         }).collect(Collectors.toList());
 
     }
@@ -149,7 +149,7 @@ public class CommentRequestServiceImpl implements CommentRequestService {
             return R.failed();
         }
         // 评论数 + 1
-        statisticsRedisService.incrValue(articleId, StatisticsType.COMMENTS, 1);
+        statisticsTypeHashCache.incrAndGet(articleId, StatisticsType.COMMENTS, 1);
         return R.ok();
     }
 
@@ -169,7 +169,7 @@ public class CommentRequestServiceImpl implements CommentRequestService {
             return R.failed();
         }
         // 评论数 - 1
-        statisticsRedisService.incrValue(comment.getArticleId(), StatisticsType.COMMENTS, -1);
+        statisticsTypeHashCache.incrAndGet(comment.getArticleId(), StatisticsType.COMMENTS, -1);
         return R.ok();
     }
 

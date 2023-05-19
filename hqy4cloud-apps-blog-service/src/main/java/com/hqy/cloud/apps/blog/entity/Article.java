@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import javax.persistence.Column;
 import javax.persistence.Table;
 import java.util.Date;
 
@@ -44,7 +43,6 @@ public class Article extends BaseEntity<Long> {
     /**
      * 类型
      */
-//    @Column(name = "'type'")
     private Integer type;
 
     /**
@@ -65,7 +63,6 @@ public class Article extends BaseEntity<Long> {
     /**
      * 状态
      */
-//    @Column(name = "'status'")
     private Boolean status;
 
     /**

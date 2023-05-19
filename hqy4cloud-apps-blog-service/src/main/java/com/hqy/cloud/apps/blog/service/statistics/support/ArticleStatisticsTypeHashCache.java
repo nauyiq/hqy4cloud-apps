@@ -1,14 +1,12 @@
-package com.hqy.cloud.apps.blog.statistics.support;
+package com.hqy.cloud.apps.blog.service.statistics.support;
 
-import com.hqy.cloud.apps.blog.service.StatisticsTkService;
 import com.hqy.cloud.apps.blog.dto.StatisticsDTO;
-import com.hqy.cloud.apps.blog.statistics.StatisticsType;
-import com.hqy.cloud.common.base.project.MicroServiceConstants;
-import com.hqy.cloud.foundation.cache.redis.key.support.RedisNamedKey;
+import com.hqy.cloud.apps.blog.service.statistics.StatisticsType;
+import com.hqy.cloud.apps.blog.service.statistics.StatisticsTypeHashCache;
 import com.hqy.cloud.util.AssertUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.MapUtils;
 import org.redisson.api.RLock;
+import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +14,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * TODO 后续可将统计功能包括点赞 浏览等功能提取出 新建一个服务.
  * 采用hash结构, 为了减少内存使用 对文章id进行hash运算进行存储
  * 发生hash冲突时 具体解决思路看方法 this#genkey()
  * 注：无法保证一致性
@@ -26,20 +23,23 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public class ArticleStatisticsHashRedisService extends StatisticsHashRedisService<Long, StatisticsDTO> {
+public class ArticleStatisticsTypeHashCache implements StatisticsTypeHashCache<Long, StatisticsDTO> {
 
-    private final StatisticsTkService statisticsTkService;
+    /**
+     * 所有文章的统计数据，redis key是不变的，但是需要注意如果数据量大时是否存在大key问题.
+     */
+    private final RMapCache<Long, StatisticsDTO> redisStatisticsCache;
+    private final RedissonClient redissonClient;
 
-    public ArticleStatisticsHashRedisService(RedissonClient redissonClient, StatisticsTkService statisticsTkService) {
-        super(60, 60 * 60,
-                new RedisNamedKey(MicroServiceConstants.BLOG_SERVICE, StatisticsDTO.class.getSimpleName()), redissonClient);
-        this.statisticsTkService = statisticsTkService;
+    public ArticleStatisticsTypeHashCache(RedissonClient redissonClient) {
+        this.redisStatisticsCache = redissonClient.getMapCache(getKey());
+        this.redissonClient = redissonClient;
     }
 
     private int genKey(Long id) {
         int hash1 = id.hashCode();
         int hash2 = id.hashCode();
-        StatisticsDTO o = getRedissonMapCache().get((long)hash1);
+        StatisticsDTO o = redisStatisticsCache.get((long)hash1);
         if (o == null) {
             return hash1;
         } else {
@@ -51,7 +51,7 @@ public class ArticleStatisticsHashRedisService extends StatisticsHashRedisServic
         int depth = 1;
         do {
             int newKey = hash1 + hash2 * depth;
-            o = getRedissonMapCache().get((long)newKey);
+            o = redisStatisticsCache.get((long)newKey);
             if (o == null) {
                 return newKey;
             } else {
@@ -69,7 +69,7 @@ public class ArticleStatisticsHashRedisService extends StatisticsHashRedisServic
     public StatisticsDTO getStatistics(Long id) {
         int hash1 = id.hashCode();
         int hash2 = id.hashCode();
-        StatisticsDTO o = getRedissonMapCache().get((long)hash1);
+        StatisticsDTO o = redisStatisticsCache.get((long)hash1);
         if (o == null) {
             return new StatisticsDTO(id, hash1);
         } else if (o.getId().equals(id)) {
@@ -79,7 +79,7 @@ public class ArticleStatisticsHashRedisService extends StatisticsHashRedisServic
             int depth = 1;
             do {
                 int newKey = hash1 + hash2 * depth;
-                o = getRedissonMapCache().get((long)newKey);
+                o = redisStatisticsCache.get((long)newKey);
                 if (o == null) {
                     return new StatisticsDTO(id, newKey);
                 } else if (o.getId().equals(id)) {
@@ -99,7 +99,7 @@ public class ArticleStatisticsHashRedisService extends StatisticsHashRedisServic
         //第一次hash获取key集合
         Set<Long> hashKeys = keys.stream().map(e -> (long)e.hashCode()).collect(Collectors.toSet());
         //查询redis
-        Map<Long, StatisticsDTO> map = getRedissonMapCache().getAll(hashKeys);
+        Map<Long, StatisticsDTO> map = redisStatisticsCache.getAll(hashKeys);
         //结果集
         List<StatisticsDTO> resultList = new LinkedList<>(map.values());
 
@@ -115,41 +115,20 @@ public class ArticleStatisticsHashRedisService extends StatisticsHashRedisServic
         return resultList;
     }
 
-    @Override
-    public long countByType(Long id, StatisticsType type) {
-        AssertUtil.notNull(type, "Statistics type should not be null.");
-        StatisticsDTO statistics = getStatistics(id);
-        return statistics.getCount(type);
-    }
 
     @Override
-    public long incrValue(Long id, StatisticsType type, int offset) {
-        RLock lock = redissonClient.getLock(getRedisKey().getKey(id.toString()));
+    public void incrAndGet(Long id, StatisticsType type, int offset) {
+        RLock lock = redissonClient.getLock(ArticleStatisticsTypeHashCache.class.getSimpleName() + id.toString());
         lock.lock();
         try {
             StatisticsDTO statistics = getStatistics(id);
             statistics.updateCount(type, offset);
-            getRedissonMapCache().put((long)statistics.getKey(), statistics);
-            return statistics.getCount(type);
+            redisStatisticsCache.put((long)statistics.getKey(), statistics);
         } catch (Throwable cause) {
             log.error("Failed executed to incrValue. id {}, cause {}.", id, cause.getMessage());
-            // TODO 补偿
-            //...
-            return 0;
         } finally {
             lock.unlock();
         }
     }
 
-    @Override
-    protected void loadRedisStatisticsData2Db(Map<Long, StatisticsDTO> statisticsFromRedis) {
-        if (MapUtils.isEmpty(statisticsFromRedis)) {
-            log.warn("Statistics map from redis is empty.");
-            return;
-        }
-        Collection<StatisticsDTO> values = statisticsFromRedis.values();
-        //TODO 1.如果REDIS中的数据已经很大 则全量读取HASH再会写到库明显不现实
-        //     2.后续改造 冷热数据分离, 以时间节点（或者其他维度）来区分冷热数据, 冷数据读写都在库 热数据读写都在redis
-        statisticsTkService.updateStatistics(values);
-    }
 }

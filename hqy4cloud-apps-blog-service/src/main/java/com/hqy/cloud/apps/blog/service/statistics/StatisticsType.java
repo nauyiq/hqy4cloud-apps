@@ -1,4 +1,4 @@
-package com.hqy.cloud.apps.blog.statistics;
+package com.hqy.cloud.apps.blog.service.statistics;
 
 /**
  * @author qiyuan.hong
