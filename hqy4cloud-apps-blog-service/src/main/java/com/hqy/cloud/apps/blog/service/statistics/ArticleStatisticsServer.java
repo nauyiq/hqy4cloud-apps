@@ -35,9 +35,9 @@ public interface ArticleStatisticsServer {
      * @param accountId 账号id
      * @param type      类型
      * @param articleId 文章id
-     * @return          result
+     * @return          result state
      */
-    boolean updateStatus(Long accountId, StatisticsType type, Long articleId);
+    int updateStatus(Long accountId, StatisticsType type, Long articleId);
 
 
     /**
@@ -53,6 +53,14 @@ public interface ArticleStatisticsServer {
      * @return     批量统计数据
      */
     List<StatisticsDTO> getStatistics(List<Long> keys);
+
+    /**
+     * 使某个文章的StatisticsType值自增，并且获取自增后的值
+     * @param key  文章FILED KEY
+     * @param type   StatisticsType
+     * @param offset 偏移量
+     */
+    void incrValue(Long key, StatisticsType type, int offset);
 
 
 }

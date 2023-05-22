@@ -9,9 +9,9 @@ package com.hqy.cloud.apps.commom.constants;
 public interface AppsConstants {
 
     interface Blog {
-
         String UPLOAD_IMAGE_FOLDER = "/files/blog/image";
         String UPLOAD_IMAGE_MUSIC = "/files/blog/music";
+        String BLOG_STATE_TOPIC = "blog-user-state-topic";
     }
 
 

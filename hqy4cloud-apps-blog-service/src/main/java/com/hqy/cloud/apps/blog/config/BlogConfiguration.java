@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
  * @date 2022/9/29 15:14
  */
 @Configuration
-public class WebAutoConfiguration {
+public class BlogConfiguration {
 
     @Bean
     public UploadFileService uploadFileService() {

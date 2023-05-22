@@ -149,7 +149,7 @@ public class CommentRequestServiceImpl implements CommentRequestService {
             return R.failed();
         }
         // 评论数 + 1
-        statisticsTypeHashCache.incrAndGet(articleId, StatisticsType.COMMENTS, 1);
+        statisticsTypeHashCache.increment(articleId, StatisticsType.COMMENTS, 1);
         return R.ok();
     }
 
@@ -169,7 +169,7 @@ public class CommentRequestServiceImpl implements CommentRequestService {
             return R.failed();
         }
         // 评论数 - 1
-        statisticsTypeHashCache.incrAndGet(comment.getArticleId(), StatisticsType.COMMENTS, -1);
+        statisticsTypeHashCache.increment(comment.getArticleId(), StatisticsType.COMMENTS, -1);
         return R.ok();
     }
 

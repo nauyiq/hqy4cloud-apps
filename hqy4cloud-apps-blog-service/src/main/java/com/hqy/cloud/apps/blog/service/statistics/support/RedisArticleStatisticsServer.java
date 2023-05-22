@@ -1,11 +1,11 @@
 package com.hqy.cloud.apps.blog.service.statistics.support;
 
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.hqy.cloud.apps.blog.dto.AccountAccessArticleStatusDTO;
 import com.hqy.cloud.apps.blog.dto.StatisticsDTO;
-import com.hqy.cloud.apps.blog.entity.Liked;
 import com.hqy.cloud.apps.blog.service.statistics.ArticleStatisticsServer;
 import com.hqy.cloud.apps.blog.service.statistics.StatisticsType;
 import com.hqy.cloud.apps.blog.service.statistics.StatisticsTypeHashCache;
@@ -37,9 +37,9 @@ public class RedisArticleStatisticsServer implements ArticleStatisticsServer {
      * 采用zset结构缓存了用户对某个博客文章的状态值，是否已读，是否点赞。value为blog文章id，其中不同的分数表示不同的意义
      */
     private final Cache<Long, RScoredSortedSet<Long>> accountForBlogStatusCache;
-    private static final double ONLY_READ_SCORE = 1.0;
-    private static final double ONLY_LIKE_SCORE = 2.0;
-    private static final double READ_LIKE_SCORE = 3.0;
+    public static final double ONLY_READ_SCORE = 1.0;
+    public static final double ONLY_LIKE_SCORE = 2.0;
+    public static final double READ_LIKE_SCORE = 3.0;
 
     public RedisArticleStatisticsServer(RedissonClient redissonClient, StatisticsTypeHashCache<Long, StatisticsDTO> statisticsTypeHashCache) {
         this.redissonClient = redissonClient;
@@ -60,7 +60,10 @@ public class RedisArticleStatisticsServer implements ArticleStatisticsServer {
     }
 
     private String genKey(Long accountId) {
-        return MicroServiceConstants.BLOG_SERVICE.concat(StrUtil.COLON).concat(this.getClass().getSimpleName()).concat(accountId.toString());
+        return MicroServiceConstants.BLOG_SERVICE.concat("::")
+                .concat(this.getClass().getSimpleName())
+                .concat("::")
+                .concat(accountId.toString());
     }
 
     @Override
@@ -109,13 +112,14 @@ public class RedisArticleStatisticsServer implements ArticleStatisticsServer {
     }
 
     @Override
-    public boolean updateStatus(Long accountId, StatisticsType type, Long articleId) {
+    public int updateStatus(Long accountId, StatisticsType type, Long articleId) {
         //不支持的统计类型.
         if (Objects.isNull(type) || type == COMMENTS) {
-            return false;
+            throw new IllegalArgumentException("Not support statics type.");
         }
         RScoredSortedSet<Long> cache = getBlogStatusCache(accountId);
         Double score = cache.getScore(articleId);
+        boolean updateScore = true;
         int offset;
         //根据分数和统计类型 获取当前需要更新的分数
         if (!cache.contains(articleId) || Objects.isNull(score)) {
@@ -127,17 +131,22 @@ public class RedisArticleStatisticsServer implements ArticleStatisticsServer {
             }
             offset = 1;
         } else {
-            //zset中分数本身不存在的情况 需要根据本身值再加上当前值判断需要更新的值
+            //zset中分数本身存在的情况 需要根据本身值再加上当前值判断需要更新的值
             if (score.equals(READ_LIKE_SCORE)) {
-                score = type == LIKES ? ONLY_READ_SCORE : ONLY_LIKE_SCORE;
-                offset = -1;
+                if (type == LIKES) {
+                    score = ONLY_READ_SCORE;
+                    offset = -1;
+                } else {
+                    offset = 0;
+                    updateScore = false;
+                }
             } else if (score.equals(ONLY_READ_SCORE)) {
                 if (type == LIKES) {
                     score = READ_LIKE_SCORE;
                     offset = 1;
                 } else {
-                    score = null;
-                    offset = -1;
+                    offset = 0;
+                    updateScore = false;
                 }
             } else if (score.equals(ONLY_LIKE_SCORE)) {
                 if (type == LIKES) {
@@ -155,14 +164,18 @@ public class RedisArticleStatisticsServer implements ArticleStatisticsServer {
         }
 
         if (offset != 0) {
-            statisticsTypeHashCache.incrAndGet(articleId, type, offset);
+            statisticsTypeHashCache.increment(articleId, type, offset);
         }
 
-        if (score == null) {
-            return cache.remove(articleId);
-        } else {
-            return cache.add(score, accountId);
+        if (updateScore) {
+            if (score == null) {
+                cache.remove(articleId);
+            } else {
+                cache.add(score, articleId);
+            }
         }
+
+        return Convert.toInt(score);
     }
 
     @Override
@@ -176,4 +189,8 @@ public class RedisArticleStatisticsServer implements ArticleStatisticsServer {
         return this.statisticsTypeHashCache.getStatistics(keys);
     }
 
+    @Override
+    public void incrValue(Long key, StatisticsType type, int offset) {
+        statisticsTypeHashCache.increment(key, type, offset);
+    }
 }

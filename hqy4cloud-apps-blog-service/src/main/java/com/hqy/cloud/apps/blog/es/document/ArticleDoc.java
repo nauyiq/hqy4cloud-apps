@@ -1,6 +1,5 @@
 package com.hqy.cloud.apps.blog.es.document;
 
-import com.hqy.cloud.apps.blog.es.EsConstants;
 import com.hqy.cloud.elasticsearch.document.ElasticDocument;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -21,7 +20,7 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Document(indexName = EsConstants.ARTICLE_INDEX_NAME)
+@Document(indexName = "article")
 public class ArticleDoc implements ElasticDocument<Long> {
 
     @Id

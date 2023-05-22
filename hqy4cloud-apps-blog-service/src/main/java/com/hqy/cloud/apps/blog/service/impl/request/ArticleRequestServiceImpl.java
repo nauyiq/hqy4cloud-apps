@@ -10,15 +10,14 @@ import com.hqy.cloud.apps.blog.dto.ArticleDTO;
 import com.hqy.cloud.apps.blog.dto.PageArticleDTO;
 import com.hqy.cloud.apps.blog.dto.StatisticsDTO;
 import com.hqy.cloud.apps.blog.entity.Article;
-import com.hqy.cloud.apps.blog.entity.Liked;
 import com.hqy.cloud.apps.blog.entity.Type;
 import com.hqy.cloud.apps.blog.es.document.ArticleDoc;
 import com.hqy.cloud.apps.blog.es.service.ArticleElasticService;
+import com.hqy.cloud.apps.blog.listener.message.ArticleStateKafkaMessage;
 import com.hqy.cloud.apps.blog.service.BlogDbOperationService;
 import com.hqy.cloud.apps.blog.service.request.ArticleRequestService;
 import com.hqy.cloud.apps.blog.service.statistics.ArticleStatisticsServer;
 import com.hqy.cloud.apps.blog.service.statistics.StatisticsType;
-import com.hqy.cloud.apps.blog.service.statistics.StatisticsTypeHashCache;
 import com.hqy.cloud.apps.blog.vo.ArticleDetailVO;
 import com.hqy.cloud.apps.blog.vo.PageArticleVO;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
@@ -29,6 +28,7 @@ import com.hqy.cloud.foundation.id.DistributedIdGen;
 import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.util.thread.ParentExecutorService;
 import com.hqy.cloud.web.common.AccountRpcUtil;
+import com.hqy.mq.kafka.server.KafkaMessageProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -52,7 +52,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
     private final ArticleStatisticsServer articleStatisticsServer;
     private final BlogDbOperationService blogDbOperationService;
     private final ArticleElasticService articleElasticService;
-    private final StatisticsTypeHashCache<Long, StatisticsDTO> statisticsTypeHashCache;
+    private final KafkaMessageProducer kafkaMessageProducer;
 
     @Override
     public R<Boolean> publishArticle(ArticleDTO articleDTO) {
@@ -176,6 +176,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
 
         //获取当前文章的统计数据.
         StatisticsDTO statistics = articleStatisticsServer.getStatistics(id);
+
         //获取当前用户的状态对文章当前文章的统计状态 -> 是否点赞等 | 是否已读.
         AccountAccessArticleStatusDTO status = getAccessArticleStatus(accessAccountId, id);
         //Build Article VO
@@ -189,23 +190,22 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         if (Objects.isNull(article)) {
             return R.failed(AppsResultCode.ARTICLE_NOT_FOUND);
         }
-
-        if (articleStatisticsServer.updateStatus(accessAccountId, StatisticsType.LIKES, articleId)) {
-            // 走消息队列异步写表或者直接入库写表
-            return R.ok();
-        } else {
-            return R.failed();
-        }
+        int status = articleStatisticsServer.updateStatus(accessAccountId, StatisticsType.LIKES, articleId);
+        // 发消息到kafka
+        kafkaMessageProducer.send(ArticleStateKafkaMessage.of(articleId, accessAccountId, status));
+        return R.ok();
     }
 
     @Override
     public R<Boolean> articleRead(Long articleId, Long accountId) {
         if (Objects.nonNull(accountId)) {
-            return articleStatisticsServer.updateStatus(accountId, StatisticsType.VISITS, articleId) ? R.ok() : R.failed();
+            int status = articleStatisticsServer.updateStatus(accountId, StatisticsType.VISITS, articleId);
+            // 发消息到kafka
+            kafkaMessageProducer.send(ArticleStateKafkaMessage.of(articleId, accountId, status));
         } else {
-            statisticsTypeHashCache.incrAndGet(articleId, StatisticsType.VISITS, 1);
-            return R.ok();
+            articleStatisticsServer.incrValue(articleId, StatisticsType.VISITS, 1);
         }
+        return R.ok();
     }
 
     private AccountAccessArticleStatusDTO getAccessArticleStatus(Long accessAccountId, Long articleId) {

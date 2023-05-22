@@ -117,7 +117,7 @@ public class ArticleStatisticsTypeHashCache implements StatisticsTypeHashCache<L
 
 
     @Override
-    public void incrAndGet(Long id, StatisticsType type, int offset) {
+    public void increment(Long id, StatisticsType type, int offset) {
         RLock lock = redissonClient.getLock(ArticleStatisticsTypeHashCache.class.getSimpleName() + id.toString());
         lock.lock();
         try {

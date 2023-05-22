@@ -55,5 +55,5 @@ public interface StatisticsTypeHashCache<FIELD, TARGET> {
      * @param type   StatisticsType
      * @param offset 偏移量
      */
-    void incrAndGet(FIELD filed, StatisticsType type, int offset);
+    void increment(FIELD filed, StatisticsType type, int offset);
 }
