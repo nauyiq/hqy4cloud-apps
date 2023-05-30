@@ -2,7 +2,7 @@ package com.hqy.cloud.apps.blog.mapper;
 
 import com.hqy.cloud.apps.blog.dto.PageArticleDTO;
 import com.hqy.cloud.apps.blog.entity.Article;
-import com.hqy.cloud.tk.BaseTkMapper;
+import com.hqy.cloud.db.tk.BaseTkMapper;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 

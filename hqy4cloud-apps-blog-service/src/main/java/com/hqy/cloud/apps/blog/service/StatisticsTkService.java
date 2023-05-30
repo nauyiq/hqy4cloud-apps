@@ -2,7 +2,7 @@ package com.hqy.cloud.apps.blog.service;
 
 import com.hqy.cloud.apps.blog.dto.StatisticsDTO;
 import com.hqy.cloud.apps.blog.entity.Statistics;
-import com.hqy.cloud.tk.BaseTkService;
+import com.hqy.cloud.db.tk.BaseTkService;
 
 import java.util.Collection;
 

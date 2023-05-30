@@ -3,8 +3,8 @@ package com.hqy.cloud.apps.blog.service.impl;
 import com.hqy.cloud.apps.blog.entity.ArticleUserState;
 import com.hqy.cloud.apps.blog.mapper.ArticleUserStateMapper;
 import com.hqy.cloud.apps.blog.service.ArticleUserStateTkService;
-import com.hqy.cloud.tk.BaseTkMapper;
-import com.hqy.cloud.tk.support.BaseTkServiceImpl;
+import com.hqy.cloud.db.tk.BaseTkMapper;
+import com.hqy.cloud.db.tk.support.BaseTkServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

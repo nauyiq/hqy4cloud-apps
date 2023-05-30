@@ -1,6 +1,6 @@
 package com.hqy.cloud.apps.blog.entity;
 
-import com.hqy.cloud.tk.model.BaseEntity;
+import com.hqy.cloud.db.tk.model.BaseEntity;
 import lombok.*;
 
 import javax.persistence.Table;

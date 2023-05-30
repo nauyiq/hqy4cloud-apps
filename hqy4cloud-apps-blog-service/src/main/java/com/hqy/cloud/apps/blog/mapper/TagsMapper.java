@@ -1,7 +1,7 @@
 package com.hqy.cloud.apps.blog.mapper;
 
 import com.hqy.cloud.apps.blog.entity.Tags;
-import com.hqy.cloud.tk.BaseTkMapper;
+import com.hqy.cloud.db.tk.BaseTkMapper;
 import org.springframework.stereotype.Repository;
 
 /**

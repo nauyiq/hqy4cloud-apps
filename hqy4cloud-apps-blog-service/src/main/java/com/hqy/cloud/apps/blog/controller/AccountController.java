@@ -87,6 +87,9 @@ public class AccountController extends BaseController {
     @PutMapping("/account/profile")
     public R<Boolean> updateLoginUserInfo(@RequestBody BlogUserProfileDTO profile, HttpServletRequest request) {
         Long accountId = getAccessAccountId(request);
+        if(Objects.isNull(accountId)) {
+            return R.failed(ResultCode.USER_NOT_FOUND);
+        }
         profile.setId(accountId);
         return userRequestService.updateLoginUserInfo(profile);
     }

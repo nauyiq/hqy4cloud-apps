@@ -1,11 +1,11 @@
 package com.hqy.cloud.apps.blog.service.impl;
 
-import com.hqy.cloud.apps.blog.service.StatisticsTkService;
 import com.hqy.cloud.apps.blog.dto.StatisticsDTO;
 import com.hqy.cloud.apps.blog.entity.Statistics;
 import com.hqy.cloud.apps.blog.mapper.StatisticsMapper;
-import com.hqy.cloud.tk.BaseTkMapper;
-import com.hqy.cloud.tk.support.BaseTkServiceImpl;
+import com.hqy.cloud.apps.blog.service.StatisticsTkService;
+import com.hqy.cloud.db.tk.BaseTkMapper;
+import com.hqy.cloud.db.tk.support.BaseTkServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

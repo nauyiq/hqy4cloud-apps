@@ -3,7 +3,7 @@ package com.hqy.cloud.apps.blog.service;
 import com.github.pagehelper.PageInfo;
 import com.hqy.cloud.apps.blog.dto.ArticleCommentDTO;
 import com.hqy.cloud.apps.blog.entity.Comment;
-import com.hqy.cloud.tk.BaseTkService;
+import com.hqy.cloud.db.tk.BaseTkService;
 
 import java.util.List;
 

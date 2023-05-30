@@ -1,7 +1,7 @@
 package com.hqy.cloud.apps.blog.entity;
 
 import com.google.common.base.Objects;
-import com.hqy.cloud.tk.model.BaseEntity;
+import com.hqy.cloud.db.tk.model.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

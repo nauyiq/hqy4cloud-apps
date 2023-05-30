@@ -1,7 +1,7 @@
 package com.hqy.cloud.apps.blog.service;
 
 import com.hqy.cloud.apps.blog.entity.Liked;
-import com.hqy.cloud.tk.BaseTkService;
+import com.hqy.cloud.db.tk.BaseTkService;
 
 /**
  * LikedTkService.
