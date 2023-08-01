@@ -1,5 +1,6 @@
-package com.hqy.cloud.message.service;
+package com.hqy.cloud.message.service.impl;
 
+import com.hqy.cloud.message.service.SocketIoMessagePushService;
 import com.hqy.cloud.socketio.starter.service.AbstractThriftSocketIoPushService;
 import org.springframework.stereotype.Service;
 

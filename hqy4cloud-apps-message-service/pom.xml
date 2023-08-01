@@ -13,8 +13,8 @@
     <artifactId>hqy4cloud-apps-message-service</artifactId>
 
     <properties>
-        <maven.compiler.source>8</maven.compiler.source>
-        <maven.compiler.target>8</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -30,11 +30,17 @@
             <version>${project.parent.version}</version>
         </dependency>
 
-        <!-- spring-cloud-nacos-config 移除原本的1.0使用http通讯的nacos客户端 -->
+        <dependency>
+            <groupId>com.hqy.cloud</groupId>
+            <artifactId>hqy4cloud-common-chatgpt</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
         </dependency>
+
 
     </dependencies>
 
