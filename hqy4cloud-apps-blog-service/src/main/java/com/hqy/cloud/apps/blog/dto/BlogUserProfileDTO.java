@@ -1,5 +1,6 @@
 package com.hqy.cloud.apps.blog.dto;
 
+import com.hqy.account.struct.ChatgptConfigStruct;
 import lombok.Data;
 
 /**
@@ -16,6 +17,7 @@ public class BlogUserProfileDTO {
     private String nickname;
     private String birthday;
     private String intro;
+    private ChatgptConfigStruct chatgptConfigStruct;
 
     public BlogUserProfileDTO() {
     }

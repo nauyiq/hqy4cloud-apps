@@ -73,25 +73,21 @@ public class AccountController extends BaseController {
         return userRequestService.registryAccount(registry);
     }
 
-    /**
-     * 获取登录用户信息.
-     * @param request request.
-     * @return        DataResponse.
-     */
-    @GetMapping("/account")
-    public R<AccountProfileVO> getLoginUserInfo(HttpServletRequest request) {
+
+    @GetMapping("/user/profile")
+    public R<AccountProfileVO> getUserProfile(HttpServletRequest request) {
         Long accountId = getAccessAccountId(request);
-        return userRequestService.getLoginUserInfo(accountId);
+        return userRequestService.getUserProfile(accountId);
     }
 
     @PutMapping("/account/profile")
-    public R<Boolean> updateLoginUserInfo(@RequestBody BlogUserProfileDTO profile, HttpServletRequest request) {
+    public R<Boolean> updateUserProfile(@RequestBody BlogUserProfileDTO profile, HttpServletRequest request) {
         Long accountId = getAccessAccountId(request);
         if(Objects.isNull(accountId)) {
             return R.failed(ResultCode.USER_NOT_FOUND);
         }
         profile.setId(accountId);
-        return userRequestService.updateLoginUserInfo(profile);
+        return userRequestService.updateUserProfile(profile);
     }
 
 

@@ -25,6 +25,8 @@ public class Config extends BaseEntity<Integer> {
      * 关于我
      */
     private String aboutMe;
+    private String chatTitle;
+    private String chatgptModels;
 
     @Override
     public String toString() {

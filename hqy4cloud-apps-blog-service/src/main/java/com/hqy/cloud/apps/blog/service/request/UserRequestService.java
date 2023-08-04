@@ -18,14 +18,14 @@ public interface UserRequestService {
      * @param id user id.
      * @return   R.
      */
-    R<AccountProfileVO> getLoginUserInfo(Long id);
+    R<AccountProfileVO> getUserProfile(Long id);
 
     /**
      * update login user profile info.
      * @param profile profile data.
      * @return        R.
      */
-    R<Boolean> updateLoginUserInfo(BlogUserProfileDTO profile);
+    R<Boolean> updateUserProfile(BlogUserProfileDTO profile);
 
     /**
      * 发送邮箱验证码

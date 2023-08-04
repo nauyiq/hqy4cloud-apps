@@ -5,7 +5,7 @@ import com.hqy.cloud.apps.blog.converter.ArticleConverter;
 import com.hqy.cloud.apps.blog.entity.Article;
 import com.hqy.cloud.apps.blog.es.document.ArticleDoc;
 import com.hqy.cloud.apps.blog.es.service.ArticleElasticService;
-import com.hqy.cloud.apps.blog.service.ArticleTkService;
+import com.hqy.cloud.apps.blog.service.tk.ArticleTkService;
 import com.hqy.cloud.canal.core.processor.BaseCanalBinlogEventProcessor;
 import com.hqy.cloud.canal.model.CanalBinLogResult;
 import lombok.RequiredArgsConstructor;

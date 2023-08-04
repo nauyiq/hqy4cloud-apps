@@ -33,11 +33,10 @@ public class ConfigController {
     @GetMapping("/connection")
     public R<SocketIoConnection> genWsMessageConnection(HttpServletRequest request) {
         AuthenticationInfo authentication = AuthenticationRequestContext.getAuthentication(request);
-        String bizId = authentication.getName();
-        if (StringUtils.isBlank(bizId)) {
+        if (authentication == null) {
             return R.failed(ResultCode.NOT_LOGIN);
         }
-        return configRequestService.genWsBlogConnection(request, bizId);
+        return configRequestService.genWsBlogConnection(request, authentication.getId().toString());
     }
 
 

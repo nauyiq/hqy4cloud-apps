@@ -3,7 +3,7 @@ package com.hqy.cloud.apps.blog.listener;
 import cn.hutool.core.map.MapUtil;
 import com.hqy.cloud.apps.blog.entity.ArticleUserState;
 import com.hqy.cloud.apps.blog.listener.message.ArticleStateKafkaMessage;
-import com.hqy.cloud.apps.blog.service.ArticleUserStateTkService;
+import com.hqy.cloud.apps.blog.service.tk.ArticleUserStateTkService;
 import com.hqy.cloud.id.service.RemoteLeafService;
 import com.hqy.cloud.id.struct.ResultStruct;
 import com.hqy.cloud.rpc.nacos.client.RPCClient;
