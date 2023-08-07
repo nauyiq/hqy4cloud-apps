@@ -48,13 +48,13 @@ public class AccountController extends BaseController {
     }
 
 
-    @PostMapping("/account/password/forget")
+    @PostMapping("/user/password/forget")
     public R<Boolean> resetPassword(@RequestBody @Valid ForgetPasswordDTO passwordDTO) {
         AssertUtil.notNull(passwordDTO, "Reset password data should not be null.");
         return userRequestService.resetPassword(passwordDTO);
     }
 
-    @PutMapping("/account/password")
+    @PutMapping("/user/password")
     public R<Boolean> updatePassword(HttpServletRequest request, @RequestParam("oldPassword") String oldPassword, @RequestParam("newPassword") String newPassword) {
         if (StringUtils.isAnyBlank(oldPassword, newPassword)) {
             return R.failed(ResultCode.ERROR_PARAM);
@@ -67,7 +67,7 @@ public class AccountController extends BaseController {
     }
 
 
-    @PostMapping("/account/registry")
+    @PostMapping("/user/registry")
     public R<Boolean> registryAccount(@RequestBody @Valid AccountRegistryDTO registry) {
         AssertUtil.notNull(registry, "Registry data should not be null.");
         return userRequestService.registryAccount(registry);
@@ -80,7 +80,7 @@ public class AccountController extends BaseController {
         return userRequestService.getUserProfile(accountId);
     }
 
-    @PutMapping("/account/profile")
+    @PutMapping("/user/profile")
     public R<Boolean> updateUserProfile(@RequestBody BlogUserProfileDTO profile, HttpServletRequest request) {
         Long accountId = getAccessAccountId(request);
         if(Objects.isNull(accountId)) {
