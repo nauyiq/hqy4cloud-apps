@@ -31,12 +31,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.hqy.cloud</groupId>
-            <artifactId>hqy4cloud-common-chatgpt</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
         </dependency>
@@ -64,7 +58,6 @@
             <artifactId>hqy4cloud-common-datasource-sharding-jdbc</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-
 
         <dependency>
             <groupId>com.hqy.cloud</groupId>
