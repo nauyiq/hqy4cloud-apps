@@ -13,13 +13,6 @@
     <artifactId>hqy4cloud-apps-blog-service</artifactId>
 
     <dependencies>
-
-        <dependency>
-            <groupId>com.hqy.cloud</groupId>
-            <artifactId>hqy4cloud-netty-socketio-springboot-starter</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
         <!--nacos-config-->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
@@ -35,12 +28,6 @@
         <dependency>
             <groupId>com.hqy.cloud</groupId>
             <artifactId>hqy4cloud-base-foundation-service</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.hqy.cloud</groupId>
-            <artifactId>hqy4cloud-common-chatgpt</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
