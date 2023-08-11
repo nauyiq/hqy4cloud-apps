@@ -25,14 +25,13 @@ import javax.servlet.http.HttpServletRequest;
 public class MessageController {
     private final MessageRequestService requestService;
 
-    @GetMapping("/message/connection")
+    @GetMapping("/chat/connection")
     public R<SocketIoConnection> genWsMessageConnection(HttpServletRequest request) {
         AuthenticationInfo authentication = AuthenticationRequestContext.getAuthentication(request);
-        String bizId = authentication.getName();
-        if (StringUtils.isBlank(bizId)) {
+        if (authentication == null) {
             return R.failed(ResultCode.NOT_LOGIN);
         }
-        return requestService.genWsMessageConnection(request, bizId);
+        return requestService.genWsMessageConnection(request, authentication.getId().toString());
     }
 
 }
