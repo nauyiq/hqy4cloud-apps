@@ -1,4 +1,4 @@
-package com.hqy.cloud.message.service;
+package com.hqy.cloud.message.service.request;
 
 import com.hqy.cloud.common.bind.R;
 import com.hqy.foundation.common.bind.SocketIoConnection;

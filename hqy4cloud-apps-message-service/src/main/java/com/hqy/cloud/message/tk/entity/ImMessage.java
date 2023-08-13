@@ -21,6 +21,7 @@ public class ImMessage extends BaseEntity<Long> {
     private Long to;
     private String type;
     private String content;
+    private Boolean read;
 
     public Boolean getGroup() {
         return group;
@@ -60,5 +61,13 @@ public class ImMessage extends BaseEntity<Long> {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public Boolean getRead() {
+        return read;
+    }
+
+    public void setRead(Boolean read) {
+        this.read = read;
     }
 }

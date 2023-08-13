@@ -4,11 +4,10 @@ import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.foundation.common.authentication.AuthenticationRequestContext;
-import com.hqy.cloud.message.service.MessageRequestService;
+import com.hqy.cloud.message.service.request.MessageRequestService;
 import com.hqy.foundation.common.bind.SocketIoConnection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 

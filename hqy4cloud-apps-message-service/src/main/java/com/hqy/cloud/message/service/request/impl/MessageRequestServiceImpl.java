@@ -1,4 +1,4 @@
-package com.hqy.cloud.message.service.impl;
+package com.hqy.cloud.message.service.request.impl;
 
 import com.alibaba.cloud.nacos.NacosServiceManager;
 import com.alibaba.nacos.api.exception.NacosException;
@@ -9,7 +9,7 @@ import com.hqy.cloud.common.base.config.ConfigConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatus;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatusManager;
-import com.hqy.cloud.message.service.MessageRequestService;
+import com.hqy.cloud.message.service.request.MessageRequestService;
 import com.hqy.cloud.socketio.starter.core.SocketIoServerStarter;
 import com.hqy.cloud.socketio.starter.core.support.SocketIoConnectionUtil;
 import com.hqy.cloud.util.crypto.symmetric.JWT;

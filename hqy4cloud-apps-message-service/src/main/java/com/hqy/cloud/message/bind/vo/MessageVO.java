@@ -24,6 +24,48 @@ public class MessageVO {
      */
     private Boolean isGroup;
 
+    /**
+     * 是否已读
+     */
+    private Boolean isRead;
+
+    /**
+     * 发送用户信息
+     */
+    private UserInfoVO fromUser;
+
+    /**
+     * 文件信息
+     */
+    private MessageFileVO fileInfo;
+
+    /**
+     * 联系人/群 id
+     */
+    private String toContactId;
+
+    /**
+     * 消息状态
+     */
+    private String status;
+
+    /**
+     * 消息类型
+     */
+    private String type;
+
+    /**
+     * 消息发送时间
+     */
+    private Long sendTime;
+
+
+
+
+
+
+
+
 
 
 
