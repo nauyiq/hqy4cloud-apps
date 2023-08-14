@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletRequest;
  * @version 1.0
  * @date 2023/7/26 13:19
  */
-public interface MessageRequestService {
+public interface ImMessageRequestService {
 
 
     /**

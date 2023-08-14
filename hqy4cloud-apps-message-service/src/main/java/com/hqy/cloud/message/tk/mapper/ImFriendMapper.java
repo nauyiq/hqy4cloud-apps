@@ -2,6 +2,7 @@ package com.hqy.cloud.message.tk.mapper;
 
 import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
 import com.hqy.cloud.message.tk.entity.ImFriend;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -11,4 +12,12 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ImFriendMapper extends PrimaryLessTkMapper<ImFriend> {
+
+    /**
+     * 移除好友
+     * @param from 用户id
+     * @param to   用户id
+     * @return     result.
+     */
+    int removeFriend(@Param("from") Long from, @Param("to") Long to);
 }

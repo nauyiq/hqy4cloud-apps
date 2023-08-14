@@ -26,6 +26,12 @@
 
         <dependency>
             <groupId>com.hqy.cloud</groupId>
+            <artifactId>hqy4cloud-apps-common-core</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.hqy.cloud</groupId>
             <artifactId>hqy4cloud-netty-socketio-springboot-starter</artifactId>
             <version>${project.parent.version}</version>
         </dependency>

@@ -2,6 +2,7 @@ package com.hqy.cloud.message.tk.mapper;
 
 import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
 import com.hqy.cloud.message.tk.entity.ImFriendApplication;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 /**
@@ -11,4 +12,11 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ImFriendApplicationMapper extends PrimaryLessTkMapper<ImFriendApplication> {
+
+    /**
+     * 新增或更新
+     * @param application entity
+     * @return            rows
+     */
+    int insertDuplicate(@Param("application") ImFriendApplication application);
 }

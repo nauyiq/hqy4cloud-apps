@@ -4,7 +4,7 @@ import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.foundation.common.authentication.AuthenticationRequestContext;
-import com.hqy.cloud.message.service.request.MessageRequestService;
+import com.hqy.cloud.message.service.request.ImMessageRequestService;
 import com.hqy.foundation.common.bind.SocketIoConnection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +21,10 @@ import javax.servlet.http.HttpServletRequest;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-public class MessageController {
-    private final MessageRequestService requestService;
+public class ImMessageController {
+    private final ImMessageRequestService requestService;
 
-    @GetMapping("/chat/connection")
+    @GetMapping("/im/connection")
     public R<SocketIoConnection> genWsMessageConnection(HttpServletRequest request) {
         AuthenticationInfo authentication = AuthenticationRequestContext.getAuthentication(request);
         if (authentication == null) {
@@ -32,5 +32,8 @@ public class MessageController {
         }
         return requestService.genWsMessageConnection(request, authentication.getId().toString());
     }
+
+
+
 
 }

@@ -42,11 +42,21 @@ public enum AppsResultCode implements Result {
      */
     NOT_FOUND_TYPE(5006, "Type not exist."),
 
+    /**
+     * 该用户不是您的好友
+     */
+    IM_NOT_FRIEND(10001, "The user is not your friend."),
+
+    /**
+     * 当前群聊已经存在
+     */
+    IM_GROUP_EXIST(10002, "The group already exist.")
+
     ;
 
-    public int code;
+    public final int code;
 
-    public String message;
+    public final String message;
 
 
     AppsResultCode(int code, String message) {

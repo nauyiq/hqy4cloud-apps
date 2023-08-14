@@ -21,6 +21,11 @@ public class ImGroup extends BaseEntity<Long> {
     private String notice;
     private Boolean status;
 
+    public ImGroup(String name, Long creator) {
+        this.name = name;
+        this.creator = creator;
+    }
+
     public String getName() {
         return name;
     }
@@ -52,4 +57,12 @@ public class ImGroup extends BaseEntity<Long> {
     public void setStatus(Boolean status) {
         this.status = status;
     }
+
+    public static ImGroup of(String name, Long creator) {
+        ImGroup imGroup = new ImGroup(name, creator);
+        imGroup.setStatus(true);
+        return imGroup;
+    }
+
+
 }

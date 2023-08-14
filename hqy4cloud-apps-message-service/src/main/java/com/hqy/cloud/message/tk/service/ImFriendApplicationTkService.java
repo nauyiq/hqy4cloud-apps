@@ -9,4 +9,11 @@ import com.hqy.cloud.message.tk.entity.ImFriendApplication;
  * @date 2023/8/11 11:24
  */
 public interface ImFriendApplicationTkService extends PrimaryLessTkService<ImFriendApplication> {
+
+    /**
+     * 新增或更新
+     * @param application entity
+     * @return            rows
+     */
+    int insertDuplicate(ImFriendApplication application);
 }

@@ -4,4 +4,26 @@
 <mapper namespace="com.hqy.cloud.message.tk.mapper.ImFriendApplicationMapper">
 
 
+    <insert id="insertDuplicate">
+        INSERT INTO t_im_friend_application
+        (
+         id,
+         user_id,
+         remark,
+         status,
+         created,
+         updated
+        ) VALUES
+        (
+         #{application.id},
+         #{application.userId},
+         #{application.remark},
+         #{application.status},
+         #{application.created},
+         #{application.updated}
+        ) ON DUPLICATE KEY UPDATE
+            remark = VALUES(remark),
+            updated = VALUES(updated)
+    </insert>
+
 </mapper>

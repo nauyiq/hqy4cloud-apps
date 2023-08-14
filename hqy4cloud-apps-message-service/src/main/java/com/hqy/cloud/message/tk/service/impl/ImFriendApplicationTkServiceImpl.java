@@ -22,4 +22,9 @@ public class ImFriendApplicationTkServiceImpl extends PrimaryLessTkServiceImpl<I
     public PrimaryLessTkMapper<ImFriendApplication> getTkDao() {
         return mapper;
     }
+
+    @Override
+    public int insertDuplicate(ImFriendApplication application) {
+        return mapper.insertDuplicate(application);
+    }
 }

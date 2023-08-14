@@ -4,4 +4,8 @@
 <mapper namespace="com.hqy.cloud.message.tk.mapper.ImFriendMapper">
 
 
+    <update id="removeFriend">
+        UPDATE t_im_friend SET `status` = 0
+        WHERE (id = #{from} AND user_id = #{to}) OR (id = #{to} AND user_id = #{from})
+    </update>
 </mapper>

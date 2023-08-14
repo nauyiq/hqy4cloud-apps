@@ -22,4 +22,9 @@ public class ImFriendTkServiceImpl extends PrimaryLessTkServiceImpl<ImFriend> im
     public PrimaryLessTkMapper<ImFriend> getTkDao() {
         return mapper;
     }
+
+    @Override
+    public boolean removeFriend(Long from, Long to) {
+        return mapper.removeFriend(from, to) > 0;
+    }
 }

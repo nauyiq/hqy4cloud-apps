@@ -26,4 +26,28 @@ public class ImFriendApplication implements PrimaryLessBaseEntity {
     private Date created;
     private Date updated;
 
+    public ImFriendApplication(Long id, Long userId) {
+        this.id = id;
+        this.userId = userId;
+    }
+
+    public static ImFriendApplication of(Long id, Long userId) {
+        return new ImFriendApplication(id, userId);
+    }
+
+    public static ImFriendApplication of(Long id, Long userId, String remark) {
+        ImFriendApplication application = new ImFriendApplication();
+        application.setId(id);
+        application.setUserId(userId);
+        application.setRemark(remark);
+        Date now = new Date();
+        application.setCreated(now);
+        application.setUpdated(now);
+        return application;
+    }
+
+
+
+
+
 }

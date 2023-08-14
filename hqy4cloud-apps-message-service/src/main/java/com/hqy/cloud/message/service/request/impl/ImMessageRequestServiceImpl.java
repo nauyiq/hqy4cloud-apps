@@ -9,7 +9,7 @@ import com.hqy.cloud.common.base.config.ConfigConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatus;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatusManager;
-import com.hqy.cloud.message.service.request.MessageRequestService;
+import com.hqy.cloud.message.service.request.ImMessageRequestService;
 import com.hqy.cloud.socketio.starter.core.SocketIoServerStarter;
 import com.hqy.cloud.socketio.starter.core.support.SocketIoConnectionUtil;
 import com.hqy.cloud.util.crypto.symmetric.JWT;
@@ -31,7 +31,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MessageRequestServiceImpl implements MessageRequestService {
+public class ImMessageRequestServiceImpl implements ImMessageRequestService {
     private final SocketIoServerStarter starter;
     private final Environment environment;
     private final NacosServiceManager nacosServiceManager;

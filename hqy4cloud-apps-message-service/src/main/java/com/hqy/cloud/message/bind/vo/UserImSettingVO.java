@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.bind.vo;
 
+import com.hqy.cloud.message.tk.entity.ImUserSetting;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -38,6 +39,19 @@ public class UserImSettingVO {
      */
     private Integer clearMessageDate;
 
+    public static UserImSettingVO of(ImUserSetting imUserSetting) {
+        UserImSettingVO vo = new UserImSettingVO();
+        vo.setIsPrivateChat(imUserSetting.getPrivateChat());
+        vo.setIsInviteGroup(imUserSetting.getInviteGroup());
+        vo.setIsOnline(imUserSetting.getOline());
+        vo.setIsClearMsg(imUserSetting.getClearMsg());
+        vo.setClearMessageDate(imUserSetting.getClearMsgDate());
+        return vo;
+    }
+
+    public static UserImSettingVO of() {
+        return new UserImSettingVO(false, true, true, true, 30);
+    }
 
 
 
