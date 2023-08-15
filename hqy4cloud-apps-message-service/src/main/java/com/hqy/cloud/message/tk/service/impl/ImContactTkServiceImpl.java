@@ -1,6 +1,8 @@
 package com.hqy.cloud.message.tk.service.impl;
 
+import com.hqy.cloud.db.tk.BaseTkMapper;
 import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
+import com.hqy.cloud.db.tk.support.BaseTkServiceImpl;
 import com.hqy.cloud.db.tk.support.PrimaryLessTkServiceImpl;
 import com.hqy.cloud.message.tk.entity.ImContact;
 import com.hqy.cloud.message.tk.mapper.ImContactMapper;
@@ -15,11 +17,11 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @RequiredArgsConstructor
-public class ImContactTkServiceImpl extends PrimaryLessTkServiceImpl<ImContact> implements ImContactTkService {
+public class ImContactTkServiceImpl extends BaseTkServiceImpl<ImContact, Long> implements ImContactTkService {
     private final ImContactMapper mapper;
 
     @Override
-    public PrimaryLessTkMapper<ImContact> getTkDao() {
+    public BaseTkMapper<ImContact, Long> getTkMapper() {
         return mapper;
     }
 }

@@ -4,41 +4,24 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 /**
  * @author qiyuan.hong
  * @version 1.0
- * @date 2023/8/14 17:42
+ * @date 2023/8/15 9:53
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class GroupDTO {
+public class GroupMemberDTO {
 
-    /**
-     * 群id
-     */
+    private Long id;
     private Long groupId;
-
-    /**
-     * 群名
-     */
-    private String name;
-
-    /**
-     * 群公告
-     */
+    private Integer role;
+    private String groupName;
     private String notice;
+    private String displayName;
 
-    /**
-     * 群成员id集合
-     */
-    private List<Long> userIds;
-
-
-
-
-
-
+    public boolean isEnable() {
+        return id != null && groupId != null;
+    }
 }

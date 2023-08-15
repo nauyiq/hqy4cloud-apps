@@ -50,7 +50,12 @@ public enum AppsResultCode implements Result {
     /**
      * 当前群聊已经存在
      */
-    IM_GROUP_EXIST(10002, "The group already exist.")
+    IM_GROUP_EXIST(10002, "The group already exist."),
+
+    /**
+     * 当前群聊不存在
+     */
+    IM_GROUP_NOT_EXIST(10003, "The group not exist."),
 
     ;
 

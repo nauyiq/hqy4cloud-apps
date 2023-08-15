@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Table;
+import java.util.Date;
 
 /**
  * @author qiyuan.hong
@@ -21,9 +22,17 @@ public class ImGroup extends BaseEntity<Long> {
     private String notice;
     private Boolean status;
 
+    public ImGroup(Long id) {
+        super.setId(id);
+    }
+
     public ImGroup(String name, Long creator) {
         this.name = name;
         this.creator = creator;
+    }
+
+    public static ImGroup of(Long groupId) {
+        return new ImGroup(groupId);
     }
 
     public String getName() {
@@ -61,6 +70,14 @@ public class ImGroup extends BaseEntity<Long> {
     public static ImGroup of(String name, Long creator) {
         ImGroup imGroup = new ImGroup(name, creator);
         imGroup.setStatus(true);
+        return imGroup;
+    }
+
+    public static ImGroup of(String name, Long creator, Date now) {
+        ImGroup imGroup = new ImGroup(name, creator);
+        imGroup.setStatus(true);
+        imGroup.setCreated(now);
+        imGroup.setUpdated(now);
         return imGroup;
     }
 
