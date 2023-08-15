@@ -1,6 +1,6 @@
 package com.hqy.cloud.message.service.impl;
 
-import com.hqy.cloud.message.bind.GroupRole;
+import com.hqy.cloud.message.bind.enums.GroupRole;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.service.ImGroupOperationsService;

@@ -1,12 +1,11 @@
 package com.hqy.cloud.message.tk.entity;
 
 import com.hqy.cloud.db.tk.PrimaryLessBaseEntity;
-import com.hqy.cloud.message.bind.GroupRole;
+import com.hqy.cloud.message.bind.enums.GroupRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.util.ArrayList;

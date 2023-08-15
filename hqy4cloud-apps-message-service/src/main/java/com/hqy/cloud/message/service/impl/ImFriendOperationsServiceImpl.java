@@ -5,6 +5,7 @@ import com.hqy.cloud.foundation.cache.redis.support.SmartRedisManager;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
 import com.hqy.cloud.message.tk.entity.ImFriend;
 import com.hqy.cloud.message.tk.entity.ImFriendApplication;
+import com.hqy.cloud.message.tk.service.ImContactTkService;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import com.hqy.cloud.util.AssertUtil;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ import static com.hqy.cloud.common.base.lang.StringConstants.Symbol.UNION;
 @RequiredArgsConstructor
 public class ImFriendOperationsServiceImpl implements ImFriendOperationsService {
     private final ImFriendTkService friendTkService;
+    private final ImContactTkService imContactTkService;
     private static final String KEY = MicroServiceConstants.MESSAGE_NETTY_SERVICE + UNION + "im-friend";
     private static final String TRUE = "1";
     private static final String FALSE = "0";

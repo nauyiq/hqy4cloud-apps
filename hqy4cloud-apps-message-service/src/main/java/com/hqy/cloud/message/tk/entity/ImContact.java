@@ -25,7 +25,6 @@ public class ImContact extends BaseEntity<Long> {
 
     private Long userId;
     private Long contactId;
-    private String index;
     private Boolean group;
     private Boolean notice;
     private Boolean top;

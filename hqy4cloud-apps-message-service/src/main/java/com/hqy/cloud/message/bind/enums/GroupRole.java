@@ -1,4 +1,4 @@
-package com.hqy.cloud.message.bind;
+package com.hqy.cloud.message.bind.enums;
 
 import java.util.Arrays;
 

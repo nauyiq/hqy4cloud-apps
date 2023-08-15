@@ -6,7 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.hqy.account.struct.AccountBaseInfoStruct;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
-import com.hqy.cloud.message.bind.GroupRole;
+import com.hqy.cloud.message.bind.enums.GroupRole;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.bind.vo.GroupMemberVO;

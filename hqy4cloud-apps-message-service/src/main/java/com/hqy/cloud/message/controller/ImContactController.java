@@ -7,6 +7,7 @@ import com.hqy.cloud.message.service.request.ImContactRequestService;
 import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,7 +32,7 @@ public class ImContactController extends BaseController {
      * @param request HttpServletRequest.
      * @return        R.
      */
-    @PostMapping("/contacts")
+    @GetMapping("/contacts")
     public R<ContactVO> getContacts(HttpServletRequest request) {
         Long id = getAccessAccountId(request);
         if (id == null) {
@@ -39,6 +40,7 @@ public class ImContactController extends BaseController {
         }
         return requestService.getContacts(id);
     }
+
 
 
 }
