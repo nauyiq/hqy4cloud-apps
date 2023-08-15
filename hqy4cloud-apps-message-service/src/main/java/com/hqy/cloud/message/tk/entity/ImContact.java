@@ -25,6 +25,7 @@ public class ImContact extends BaseEntity<Long> {
 
     private Long userId;
     private Long contactId;
+    private String index;
     private Boolean group;
     private Boolean notice;
     private Boolean top;
@@ -33,6 +34,10 @@ public class ImContact extends BaseEntity<Long> {
     private Date lastMessageTime;
     private Date created;
     private Date updated;
+
+    public ImContact(Long contactId) {
+        this.contactId = contactId;
+    }
 
     public ImContact(Long id, Long contactId) {
         this.userId = id;
@@ -46,6 +51,12 @@ public class ImContact extends BaseEntity<Long> {
         Date now = new Date();
         this.created = now;
         this.updated = now;
+    }
+
+    public static ImContact of(Long contactId, boolean isGroup) {
+        ImContact contact = new ImContact(contactId);
+        contact.setGroup(isGroup);
+        return contact;
     }
 
     public static ImContact of(Long userId, Long contactId, boolean isGroup) {

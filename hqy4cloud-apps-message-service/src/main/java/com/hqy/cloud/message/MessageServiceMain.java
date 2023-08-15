@@ -1,7 +1,9 @@
 package com.hqy.cloud.message;
 
 import com.corundumstudio.socketio.SocketIOServer;
+import com.hqy.cloud.message.server.ImEventListener;
 import com.hqy.cloud.message.service.SocketIoMessagePushService;
+import com.hqy.cloud.message.socketio.event.ContactOnlineOfflineEvent;
 import com.hqy.cloud.rpc.service.RPCService;
 import com.hqy.cloud.rpc.thrift.service.ThriftServerLauncher;
 import com.hqy.cloud.util.spring.ProjectContextInfo;
@@ -19,7 +21,6 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- *
  * 基于netty的socket.io服务 <br>
  * @author qiyuan.hong
  * @date 2022-03-23 22:08
@@ -49,14 +50,19 @@ public class MessageServiceMain {
 
 
     private static void initializeOnlineOfflineListener(SocketIOServer server) {
+        ImEventListener eventListener = SpringContextHolder.getBean(ImEventListener.class);
         server.addConnectListener(client -> {
             UUID sessionId = client.getSessionId();
-            log.info("@@@ 新连接上线: sessionId = {}", sessionId);
+            long id = Long.parseLong(client.getHandshakeData().getBizId());
+            boolean result = eventListener.doContactOnlineOffline(new ContactOnlineOfflineEvent(id, true));
+            log.info("SessionId online: {}, do online result: {}.", sessionId, result);
         });
 
         server.addDisconnectListener(client -> {
             UUID sessionId = client.getSessionId();
-            log.info("@@@ 旧连接断开: sessionId = {}", sessionId);
+            long id = Long.parseLong(client.getHandshakeData().getBizId());
+            boolean result = eventListener.doContactOnlineOffline(new ContactOnlineOfflineEvent(id, false));
+            log.info("SessionId offline: {}, do offline result: {}.", sessionId, result);
         });
     }
 

@@ -50,24 +50,14 @@ public class ContactVO {
     private Boolean isTop;
 
     /**
-     * 群聊创建者
+     * 未读消息数
      */
-    private String creator;
+    private Integer unread;
 
     /**
-     * 群聊用户角色
+     * 群聊设置
      */
-    private Integer role;
-
-    /**
-     * 群聊邀请确认
-     */
-    private Boolean invite;
-
-    /**
-     * 群公告
-     */
-    private String notice;
+    private GroupContactSettingVO setting;
 
     /**
      * 最后一条消息类型

@@ -1,4 +1,4 @@
-package com.hqy.cloud.message.server;
+package com.hqy.cloud.message.server.support;
 
 import com.alibaba.cloud.nacos.NacosServiceManager;
 import com.hqy.cloud.common.base.project.MicroServiceConstants;
