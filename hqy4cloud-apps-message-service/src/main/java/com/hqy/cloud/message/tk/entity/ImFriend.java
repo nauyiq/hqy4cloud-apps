@@ -24,7 +24,7 @@ public class ImFriend implements PrimaryLessBaseEntity {
 
     private Long id;
     private Long userId;
-    private String mark;
+    private String remark;
     private Boolean status;
     private Date created;
     private Date updated;

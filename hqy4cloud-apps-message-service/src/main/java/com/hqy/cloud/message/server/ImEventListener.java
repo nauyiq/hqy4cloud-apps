@@ -1,6 +1,9 @@
 package com.hqy.cloud.message.server;
 
+import com.hqy.cloud.message.socketio.event.AddGroupEvent;
 import com.hqy.cloud.message.socketio.event.ContactOnlineOfflineEvent;
+
+import java.util.List;
 
 /**
  * @author qiyuan.hong
@@ -16,5 +19,10 @@ public interface ImEventListener {
      */
     boolean doContactOnlineOffline(ContactOnlineOfflineEvent event);
 
-
+    /**
+     * 新增群聊事件
+     * @param events {@link AddGroupEvent}
+     * @return       result.
+     */
+    boolean doAddGroup(List<AddGroupEvent> events);
 }

@@ -2,17 +2,17 @@ package com.hqy.cloud.message.controller;
 
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
-import com.hqy.cloud.message.bind.vo.ContactVO;
+import com.hqy.cloud.message.bind.vo.ConversationVO;
 import com.hqy.cloud.message.service.request.ImContactRequestService;
 import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 聊天联系人相关API
@@ -33,7 +33,7 @@ public class ImContactController extends BaseController {
      * @return        R.
      */
     @GetMapping("/contacts")
-    public R<ContactVO> getContacts(HttpServletRequest request) {
+    public R<List<ConversationVO>> getContacts(HttpServletRequest request) {
         Long id = getAccessAccountId(request);
         if (id == null) {
             return R.failed(ResultCode.NOT_LOGIN);

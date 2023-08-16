@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 /**
+ * 群聊用户表 entity
  * @author qiyuan.hong
  * @version 1.0
  * @date 2023/8/11 11:29
@@ -22,6 +23,7 @@ import java.util.List;
 @AllArgsConstructor
 @Table(name = "t_im_group_member")
 public class ImGroupMember implements PrimaryLessBaseEntity {
+    public static final int MAX_MEMBERS = 500;
 
     @Id
     private Long groupId;
@@ -29,32 +31,31 @@ public class ImGroupMember implements PrimaryLessBaseEntity {
     private Long userId;
     private String displayName;
     private Integer role;
-    private Boolean status;
+    private Boolean top = false;
+    private Boolean notice = true;
     private Date created;
     private Date updated;
+
+    public ImGroupMember(Long groupId) {
+        this.groupId = groupId;
+    }
 
     public ImGroupMember(Long groupId, Long userId) {
         this.groupId = groupId;
         this.userId = userId;
     }
 
-    public ImGroupMember(Long groupId, Boolean status) {
-        this.groupId = groupId;
-        this.status = status;
-    }
-
     public ImGroupMember(Long groupId, Long userId, Integer role) {
         this.groupId = groupId;
         this.userId = userId;
         this.role = role;
-        this.status = true;
         Date now = new Date();
         this.created = now;
         this.updated = now;
     }
 
-    public static ImGroupMember of(Long groupId, Boolean status) {
-        return new ImGroupMember(groupId, status);
+    public static ImGroupMember of(Long groupId) {
+        return new ImGroupMember(groupId);
     }
 
     public static ImGroupMember of(Long groupId, Long userId, String displayName, Integer role) {

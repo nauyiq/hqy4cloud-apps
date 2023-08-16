@@ -1,18 +1,22 @@
 package com.hqy.cloud.message.service.impl;
 
+import com.hqy.cloud.message.bind.ConvertUtil;
 import com.hqy.cloud.message.bind.enums.GroupRole;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
+import com.hqy.cloud.message.server.ImEventListener;
 import com.hqy.cloud.message.service.ImGroupOperationsService;
-import com.hqy.cloud.message.tk.entity.ImContact;
+import com.hqy.cloud.message.socketio.event.AddGroupEvent;
+import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.entity.ImGroup;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
-import com.hqy.cloud.message.tk.service.ImContactTkService;
+import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import com.hqy.cloud.message.tk.service.ImGroupMemberTkService;
 import com.hqy.cloud.message.tk.service.ImGroupTkService;
 import com.hqy.cloud.util.AssertUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -30,15 +34,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
     private final TransactionTemplate template;
-    private final ImContactTkService contactTkService;
+    private final ImConversationTkService contactTkService;
     private final ImGroupTkService groupTkService;
     private final ImGroupMemberTkService groupMemberTkService;
+    private final ImEventListener eventListener;
 
 
     @Override
     public boolean createGroup(Long id, GroupDTO createGroup) {
         ImGroup group = ImGroup.of(createGroup.getName(), id, new Date());
-        Boolean execute = template.execute(status -> {
+        List<ImGroupMember> members = template.execute(status -> {
             try {
                 // insert group.
                 AssertUtil.isTrue(groupTkService.insert(group), "Failed execute to insert group.");
@@ -46,18 +51,19 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
                 // insert group members
                 List<ImGroupMember> groupMembers = ImGroupMember.of(groupId, id, createGroup.getUserIds());
                 AssertUtil.isTrue(groupMemberTkService.insertList(groupMembers), "Failed execute to insert group members.");
-                // insert contact.
-                List<ImContact> contacts = ImContact.ofGroup(groupId, id, createGroup.getUserIds());
-                AssertUtil.isTrue(contactTkService.insertList(contacts), "Failed execute to insert contacts by create group.");
-                return true;
+                // insert conversation.
+                List<ImConversation> conversations = ImConversation.ofGroup(groupId, id, createGroup.getName(), createGroup.getUserIds());
+                AssertUtil.isTrue(contactTkService.insertList(conversations), "Failed execute to insert conversations by create group.");
+                return groupMembers;
             } catch (Throwable cause) {
                 status.setRollbackOnly();
-                return false;
+                return null;
             }
         });
 
-        if (Boolean.TRUE.equals(execute)) {
-            //TODO send socket messages
+        if (CollectionUtils.isNotEmpty(members)) {
+            List<AddGroupEvent> addGroupEvents = ConvertUtil.newAddGroupEvent(members, group);
+            eventListener.doAddGroup(addGroupEvents);
             return true;
         }
         return false;
@@ -102,7 +108,7 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
     @Override
     public boolean addGroupMember(GroupMemberDTO groupMember) {
         ImGroupMember imGroupMember = ImGroupMember.of(groupMember.getGroupId(), groupMember.getId(), groupMember.getGroupName(), GroupRole.COMMON.role);
-        ImContact contact = ImContact.ofGroup(groupMember.getId(), groupMember.getGroupId());
+        ImConversation contact = ImConversation.ofGroup(groupMember.getId(), groupMember.getGroupId());
         Boolean execute = template.execute(status -> {
             try {
                 AssertUtil.isTrue(groupMemberTkService.insert(imGroupMember), "Failed execute to insert group members.");
@@ -127,7 +133,7 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
         Boolean execute = template.execute(status -> {
             try {
                 AssertUtil.isTrue(groupMemberTkService.delete(new ImGroupMember(groupId, id)), "Failed execute to delete group member.");
-                AssertUtil.isTrue(contactTkService.delete(ImContact.of(id, groupId, true)), "Failed execute to delete group contact.");
+                AssertUtil.isTrue(contactTkService.delete(ImConversation.of(id, groupId, true)), "Failed execute to delete group contact.");
                 return true;
             } catch (Throwable cause) {
                 log.error(cause.getMessage());

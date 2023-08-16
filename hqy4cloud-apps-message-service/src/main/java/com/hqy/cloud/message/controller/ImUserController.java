@@ -3,6 +3,7 @@ package com.hqy.cloud.message.controller;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
+import com.hqy.cloud.message.bind.vo.FriendVO;
 import com.hqy.cloud.message.bind.vo.UserImSettingVO;
 import com.hqy.cloud.message.service.request.ImUserRequestService;
 import com.hqy.cloud.web.common.BaseController;
@@ -11,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * 聊天用户相关接口API
@@ -35,6 +37,15 @@ public class ImUserController extends BaseController {
             return R.failed(ResultCode.NOT_LOGIN);
         }
         return requestService.getUserImSetting(accountId);
+    }
+
+    @GetMapping("/friends")
+    public R<List<FriendVO>> getFriends(HttpServletRequest request) {
+        Long id = getAccessAccountId(request);
+        if (id == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        return requestService.getImFriends(id);
     }
 
     /**

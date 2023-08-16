@@ -75,7 +75,7 @@ public class ImGroupRequestServiceImpl implements ImGroupRequestService {
         if (group == null) {
             return R.failed(IM_GROUP_NOT_EXIST);
         }
-        List<ImGroupMember> groupMembers = groupMemberTkService.queryList(ImGroupMember.of(groupId, true));
+        List<ImGroupMember> groupMembers = groupMemberTkService.queryList(ImGroupMember.of(groupId));
         if (CollectionUtils.isEmpty(groupMembers)) {
             return R.ok(Collections.emptyList());
         }

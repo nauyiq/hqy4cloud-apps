@@ -1,7 +1,9 @@
 package com.hqy.cloud.message.service.request;
 
 import com.hqy.cloud.common.bind.R;
-import com.hqy.cloud.message.bind.vo.ContactVO;
+import com.hqy.cloud.message.bind.vo.ConversationVO;
+
+import java.util.List;
 
 /**
  * @author qiyuan.hong
@@ -15,5 +17,5 @@ public interface ImContactRequestService {
      * @param id 用户id
      * @return   R.
      */
-    R<ContactVO> getContacts(Long id);
+    R<List<ConversationVO>> getContacts(Long id);
 }

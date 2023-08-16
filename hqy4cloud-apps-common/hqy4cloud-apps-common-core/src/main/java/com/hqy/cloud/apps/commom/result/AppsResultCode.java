@@ -57,6 +57,11 @@ public enum AppsResultCode implements Result {
      */
     IM_GROUP_NOT_EXIST(10003, "The group not exist."),
 
+    /**
+     * 群聊成员已满
+     */
+    IM_GROUP_MEMBER_COUNT_LIMITED(1004, "The im group is full.")
+
     ;
 
     public final int code;

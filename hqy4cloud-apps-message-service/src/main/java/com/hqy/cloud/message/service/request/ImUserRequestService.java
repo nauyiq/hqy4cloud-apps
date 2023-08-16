@@ -2,7 +2,10 @@ package com.hqy.cloud.message.service.request;
 
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
+import com.hqy.cloud.message.bind.vo.FriendVO;
 import com.hqy.cloud.message.bind.vo.UserImSettingVO;
+
+import java.util.List;
 
 /**
  * @author qiyuan.hong
@@ -16,6 +19,13 @@ public interface ImUserRequestService {
      * @return R.
      */
     R<UserImSettingVO> getUserImSetting(Long id);
+
+    /**
+     * 获取通讯录中的好友
+     * @param id 用户id
+     * @return   R.
+     */
+    R<List<FriendVO>> getImFriends(Long id);
 
     /**
      * 申请添加用户
@@ -49,4 +59,6 @@ public interface ImUserRequestService {
      * @return       R.
      */
     R<Boolean> removeFriend(Long id, Long userId);
+
+
 }

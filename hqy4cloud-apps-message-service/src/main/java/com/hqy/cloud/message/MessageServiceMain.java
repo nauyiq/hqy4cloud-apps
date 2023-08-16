@@ -15,6 +15,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
+import tk.mybatis.spring.annotation.MapperScan;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.UUID;
 @Slf4j
 @SpringBootApplication
 @EnableDiscoveryClient
+@MapperScan(basePackages = {"com.hqy.cloud.message.tk.mapper"})
 @Import(SpringContextHolder.class)
 public class MessageServiceMain {
 

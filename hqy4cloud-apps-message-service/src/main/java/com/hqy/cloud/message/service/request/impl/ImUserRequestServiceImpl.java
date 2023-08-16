@@ -1,10 +1,12 @@
 package com.hqy.cloud.message.service.request.impl;
 
 import com.hqy.account.dto.AccountInfoDTO;
+import com.hqy.account.struct.AccountBaseInfoStruct;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
+import com.hqy.cloud.message.bind.vo.FriendVO;
 import com.hqy.cloud.message.bind.vo.UserImSettingVO;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
 import com.hqy.cloud.message.service.request.ImUserRequestService;
@@ -18,8 +20,16 @@ import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.web.common.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author qiyuan.hong
@@ -40,6 +50,30 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
         ImUserSetting imUserSetting = userSettingTkService.queryById(id);
         UserImSettingVO vo = imUserSetting == null ? UserImSettingVO.of() : UserImSettingVO.of(imUserSetting);
         return R.ok(vo);
+    }
+
+    @Override
+    public R<List<FriendVO>> getImFriends(Long id) {
+        List<ImFriend> imFriends = friendTkService.queryList(ImFriend.of(id, null, true));
+        if (CollectionUtils.isEmpty(imFriends)) {
+            return R.ok(Collections.emptyList());
+        }
+        List<Long> ids = imFriends.parallelStream().map(ImFriend::getUserId).toList();
+        Map<Long, AccountBaseInfoStruct> map = AccountRpcUtil.getAccountBaseInfoMap(ids);
+        List<FriendVO> vos = imFriends.stream().map(friend -> {
+            Long userId = friend.getUserId();
+            AccountBaseInfoStruct struct = map.get(userId);
+            if (struct == null) {
+                return null;
+            }
+            return FriendVO.builder()
+                    .id(friend.getUserId().toString())
+                    .avatar(struct.avatar)
+                    .username(struct.username)
+                    .displayName(StringUtils.isBlank(friend.getRemark()) ? struct.nickname : friend.getRemark())
+                    .build();
+        }).filter(Objects::nonNull).toList();
+        return R.ok(vos);
     }
 
     @Override
@@ -96,7 +130,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
             return R.failed(AppsResultCode.IM_NOT_FRIEND);
         }
         ImFriend friend = ImFriend.of(id, userId, true);
-        friend.setMark(mark);
+        friend.setRemark(mark);
         return friendTkService.updateSelective(friend) ? R.ok() : R.failed();
     }
 

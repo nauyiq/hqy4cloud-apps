@@ -1,21 +1,24 @@
-package com.hqy.cloud.message.bind.vo;
+package com.hqy.cloud.message.socketio.event;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
+ * 新增群聊事件
  * @author qiyuan.hong
  * @version 1.0
- * @date 2023/8/11 14:01
+ * @date 2023/8/16 14:31
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ContactVO {
+public class AddGroupEvent implements ImEvent {
 
     /**
-     * 联系人id
+     * id
      */
     private String id;
 
@@ -28,11 +31,6 @@ public class ContactVO {
      * 头像
      */
     private String avatar;
-
-    /**
-     * 通讯录索引，传入字母或数字进行排序，索引可以显示自定义文字“[1]群组
-     */
-    private String index;
 
     /**
      * 是否是群
@@ -55,9 +53,24 @@ public class ContactVO {
     private Integer unread;
 
     /**
-     * 群聊设置
+     * 群聊用户角色
      */
-    private GroupContactSettingVO setting;
+    private Integer role;
+
+    /**
+     * 群聊邀请确认
+     */
+    private Boolean invite;
+
+    /**
+     * 群公告
+     */
+    private String notice;
+
+    /**
+     * 群聊创建者
+     */
+    private String creator;
 
     /**
      * 最后一条消息类型
@@ -74,4 +87,9 @@ public class ContactVO {
      */
     private String lastContent;
 
+
+    @Override
+    public String name() {
+        return "AddGroupEvent";
+    }
 }

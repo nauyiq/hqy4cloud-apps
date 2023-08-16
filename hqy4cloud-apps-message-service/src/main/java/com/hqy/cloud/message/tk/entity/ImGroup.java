@@ -2,25 +2,32 @@ package com.hqy.cloud.message.tk.entity;
 
 import com.hqy.cloud.db.tk.model.BaseEntity;
 import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Table;
 import java.util.Date;
 
 /**
+ * 群聊表 entity
  * @author qiyuan.hong
  * @version 1.0
  * @date 2023/8/11 11:25
  */
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "t_im_group")
+@EqualsAndHashCode(callSuper = true)
 public class ImGroup extends BaseEntity<Long> {
 
     private String name;
+    private String avatar;
     private Long creator;
     private String notice;
-    private Boolean status;
+    private Boolean invite = true;
+    private Boolean status = true;
 
     public ImGroup(Long id) {
         super.setId(id);
@@ -35,42 +42,8 @@ public class ImGroup extends BaseEntity<Long> {
         return new ImGroup(groupId);
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Long getCreator() {
-        return creator;
-    }
-
-    public void setCreator(Long creator) {
-        this.creator = creator;
-    }
-
-    public String getNotice() {
-        return notice;
-    }
-
-    public void setNotice(String notice) {
-        this.notice = notice;
-    }
-
-    public Boolean getStatus() {
-        return status;
-    }
-
-    public void setStatus(Boolean status) {
-        this.status = status;
-    }
-
     public static ImGroup of(String name, Long creator) {
-        ImGroup imGroup = new ImGroup(name, creator);
-        imGroup.setStatus(true);
-        return imGroup;
+        return new ImGroup(name, creator);
     }
 
     public static ImGroup of(String name, Long creator, Date now) {
