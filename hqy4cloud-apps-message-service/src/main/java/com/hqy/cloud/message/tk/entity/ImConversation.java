@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Column;
 import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.Date;
@@ -20,14 +21,17 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "t_im_contact")
+@Table(name = "t_im_conversation")
 @EqualsAndHashCode(callSuper = true)
 public class ImConversation extends BaseEntity<Long> {
 
     private Long userId;
     private Long contactId;
+    @Column(name = "is_group")
     private Boolean group;
+    @Column(name = "is_notice")
     private Boolean notice = true;
+    @Column(name = "is_top")
     private Boolean top = false;
     private String displayName;
     private String lastMessageType;

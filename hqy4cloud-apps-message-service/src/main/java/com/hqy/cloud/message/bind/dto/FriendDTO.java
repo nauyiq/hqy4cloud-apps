@@ -20,6 +20,11 @@ public class FriendDTO {
     private Long userId;
 
     /**
+     * 用户名
+     */
+    private String username;
+
+    /**
      * 备注
      */
     private String remark;

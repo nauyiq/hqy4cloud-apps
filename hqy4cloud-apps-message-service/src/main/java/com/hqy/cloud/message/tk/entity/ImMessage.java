@@ -4,6 +4,7 @@ import com.hqy.cloud.db.tk.model.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Column;
 import javax.persistence.Table;
 
 /**
@@ -21,6 +22,7 @@ public class ImMessage extends BaseEntity<Long> {
     private Long to;
     private String type;
     private String content;
+    @Column(name = "is_read")
     private Boolean read;
 
     public Boolean getGroup() {

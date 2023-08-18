@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.util.ArrayList;
@@ -31,7 +32,9 @@ public class ImGroupMember implements PrimaryLessBaseEntity {
     private Long userId;
     private String displayName;
     private Integer role;
+    @Column(name = "is_top")
     private Boolean top = false;
+    @Column(name = "is_notice")
     private Boolean notice = true;
     private Date created;
     private Date updated;

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Column;
 import javax.persistence.Table;
 import java.util.Date;
 
@@ -26,6 +27,7 @@ public class ImGroup extends BaseEntity<Long> {
     private String avatar;
     private Long creator;
     private String notice;
+    @Column(name = "is_invite")
     private Boolean invite = true;
     private Boolean status = true;
 

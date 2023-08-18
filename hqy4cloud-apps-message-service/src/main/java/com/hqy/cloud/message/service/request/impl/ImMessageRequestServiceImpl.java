@@ -58,9 +58,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
             }
             authorization = authorization + "&hash=" + hash;
         }
-
-        String connectionUrl = host + starter.contextPath();
-        SocketIoConnection connection = new SocketIoConnection(connectionUrl, authorization, starter.contextPath(), host);
+        SocketIoConnection connection = new SocketIoConnection(host, authorization, starter.contextPath(), host);
         return R.ok(connection);
     }
 }

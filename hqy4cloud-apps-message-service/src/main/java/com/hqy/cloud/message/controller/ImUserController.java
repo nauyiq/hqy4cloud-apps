@@ -60,7 +60,7 @@ public class ImUserController extends BaseController {
         if (id == null) {
             return R.failed(ResultCode.NOT_LOGIN);
         }
-        if (add == null || add.getUserId() == null) {
+        if (add == null || (add.getUserId() == null)) {
             return R.failed(ResultCode.ERROR_PARAM_UNDEFINED);
         }
         return requestService.addImFriend(id, add);
