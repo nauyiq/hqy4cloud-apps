@@ -28,17 +28,17 @@ public class ImContactController extends BaseController {
     private final ImContactRequestService requestService;
 
     /**
-     * 获取当前用户的聊天联系人
+     * 获取当前用户的聊天会话
      * @param request HttpServletRequest.
      * @return        R.
      */
-    @GetMapping("/contacts")
-    public R<List<ConversationVO>> getContacts(HttpServletRequest request) {
+    @GetMapping("/conversations")
+    public R<List<ConversationVO>> getConversations(HttpServletRequest request) {
         Long id = getAccessAccountId(request);
         if (id == null) {
             return R.failed(ResultCode.NOT_LOGIN);
         }
-        return requestService.getContacts(id);
+        return requestService.getConversations(id);
     }
 
 

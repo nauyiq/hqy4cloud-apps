@@ -13,9 +13,9 @@ import java.util.List;
 public interface ImContactRequestService {
 
     /**
-     * 获取聊天联系人
+     * 获取聊天会话
      * @param id 用户id
      * @return   R.
      */
-    R<List<ConversationVO>> getContacts(Long id);
+    R<List<ConversationVO>> getConversations(Long id);
 }

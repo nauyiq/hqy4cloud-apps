@@ -4,6 +4,7 @@ import com.hqy.cloud.db.tk.model.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Column;
 import javax.persistence.Table;
 
 /**
@@ -16,9 +17,13 @@ import javax.persistence.Table;
 @Table(name = "t_im_user_setting")
 public class ImUserSetting extends BaseEntity<Long> {
 
+    @Column(name = "is_private_chat")
     private Boolean privateChat;
+    @Column(name = "is_invite_group")
     private Boolean inviteGroup;
+    @Column(name = "is_online")
     private Boolean oline;
+    @Column(name = "is_clear_msg")
     private Boolean clearMsg;
     private Integer clearMsgDate;
 

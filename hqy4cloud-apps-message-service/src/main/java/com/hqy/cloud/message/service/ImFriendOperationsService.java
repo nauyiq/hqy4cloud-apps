@@ -2,6 +2,8 @@ package com.hqy.cloud.message.service;
 
 import com.hqy.cloud.message.tk.entity.ImFriendApplication;
 
+import java.util.Map;
+
 /**
  * 聊天好友相关操作service
  * @author qiyuan.hong
@@ -32,4 +34,12 @@ public interface ImFriendOperationsService {
      * @return     result.
      */
     boolean removeFriend(Long from, Long to);
+
+    /**
+     * 获取指定用户的好友备注列表
+     * @param id 用户id
+     * @return   好友备注, key:userId value:好友备注
+     */
+    Map<String, String> getFriendRemarks(Long id);
+
 }
