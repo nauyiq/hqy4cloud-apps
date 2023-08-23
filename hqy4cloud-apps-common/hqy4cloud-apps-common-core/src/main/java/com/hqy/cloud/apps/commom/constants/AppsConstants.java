@@ -15,6 +15,13 @@ public interface AppsConstants {
     }
 
 
+    interface Message {
+        String IM_MESSAGE_INDEX= "im_message";
+        String IM_MESSAGE_SUCCESS = "succeed";
+        String IM_MESSAGE_FAILED = "failed";
+    }
+
+
 
 
 }

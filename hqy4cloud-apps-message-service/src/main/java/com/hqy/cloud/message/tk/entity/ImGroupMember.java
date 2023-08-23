@@ -61,6 +61,10 @@ public class ImGroupMember implements PrimaryLessBaseEntity {
         return new ImGroupMember(groupId);
     }
 
+    public static ImGroupMember of(Long groupId, Long userId) {
+        return new ImGroupMember(groupId, userId);
+    }
+
     public static ImGroupMember of(Long groupId, Long userId, String displayName, Integer role) {
         ImGroupMember member = new ImGroupMember(groupId, userId);
         member.setDisplayName(displayName);

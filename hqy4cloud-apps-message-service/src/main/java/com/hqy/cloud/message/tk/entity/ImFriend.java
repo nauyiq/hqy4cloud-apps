@@ -29,6 +29,7 @@ public class ImFriend implements PrimaryLessBaseEntity {
     @Id
     private Long userId;
     private String remark;
+    @Column(name = "`index`")
     private String index;
     @Column(name = "is_notice")
     private Boolean notice;

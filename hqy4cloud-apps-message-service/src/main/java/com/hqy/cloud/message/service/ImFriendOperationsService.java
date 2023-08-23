@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.service;
 
+import com.hqy.cloud.message.bind.dto.ContactDTO;
 import com.hqy.cloud.message.tk.entity.ImFriendApplication;
 
 import java.util.Map;
@@ -42,4 +43,11 @@ public interface ImFriendOperationsService {
      */
     Map<String, String> getFriendRemarks(Long id);
 
+
+    /**
+     * 获取用户通讯录列表
+     * @param userId 用户id
+     * @return       {@link ContactDTO}
+     */
+    ContactDTO queryUserContacts(Long userId);
 }

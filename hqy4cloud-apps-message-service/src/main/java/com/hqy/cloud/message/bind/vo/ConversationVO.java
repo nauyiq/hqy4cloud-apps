@@ -22,6 +22,11 @@ public class ConversationVO {
     private String id;
 
     /**
+     * 会话id
+     */
+    private String conversationId;
+
+    /**
      * 展示用户名
      */
     private String displayName;

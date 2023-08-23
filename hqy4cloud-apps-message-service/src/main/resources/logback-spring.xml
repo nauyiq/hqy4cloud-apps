@@ -91,5 +91,7 @@
     <logger name="tk.mybatis" level="WARN"/>
     <logger name="io.netty" level="WARN"/>
     <logger name="io.lettuce" level="WARN"/>
+    <logger name="org.elasticsearch" level="INFO"/>
+    <logger name="org.apache" level="INFO"/>
 
 </configuration>

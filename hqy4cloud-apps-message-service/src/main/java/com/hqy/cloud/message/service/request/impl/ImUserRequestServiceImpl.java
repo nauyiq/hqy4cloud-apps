@@ -6,6 +6,8 @@ import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
+import com.hqy.cloud.message.bind.dto.GroupContactDTO;
+import com.hqy.cloud.message.bind.vo.ContactVO;
 import com.hqy.cloud.message.bind.vo.FriendVO;
 import com.hqy.cloud.message.bind.vo.UserImSettingVO;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
@@ -15,6 +17,7 @@ import com.hqy.cloud.message.tk.entity.ImFriendApplication;
 import com.hqy.cloud.message.tk.entity.ImUserSetting;
 import com.hqy.cloud.message.tk.service.ImFriendApplicationTkService;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
+import com.hqy.cloud.message.tk.service.ImGroupTkService;
 import com.hqy.cloud.message.tk.service.ImUserSettingTkService;
 import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.web.common.AccountRpcUtil;
@@ -25,10 +28,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @author qiyuan.hong
@@ -41,6 +41,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
     private final TransactionTemplate template;
     private final ImFriendOperationsService imFriendOperationsService;
     private final ImFriendTkService friendTkService;
+    private final ImGroupTkService groupTkService;
     private final ImUserSettingTkService userSettingTkService;
     private final ImFriendApplicationTkService applicationTkService;
 
@@ -74,6 +75,40 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
         }).filter(Objects::nonNull).toList();
         return R.ok(vos);
     }
+
+    @Override
+    public R<List<ContactVO>> getUserImContacts(Long userId) {
+        List<ContactVO> contacts = new ArrayList<>();
+        //获取群聊
+        List<GroupContactDTO> groupContacts = groupTkService.queryGroupContact(userId);
+        if (CollectionUtils.isNotEmpty(groupContacts)) {
+            contacts.addAll(groupContacts.parallelStream().map(ContactVO::new).toList());
+        }
+        //获取好友
+        List<ImFriend> imFriends = friendTkService.queryList(ImFriend.of(userId, null));
+        if (CollectionUtils.isNotEmpty(imFriends)) {
+            List<Long> ids = imFriends.parallelStream().map(ImFriend::getUserId).toList();
+            Map<Long, AccountBaseInfoStruct> structMap = AccountRpcUtil.getAccountBaseInfoMap(ids);
+            List<ContactVO> vos = imFriends.parallelStream().map(friend -> {
+                AccountBaseInfoStruct struct = structMap.get(friend.getUserId());
+                if (struct == null) {
+                    return null;
+                }
+                return ContactVO.builder()
+                        .id(friend.getUserId().toString())
+                        .displayName(StringUtils.isBlank(friend.getRemark()) ? struct.nickname : friend.getRemark())
+                        .avatar(struct.avatar)
+                        .isGroup(false)
+                        .isNotice(friend.getNotice())
+                        .isTop(friend.getTop())
+                        .index(friend.getIndex()).build();
+            }).filter(Objects::nonNull).toList();
+            contacts.addAll(vos);
+        }
+
+        return R.ok(contacts);
+    }
+
 
     @Override
     public R<Boolean> addImFriend(Long id, FriendDTO add) {

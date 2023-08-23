@@ -2,12 +2,15 @@ package com.hqy.cloud.message.tk.service.impl;
 
 import com.hqy.cloud.db.tk.BaseTkMapper;
 import com.hqy.cloud.db.tk.support.BaseTkServiceImpl;
+import com.hqy.cloud.message.bind.dto.GroupContactDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.tk.entity.ImGroup;
 import com.hqy.cloud.message.tk.mapper.ImGroupMapper;
 import com.hqy.cloud.message.tk.service.ImGroupTkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @author qiyuan.hong
@@ -27,5 +30,10 @@ public class ImGroupTkServiceImpl extends BaseTkServiceImpl<ImGroup, Long> imple
     @Override
     public GroupMemberDTO getGroupMemberInfo(Long id, Long groupId) {
         return mapper.getGroupMemberInfo(id, groupId);
+    }
+
+    @Override
+    public List<GroupContactDTO> queryGroupContact(Long userId) {
+        return mapper.queryGroupContact(userId);
     }
 }

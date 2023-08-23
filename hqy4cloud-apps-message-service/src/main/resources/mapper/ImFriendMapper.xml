@@ -4,8 +4,41 @@
 <mapper namespace="com.hqy.cloud.message.tk.mapper.ImFriendMapper">
 
 
+    <resultMap id="ContactResultMap" type="com.hqy.cloud.message.bind.dto.ContactDTO">
+        <collection property="groupContacts" ofType="com.hqy.cloud.message.bind.dto.GroupContactDTO">
+            <id column="groupId" property="groupId"/>
+            <id column="name" property="name"/>
+            <id column="groupIndex" property="groupIndex"/>
+            <id column="groupAvatar" property="groupAvatar"/>
+            <id column="creator" property="creator"/>
+            <id column="groupNotice" property="groupNotice"/>
+            <id column="groupInvite" property="groupInvite"/>
+            <id column="groupTop" property="groupTop"/>
+        </collection>
+        <collection property="friendContacts" ofType="com.hqy.cloud.message.bind.dto.FriendContactDTO">
+            <id column="id" property="id"/>
+            <result column="remark" property="remark"/>
+            <result column="isNotice" property="isNotice"/>
+            <result column="is_top" property="isTop"/>
+            <result column="index" property="index"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryUserContacts" resultType="com.hqy.cloud.message.bind.dto.ContactDTO">
+        SELECT g.id groupId, g.name, g.index groupIndex, g.avatar groupAvatar, g.creator, g.is_notice groupNotice,
+               g.is_invite groupInvite, g.is_top groupTop, f.id, f.remark, f.index, f.is_notice, f.is_top
+        FROM `t_im_friend` f,
+             (SELECT a.id, a.`name`, a.`creator`, a.avatar, a.`index`, a.`is_invite`, b.`is_notice`,  b.`is_top`
+              FROM `t_im_group` a
+                       LEFT JOIN `t_im_group_member` b ON a.id = b.group_id
+              WHERE a.`creator` = #{id} AND b.user_id = #{id}) g
+        WHERE f.`id` = #{id}
+    </select>
+
     <update id="removeFriend">
         UPDATE t_im_friend SET `status` = 0
         WHERE (id = #{from} AND user_id = #{to}) OR (id = #{to} AND user_id = #{from})
     </update>
+
+
 </mapper>

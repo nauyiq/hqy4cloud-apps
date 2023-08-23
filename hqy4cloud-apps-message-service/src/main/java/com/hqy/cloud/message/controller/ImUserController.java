@@ -3,6 +3,7 @@ package com.hqy.cloud.message.controller;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
+import com.hqy.cloud.message.bind.vo.ContactVO;
 import com.hqy.cloud.message.bind.vo.FriendVO;
 import com.hqy.cloud.message.bind.vo.UserImSettingVO;
 import com.hqy.cloud.message.service.request.ImUserRequestService;
@@ -37,6 +38,15 @@ public class ImUserController extends BaseController {
             return R.failed(ResultCode.NOT_LOGIN);
         }
         return requestService.getUserImSetting(accountId);
+    }
+
+    @GetMapping("/contacts")
+    public R<List<ContactVO>> getUserImContacts(HttpServletRequest request) {
+        Long userId = getAccessAccountId(request);
+        if (userId == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        return requestService.getUserImContacts(userId);
     }
 
     @GetMapping("/friends")

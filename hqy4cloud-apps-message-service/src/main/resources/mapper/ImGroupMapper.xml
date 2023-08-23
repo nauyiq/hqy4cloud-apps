@@ -11,4 +11,19 @@
         WHERE g.id = #{groupId} AND `status` = 1
     </select>
 
+    <select id="queryGroupContact" resultType="com.hqy.cloud.message.bind.dto.GroupContactDTO">
+        SELECT
+        g.id groupId,
+        g.`index` groupIndex,
+        g.name,
+        g.avatar groupAvatar,
+        g.creator,
+        g.is_invite groupInvite,
+        m.is_top groupTop,
+        m.is_notice groupNotice
+        FROM `t_im_group` g,
+        (SELECT is_top, is_notice FROM t_im_group_member WHERE `user_id` = #{creator} AND `role` = 1  ) m
+        WHERE g.creator = #{creator}
+    </select>
+
 </mapper>

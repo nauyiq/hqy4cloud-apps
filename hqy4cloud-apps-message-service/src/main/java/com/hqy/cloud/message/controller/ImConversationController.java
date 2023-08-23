@@ -3,7 +3,7 @@ package com.hqy.cloud.message.controller;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.vo.ConversationVO;
-import com.hqy.cloud.message.service.request.ImContactRequestService;
+import com.hqy.cloud.message.service.request.ImConversationRequestService;
 import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,8 +24,8 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/im")
-public class ImContactController extends BaseController {
-    private final ImContactRequestService requestService;
+public class ImConversationController extends BaseController {
+    private final ImConversationRequestService requestService;
 
     /**
      * 获取当前用户的聊天会话

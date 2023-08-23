@@ -1,7 +1,10 @@
 package com.hqy.cloud.message.tk.service;
 
 import com.hqy.cloud.db.tk.PrimaryLessTkService;
+import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
+
+import java.util.List;
 
 /**
  * @author qiyuan.hong
@@ -9,4 +12,12 @@ import com.hqy.cloud.message.tk.entity.ImGroupMember;
  * @date 2023/8/11 11:31
  */
 public interface ImGroupMemberTkService extends PrimaryLessTkService<ImGroupMember> {
+
+    /**
+     * 查询群聊用户信息
+     * @param id       用户id
+     * @param groupIds 群聊id集合
+     * @return         {@link GroupMemberDTO}
+     */
+    List<GroupMemberDTO> queryMembers(Long id, List<Long> groupIds);
 }

@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.bind.vo;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,14 +11,20 @@ import lombok.NoArgsConstructor;
  * @date 2023/8/11 16:37
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class MessageVO {
 
     /**
-     * 消息id
+     * 主键id
      */
     private String id;
+
+    /**
+     * 消息id
+     */
+    private String messageId;
 
     /**
      * 是否是群聊消息
@@ -34,10 +41,6 @@ public class MessageVO {
      */
     private UserInfoVO fromUser;
 
-    /**
-     * 文件信息
-     */
-    private MessageFileVO fileInfo;
 
     /**
      * 联系人/群 id

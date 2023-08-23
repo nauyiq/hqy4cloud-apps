@@ -2,6 +2,7 @@ package com.hqy.cloud.message.service.request;
 
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
+import com.hqy.cloud.message.bind.vo.ContactVO;
 import com.hqy.cloud.message.bind.vo.FriendVO;
 import com.hqy.cloud.message.bind.vo.UserImSettingVO;
 
@@ -26,6 +27,13 @@ public interface ImUserRequestService {
      * @return   R.
      */
     R<List<FriendVO>> getImFriends(Long id);
+
+    /**
+     * 获取通讯录列表
+     * @param userId 用户id
+     * @return {@link ContactVO}
+     */
+    R<List<ContactVO>> getUserImContacts(Long userId);
 
     /**
      * 申请添加用户
@@ -59,6 +67,7 @@ public interface ImUserRequestService {
      * @return       R.
      */
     R<Boolean> removeFriend(Long id, Long userId);
+
 
 
 }

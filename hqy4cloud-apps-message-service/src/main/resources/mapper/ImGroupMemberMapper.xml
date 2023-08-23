@@ -4,4 +4,14 @@
 <mapper namespace="com.hqy.cloud.message.tk.mapper.ImGroupMemberMapper">
 
 
+    <select id="queryMembers" resultType="com.hqy.cloud.message.bind.dto.GroupMemberDTO">
+        SELECT m.user_id, g.id groupId, g.name groupName, g.avatar groupAvatar, g.is_invite groupInvite, g.creator groupCreator, m.role
+        FROM t_im_group g
+        LEFT JOIN t_im_group_member m on g.id = m.group_id
+        WHERE m.user_id = #{id} AND g.id IN
+        <foreach collection="groupIds" item="groupId" separator="," open="(" close=")">
+            #{groupId}
+        </foreach>
+    </select>
+
 </mapper>

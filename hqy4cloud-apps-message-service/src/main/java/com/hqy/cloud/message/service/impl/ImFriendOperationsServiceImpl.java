@@ -2,11 +2,13 @@ package com.hqy.cloud.message.service.impl;
 
 import cn.hutool.core.map.MapUtil;
 import com.hqy.cloud.common.base.project.MicroServiceConstants;
+import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
 import com.hqy.cloud.foundation.cache.redis.support.SmartRedisManager;
+import com.hqy.cloud.message.bind.dto.ContactDTO;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
 import com.hqy.cloud.message.tk.entity.ImFriend;
 import com.hqy.cloud.message.tk.entity.ImFriendApplication;
-import com.hqy.cloud.message.tk.service.ImConversationTkService;
+import com.hqy.cloud.message.tk.mapper.ImFriendMapper;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import com.hqy.cloud.util.AssertUtil;
 import lombok.RequiredArgsConstructor;
@@ -31,7 +33,6 @@ import static com.hqy.cloud.common.base.lang.StringConstants.Symbol.UNION;
 @RequiredArgsConstructor
 public class ImFriendOperationsServiceImpl implements ImFriendOperationsService {
     private final ImFriendTkService friendTkService;
-    private final ImConversationTkService imConversationTkService;
     private static final String KEY = MicroServiceConstants.MESSAGE_NETTY_SERVICE + UNION + "IM_FRIEND";
     private static final String REMARK_KEY = MicroServiceConstants.MESSAGE_NETTY_SERVICE + UNION + "IM_FRIEND_REMARK";
     private static final String TRUE = "1";
@@ -113,13 +114,21 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
         return map;
     }
 
+    @Override
+    public ContactDTO queryUserContacts(Long userId) {
+        ImFriendMapper mapper = (ImFriendMapper) friendTkService.getTkDao();
+        return mapper.queryUserContacts(userId);
+    }
+
     private String genKey(Long from, Long to) {
-        return KEY.concat(UNION).concat(from.toString()).concat(UNION).concat(to.toString());
+        return KEY + UNION + from + UNION + to;
     }
 
     private String genRemarkKey(Long id) {
         return REMARK_KEY + UNION + id;
     }
+
+
 
 
 

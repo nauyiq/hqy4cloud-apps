@@ -10,7 +10,7 @@ import java.util.List;
  * @version 1.0
  * @date 2023/8/15 17:13
  */
-public interface ImContactRequestService {
+public interface ImConversationRequestService {
 
     /**
      * 获取聊天会话
@@ -18,4 +18,5 @@ public interface ImContactRequestService {
      * @return   R.
      */
     R<List<ConversationVO>> getConversations(Long id);
+
 }

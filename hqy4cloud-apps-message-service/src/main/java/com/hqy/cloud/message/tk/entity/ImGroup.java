@@ -24,6 +24,7 @@ import java.util.Date;
 public class ImGroup extends BaseEntity<Long> {
 
     private String name;
+    private String index;
     private String avatar;
     private Long creator;
     private String notice;
