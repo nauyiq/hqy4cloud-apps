@@ -1,12 +1,12 @@
 package com.hqy.cloud.message.service.impl;
 
 import com.hqy.cloud.message.bind.ConvertUtil;
-import com.hqy.cloud.message.bind.enums.GroupRole;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
+import com.hqy.cloud.message.bind.enums.GroupRole;
 import com.hqy.cloud.message.server.ImEventListener;
 import com.hqy.cloud.message.service.ImGroupOperationsService;
-import com.hqy.cloud.message.socketio.event.AddGroupEvent;
+import com.hqy.cloud.message.bind.event.support.AddGroupEvent;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.entity.ImGroup;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
@@ -40,6 +40,7 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
     private final ImEventListener eventListener;
 
 
+
     @Override
     public boolean createGroup(Long id, GroupDTO createGroup) {
         ImGroup group = ImGroup.of(createGroup.getName(), id, new Date());
@@ -52,7 +53,7 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
                 List<ImGroupMember> groupMembers = ImGroupMember.of(groupId, id, createGroup.getUserIds());
                 AssertUtil.isTrue(groupMemberTkService.insertList(groupMembers), "Failed execute to insert group members.");
                 // insert conversation.
-                List<ImConversation> conversations = ImConversation.ofGroup(groupId, id, createGroup.getName(), createGroup.getUserIds());
+                List<ImConversation> conversations = ImConversation.ofGroup(groupId, id, createGroup.getUserIds());
                 AssertUtil.isTrue(contactTkService.insertList(conversations), "Failed execute to insert conversations by create group.");
                 return groupMembers;
             } catch (Throwable cause) {
@@ -63,7 +64,7 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
 
         if (CollectionUtils.isNotEmpty(members)) {
             List<AddGroupEvent> addGroupEvents = ConvertUtil.newAddGroupEvent(members, group);
-            eventListener.doAddGroup(addGroupEvents);
+            eventListener.onAddGroup(addGroupEvents);
             return true;
         }
         return false;
@@ -149,4 +150,12 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
 
         return false;
     }
+
+    @Override
+    public boolean isGroupMember(Long id, Long groupId) {
+        ImGroupMember member = groupMemberTkService.queryOne(new ImGroupMember(groupId, id));
+        return member != null;
+    }
+
+
 }

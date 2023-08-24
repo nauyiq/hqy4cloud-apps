@@ -6,20 +6,26 @@ import com.alibaba.nacos.api.naming.NamingService;
 import com.alibaba.nacos.api.naming.pojo.Instance;
 import com.corundumstudio.socketio.ex.SocketProjectContext;
 import com.hqy.account.struct.AccountBaseInfoStruct;
+import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.base.config.ConfigConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatus;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatusManager;
+import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessagesRequestParamDTO;
-import com.hqy.cloud.message.bind.vo.MessageVO;
+import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.bind.vo.UserInfoVO;
+import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.es.service.ImMessageElasticService;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
+import com.hqy.cloud.message.service.ImGroupOperationsService;
+import com.hqy.cloud.message.service.ImMessageOperationsService;
 import com.hqy.cloud.message.service.request.ImMessageRequestService;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
+import com.hqy.cloud.message.tk.service.ImUserSettingTkService;
 import com.hqy.cloud.socketio.starter.core.SocketIoServerStarter;
 import com.hqy.cloud.socketio.starter.core.support.SocketIoConnectionUtil;
 import com.hqy.cloud.util.crypto.symmetric.JWT;
@@ -53,9 +59,13 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
     private final SocketIoServerStarter starter;
     private final Environment environment;
     private final NacosServiceManager nacosServiceManager;
+
+    private final ImUserSettingTkService imUserSettingTkService;
     private final ImConversationTkService conversationTkService;
     private final ImMessageElasticService imMessageElasticService;
+    private final ImMessageOperationsService messageOperationsService;
     private final ImFriendOperationsService friendOperationsService;
+    private final ImGroupOperationsService groupOperationsService;
 
     @Override
     public R<SocketIoConnection> genWsMessageConnection(HttpServletRequest request, String bizId) {
@@ -84,13 +94,13 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
     }
 
     @Override
-    public R<PageResult<MessageVO>> getImMessages(Long id, MessagesRequestParamDTO params) {
+    public R<PageResult<ImMessageVO>> getImMessages(Long id, MessagesRequestParamDTO params) {
         // query from es.
         ImConversation imConversation = conversationTkService.queryById(params.getConversationId());
         if (imConversation == null || (!id.equals(imConversation.getUserId()))) {
             return R.ok(new PageResult<>());
         }
-        PageResult<ImMessageDoc> result = imMessageElasticService.queryPage(params);
+        PageResult<ImMessageDoc> result = imMessageElasticService.queryPage(id, params);
         if (result == null || CollectionUtils.isEmpty(result.getResultList())) {
             return R.ok(new PageResult<>());
         }
@@ -106,25 +116,43 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         Map<String, String> friendRemarks = friendOperationsService.getFriendRemarks(id);
         Map<Long, AccountBaseInfoStruct> infoMap = AccountRpcUtil.getAccountBaseInfoMap(ids);
         //convert to message vo
-        List<MessageVO> messages = resultList.stream().map(doc -> {
+        List<ImMessageVO> messages = resultList.stream().map(doc -> {
             Long from = doc.getFrom();
             String remark = friendRemarks.get(from.toString());
             AccountBaseInfoStruct struct = infoMap.get(from);
             if (struct == null) {
                 return null;
             }
-            return MessageVO.builder()
-                    .id(doc.getId().toString())
-                    .messageId(doc.getMessageId())
+            return ImMessageVO.builder()
+                    .id(doc.getMessageId())
+                    .messageId(doc.getId().toString())
                     .isGroup(doc.getGroup())
                     .isRead(doc.getRead())
                     .fromUser(new UserInfoVO(from.toString(), struct.username, struct.nickname, struct.avatar, remark))
                     .toContactId(doc.getTo().toString())
+                    .content(doc.getType().equals(ImMessageType.TEXT.type) ? doc.getContent() : doc.getPath())
                     .status(doc.getStatus() ? IM_MESSAGE_SUCCESS : IM_MESSAGE_FAILED)
                     .type(doc.getType())
                     .sendTime(doc.getCreated())
                     .build();
         }).toList();
         return R.ok(new PageResult<>(result.getCurrentPage(), result.getPages(), result.getTotal(), messages));
+    }
+
+    @Override
+    public R<ImMessageVO> sendImMessage(Long id, ImMessageDTO message) {
+        Long to = Long.parseLong(message.getToContactId());
+        //check user enable chat.
+        if (message.getIsGroup()) {
+            if (groupOperationsService.isGroupMember(id, to)) {
+                return R.failed(AppsResultCode.IM_NOT_GROUP_MEMBER);
+            }
+        } else {
+            if (!friendOperationsService.isFriend(id, to) && !imUserSettingTkService.enabledPrivateChat(id)) {
+                return R.failed(AppsResultCode.IM_NOT_FRIEND);
+            }
+        }
+        ImMessageVO messageVo = messageOperationsService.sendImMessage(id, message);
+        return R.ok(messageVo);
     }
 }

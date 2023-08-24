@@ -2,7 +2,10 @@ package com.hqy.cloud.message.tk.mapper;
 
 import com.hqy.cloud.db.tk.BaseTkMapper;
 import com.hqy.cloud.message.tk.entity.ImConversation;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * @author qiyuan.hong
@@ -11,4 +14,11 @@ import org.springframework.stereotype.Repository;
  */
 @Repository
 public interface ImConversationMapper extends BaseTkMapper<ImConversation, Long> {
+
+    /**
+     * 批量新增或修改
+     * @param imConversations entities
+     * @return                result
+     */
+    int insertOrUpdate(@Param("conversations") List<ImConversation> imConversations);
 }

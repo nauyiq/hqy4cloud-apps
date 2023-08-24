@@ -1,4 +1,6 @@
-package com.hqy.cloud.message.socketio.event;
+package com.hqy.cloud.message.bind.event.support;
+
+import com.hqy.cloud.message.bind.event.ImEvent;
 
 /**
  * 用户上下线事件

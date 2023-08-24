@@ -6,7 +6,11 @@ import com.hqy.cloud.message.tk.entity.ImUserSetting;
 import com.hqy.cloud.message.tk.mapper.ImUserSettingMapper;
 import com.hqy.cloud.message.tk.service.ImUserSettingTkService;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import tk.mybatis.mapper.entity.Example;
+
+import java.util.List;
 
 /**
  * @author qiyuan.hong
@@ -21,5 +25,17 @@ public class ImUserSettingTkServiceImpl extends BaseTkServiceImpl<ImUserSetting,
     @Override
     public BaseTkMapper<ImUserSetting, Long> getTkMapper() {
         return mapper;
+    }
+
+    @Override
+    public boolean enabledPrivateChat(Long id) {
+        Example example = new Example(ImUserSetting.class);
+        example.createCriteria().andEqualTo("id", id);
+        example.excludeProperties("inviteGroup", "oline", "clearMsg", "clearMsgDate");
+        List<ImUserSetting> imUserSettings = mapper.selectByExample(example);
+        if (CollectionUtils.isEmpty(imUserSettings)) {
+            return false;
+        }
+        return imUserSettings.get(0).getPrivateChat();
     }
 }

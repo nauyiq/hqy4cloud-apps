@@ -1,7 +1,6 @@
 package com.hqy.cloud.message.bind;
 
-import com.hqy.cloud.message.bind.vo.ConversationVO;
-import com.hqy.cloud.message.socketio.event.AddGroupEvent;
+import com.hqy.cloud.message.bind.event.support.AddGroupEvent;
 import com.hqy.cloud.message.tk.entity.ImGroup;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
 import lombok.experimental.UtilityClass;

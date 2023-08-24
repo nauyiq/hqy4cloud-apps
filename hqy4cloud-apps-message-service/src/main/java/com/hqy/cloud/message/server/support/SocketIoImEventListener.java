@@ -3,9 +3,12 @@ package com.hqy.cloud.message.server.support;
 import com.hqy.cloud.common.base.project.MicroServiceConstants;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatus;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatusManager;
+import com.hqy.cloud.message.bind.dto.ImMessageDTO;
+import com.hqy.cloud.message.bind.event.support.GroupChatEvent;
+import com.hqy.cloud.message.bind.event.support.PrivateChatEvent;
 import com.hqy.cloud.message.server.ImEventListener;
-import com.hqy.cloud.message.socketio.event.AddGroupEvent;
-import com.hqy.cloud.message.socketio.event.ContactOnlineOfflineEvent;
+import com.hqy.cloud.message.bind.event.support.AddGroupEvent;
+import com.hqy.cloud.message.bind.event.support.ContactOnlineOfflineEvent;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import com.hqy.cloud.rpc.core.Environment;
@@ -35,7 +38,7 @@ public class SocketIoImEventListener implements ImEventListener {
     private final ThriftSocketIoPushService socketIoPushService;
 
     @Override
-    public boolean doContactOnlineOffline(ContactOnlineOfflineEvent event) {
+    public boolean onContactOnlineOffline(ContactOnlineOfflineEvent event) {
         AssertUtil.notNull(event, "ContactOnlineOfflineEvent is should not be null.");
         Long id = event.id();
         List<ImConversation> contacts = contactTkService.queryList(ImConversation.of(id, false));
@@ -62,7 +65,7 @@ public class SocketIoImEventListener implements ImEventListener {
     }
 
     @Override
-    public boolean doAddGroup(List<AddGroupEvent> events) {
+    public boolean onAddGroup(List<AddGroupEvent> events) {
         SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
         for (AddGroupEvent event : events) {
             try {
@@ -77,5 +80,27 @@ public class SocketIoImEventListener implements ImEventListener {
             }
         }
         return true;
+    }
+
+    @Override
+    public boolean onPrivateChat(PrivateChatEvent event) {
+        ImMessageDTO messageDTO = event.getMessageDTO();
+        SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+        String to = messageDTO.getToContactId();
+        if (query.isEnableMultiWsNode()) {
+            ThriftSocketIoPushService service = SocketIoConnectionUtil.getSocketIoPushService(to, ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+            service.asyncPush(to, event.name(), JsonUtil.toJson(messageDTO));
+        } else {
+            String json = JsonUtil.toJson(messageDTO);
+            socketIoPushService.asyncPush(to, event.name(), json);
+        }
+        return true;
+    }
+
+    @Override
+    public boolean onGroupChat(GroupChatEvent event) {
+        SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+
+        return false;
     }
 }

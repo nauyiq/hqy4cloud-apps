@@ -14,15 +14,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MessageVO {
+public class ImMessageVO {
 
     /**
-     * 主键id
+     * 消息id
      */
     private String id;
 
     /**
-     * 消息id
+     * 表 im_message 主键id
      */
     private String messageId;
 
@@ -32,9 +32,10 @@ public class MessageVO {
     private Boolean isGroup;
 
     /**
-     * 是否已读
+     * 已读未读
      */
     private Boolean isRead;
+
 
     /**
      * 发送用户信息
@@ -46,6 +47,11 @@ public class MessageVO {
      * 联系人/群 id
      */
     private String toContactId;
+
+    /**
+     * 内容
+     */
+    private String content;
 
     /**
      * 消息状态

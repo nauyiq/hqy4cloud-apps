@@ -1,4 +1,4 @@
-package com.hqy.cloud.message.socketio.event;
+package com.hqy.cloud.message.bind.event;
 
 /**
  * @author qiyuan.hong

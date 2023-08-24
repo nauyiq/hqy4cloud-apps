@@ -1,5 +1,7 @@
 package com.hqy.cloud.message.common.im.enums;
 
+import java.util.Arrays;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -29,4 +31,10 @@ public enum ImMessageType {
     ImMessageType(String type) {
         this.type = type;
     }
+
+    public static boolean isEnabled(String type) {
+        ImMessageType[] values = values();
+        return Arrays.stream(values).anyMatch(e -> e.type.equals(type));
+    }
+
 }

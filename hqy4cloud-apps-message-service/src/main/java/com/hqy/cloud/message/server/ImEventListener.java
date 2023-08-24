@@ -1,7 +1,9 @@
 package com.hqy.cloud.message.server;
 
-import com.hqy.cloud.message.socketio.event.AddGroupEvent;
-import com.hqy.cloud.message.socketio.event.ContactOnlineOfflineEvent;
+import com.hqy.cloud.message.bind.event.support.AddGroupEvent;
+import com.hqy.cloud.message.bind.event.support.ContactOnlineOfflineEvent;
+import com.hqy.cloud.message.bind.event.support.GroupChatEvent;
+import com.hqy.cloud.message.bind.event.support.PrivateChatEvent;
 
 import java.util.List;
 
@@ -17,12 +19,28 @@ public interface ImEventListener {
      * @param event {@link ContactOnlineOfflineEvent}
      * @return      result
      */
-    boolean doContactOnlineOffline(ContactOnlineOfflineEvent event);
+    boolean onContactOnlineOffline(ContactOnlineOfflineEvent event);
 
     /**
      * 新增群聊事件
      * @param events {@link AddGroupEvent}
      * @return       result.
      */
-    boolean doAddGroup(List<AddGroupEvent> events);
+    boolean onAddGroup(List<AddGroupEvent> events);
+
+    /**
+     * im私聊事件
+     * @param event {@link PrivateChatEvent}
+     * @return      result.
+     */
+    boolean onPrivateChat(PrivateChatEvent event);
+
+    /**
+     * im群聊事件
+     * @param event {@link GroupChatEvent}
+     * @return      result.
+     */
+    boolean onGroupChat(GroupChatEvent event);
+
+
 }

@@ -1,6 +1,8 @@
 package com.hqy.cloud.message.service;
 
+import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
+import com.hqy.cloud.message.bind.vo.ImMessageVO;
 
 import java.util.List;
 import java.util.Map;
@@ -18,5 +20,13 @@ public interface ImMessageOperationsService {
      * @return                  key:会话id value:消息未读数
      */
     Map<String, Integer> getConversationUnread(Long id, List<MessageUnreadDTO> messageUnreadList);
+
+    /**
+     * 发消息
+     * @param id      from user id
+     * @param message {@link ImMessageDTO}
+     * @return        {@link ImMessageVO}
+     */
+    ImMessageVO sendImMessage(Long id, ImMessageDTO message);
 
 }

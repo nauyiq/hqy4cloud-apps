@@ -8,6 +8,8 @@ import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -21,5 +23,10 @@ public class ImConversationTkServiceImpl extends BaseTkServiceImpl<ImConversatio
     @Override
     public BaseTkMapper<ImConversation, Long> getTkMapper() {
         return mapper;
+    }
+
+    @Override
+    public boolean insertOrUpdate(List<ImConversation> imConversations) {
+        return mapper.insertOrUpdate(imConversations) > 0;
     }
 }

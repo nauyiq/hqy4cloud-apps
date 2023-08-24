@@ -60,7 +60,14 @@ public enum AppsResultCode implements Result {
     /**
      * 群聊成员已满
      */
-    IM_GROUP_MEMBER_COUNT_LIMITED(1004, "The im group is full.")
+    IM_GROUP_MEMBER_COUNT_LIMITED(10004, "The im group is full."),
+
+    /**
+     * 用户不是群聊成员
+     */
+    IM_NOT_GROUP_MEMBER(10005, "The user is not group member.")
+
+
 
     ;
 

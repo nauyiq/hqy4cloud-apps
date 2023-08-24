@@ -9,4 +9,11 @@ import com.hqy.cloud.message.tk.entity.ImUserSetting;
  * @date 2023/8/11 11:05
  */
 public interface ImUserSettingTkService extends BaseTkService<ImUserSetting, Long> {
+
+    /**
+     * 判断当前用户是否允许私聊
+     * @param id 用户id
+     * @return   result
+     */
+    boolean enabledPrivateChat(Long id);
 }

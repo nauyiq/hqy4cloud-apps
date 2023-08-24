@@ -2,8 +2,9 @@ package com.hqy.cloud.message.service.request;
 
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
+import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessagesRequestParamDTO;
-import com.hqy.cloud.message.bind.vo.MessageVO;
+import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.foundation.common.bind.SocketIoConnection;
 
 import javax.servlet.http.HttpServletRequest;
@@ -30,5 +31,13 @@ public interface ImMessageRequestService {
      * @param params 请求参数
      * @return       R.
      */
-    R<PageResult<MessageVO>> getImMessages(Long id, MessagesRequestParamDTO params);
+    R<PageResult<ImMessageVO>> getImMessages(Long id, MessagesRequestParamDTO params);
+
+    /**
+     * send message to user or group
+     * @param id      current user id.
+     * @param message {@link ImMessageDTO}
+     * @return        R.
+     */
+    R<ImMessageVO> sendImMessage(Long id, ImMessageDTO message);
 }

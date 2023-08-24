@@ -4,4 +4,41 @@
 <mapper namespace="com.hqy.cloud.message.tk.mapper.ImConversationMapper">
 
 
+    <insert id="insertOrUpdate" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_im_conversation
+        (
+            user_id,
+            contact_id,
+            is_group,
+            is_notice,
+            is_top,
+            last_message_type,
+            last_message_content,
+            last_message_time,
+            created,
+            updated
+        ) VALUES
+        <foreach collection="conversations" item="conversation" separator="," >
+            (
+             #{conversation.userId},
+             #{conversation.contactId},
+             #{conversation.group},
+             #{conversation.notice},
+             #{conversation.top},
+             #{conversation.lastMessageType},
+             #{conversation.lastMessageContent},
+             #{conversation.lastMessageTime},
+             #{conversation.created},
+             #{conversation.updated}
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        is_notice = VALUES(is_notice),
+        is_top = VALUES(is_top),
+        last_message_type = VALUES(last_message_type),
+        last_message_content = VALUES(last_message_content),
+        last_message_time = VALUES(last_message_time),
+        updated = VALUES(updated)
+    </insert>
+
 </mapper>

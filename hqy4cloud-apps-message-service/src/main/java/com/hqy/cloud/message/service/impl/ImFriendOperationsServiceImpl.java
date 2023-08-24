@@ -2,13 +2,10 @@ package com.hqy.cloud.message.service.impl;
 
 import cn.hutool.core.map.MapUtil;
 import com.hqy.cloud.common.base.project.MicroServiceConstants;
-import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
 import com.hqy.cloud.foundation.cache.redis.support.SmartRedisManager;
-import com.hqy.cloud.message.bind.dto.ContactDTO;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
 import com.hqy.cloud.message.tk.entity.ImFriend;
 import com.hqy.cloud.message.tk.entity.ImFriendApplication;
-import com.hqy.cloud.message.tk.mapper.ImFriendMapper;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import com.hqy.cloud.util.AssertUtil;
 import lombok.RequiredArgsConstructor;
@@ -114,11 +111,6 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
         return map;
     }
 
-    @Override
-    public ContactDTO queryUserContacts(Long userId) {
-        ImFriendMapper mapper = (ImFriendMapper) friendTkService.getTkDao();
-        return mapper.queryUserContacts(userId);
-    }
 
     private String genKey(Long from, Long to) {
         return KEY + UNION + from + UNION + to;

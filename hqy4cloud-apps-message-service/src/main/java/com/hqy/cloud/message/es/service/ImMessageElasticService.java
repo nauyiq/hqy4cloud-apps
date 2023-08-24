@@ -14,8 +14,9 @@ public interface ImMessageElasticService extends ElasticService<Long, ImMessageD
 
     /**
      * 分页查询
+     * @param id     user id
      * @param params {@link MessagesRequestParamDTO}
      * @return       result
      */
-    PageResult<ImMessageDoc> queryPage(MessagesRequestParamDTO params);
+    PageResult<ImMessageDoc> queryPage(Long id, MessagesRequestParamDTO params);
 }

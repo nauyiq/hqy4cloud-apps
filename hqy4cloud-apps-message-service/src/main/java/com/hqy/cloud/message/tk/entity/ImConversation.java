@@ -33,12 +33,9 @@ public class ImConversation extends BaseEntity<Long> {
     private Boolean notice = true;
     @Column(name = "is_top")
     private Boolean top = false;
-    private String displayName;
     private String lastMessageType;
     private String lastMessageContent;
     private Date lastMessageTime;
-    private Date created;
-    private Date updated;
 
 
     public ImConversation(Long id, Long contactId) {
@@ -52,14 +49,11 @@ public class ImConversation extends BaseEntity<Long> {
         this.group = group;
     }
 
-    public ImConversation(Long id, Long contactId, String groupName) {
+    public ImConversation(Long id, Long contactId, Date date, boolean group) {
+        super(date);
         this.userId = id;
         this.contactId = contactId;
-        this.group = true;
-        this.displayName = groupName;
-        Date now = new Date();
-        this.created = now;
-        this.updated = now;
+        this.group = group;
     }
 
     public static ImConversation of(Long userId) {
@@ -70,18 +64,19 @@ public class ImConversation extends BaseEntity<Long> {
         return of(null, contactId, isGroup);
     }
 
-    public static ImConversation ofGroup(Long userId, Long groupId) {
-        return of(userId, groupId, true);
-    }
-
     public static ImConversation of(Long userId, Long contactId, boolean isGroup) {
         return new ImConversation(userId, contactId, isGroup);
     }
 
-    public static List<ImConversation> ofGroup(Long groupId, Long id, String groupName, List<Long> userIds) {
+    public static ImConversation ofGroup(Long userId, Long groupId) {
+        return new ImConversation(userId, groupId, new Date(), true);
+    }
+
+    public static List<ImConversation> ofGroup(Long groupId, Long id, List<Long> userIds) {
+        Date now = new Date();
         List<ImConversation> contacts = new ArrayList<>(userIds.size() + 1);
-        contacts.add(new ImConversation(id, groupId, groupName));
-        userIds.forEach(userId -> contacts.add(new ImConversation(userId, groupId, groupName)));
+        contacts.add(new ImConversation(id, groupId, now, true));
+        userIds.forEach(userId -> contacts.add(new ImConversation(userId, groupId, now,true)));
         return contacts;
     }
 }

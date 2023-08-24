@@ -1,5 +1,6 @@
-package com.hqy.cloud.message.socketio.event;
+package com.hqy.cloud.message.bind.event.support;
 
+import com.hqy.cloud.message.bind.event.ImEvent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

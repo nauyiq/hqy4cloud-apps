@@ -40,4 +40,12 @@ public interface ImGroupOperationsService {
      * @return        result.
      */
     boolean removeGroupMember(Long id, Long groupId);
+
+    /**
+     * 是否是群聊成员
+     * @param id      user id
+     * @param groupId group id
+     * @return        result
+     */
+    boolean isGroupMember(Long id, Long groupId);
 }
