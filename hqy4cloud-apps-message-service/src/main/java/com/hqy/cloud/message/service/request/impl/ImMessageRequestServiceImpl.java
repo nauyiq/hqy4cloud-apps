@@ -136,7 +136,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
                     .sendTime(doc.getCreated())
                     .build();
         }).toList();
-        return R.ok(new PageResult<>(result.getCurrentPage(), result.getPages(), result.getTotal(), messages));
+        return R.ok(new PageResult<>(result.getCurrentPage(), params.getLimit(), result.getTotal(), messages));
     }
 
     @Override

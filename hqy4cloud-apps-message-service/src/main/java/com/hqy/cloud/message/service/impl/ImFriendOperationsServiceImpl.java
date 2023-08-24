@@ -84,7 +84,6 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
             return true;
         }
         if (friendTkService.removeFriend(from, to)) {
-            // 移除redis
             String fromKey = genKey(from, to);
             String toKey = genKey(to, from);
             SmartRedisManager.getInstance().del(fromKey, toKey);

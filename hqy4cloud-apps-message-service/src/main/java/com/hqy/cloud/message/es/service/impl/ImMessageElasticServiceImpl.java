@@ -54,8 +54,8 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
             //对内容进行分词搜索 并且只有是文本类型的时候进行搜索.
             queryBuilder.withQuery(q -> q.matchPhrase(m -> m.field("content").query(keywords)));
         }
-        //order by `created` ASC
-        queryBuilder.withSort(Sort.by(Sort.Direction.ASC, "created"));
+        //order by `created` DESC
+        queryBuilder.withSort(Sort.by(Sort.Direction.DESC, "created"));
         return pageQueryByBuilder(params.getPage(), params.getLimit(), queryBuilder);
     }
 
