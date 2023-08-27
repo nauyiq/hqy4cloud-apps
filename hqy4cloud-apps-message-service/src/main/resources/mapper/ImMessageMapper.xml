@@ -3,7 +3,6 @@
 
 <mapper namespace="com.hqy.cloud.message.tk.mapper.ImMessageMapper">
 
-
     <select id="getMessageUnread" resultType="com.hqy.cloud.message.bind.dto.MessageUnreadDTO">
         SELECT COUNT(is_read) unread,`to`, `from` FROM t_im_message
         WHERE
@@ -14,5 +13,12 @@
         ) AND is_read  = 0 AND `to` = #{to}
         GROUP BY `from`
     </select>
+
+    <update id="updateMessagesRead">
+        UPDATE t_im_message SET is_read = 1 WHERE id IN
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
 
 </mapper>

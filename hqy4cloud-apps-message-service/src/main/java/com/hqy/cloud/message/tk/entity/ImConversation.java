@@ -33,6 +33,7 @@ public class ImConversation extends BaseEntity<Long> {
     private Boolean notice = true;
     @Column(name = "is_top")
     private Boolean top = false;
+    private Boolean lastMessageFrom;
     private String lastMessageType;
     private String lastMessageContent;
     private Date lastMessageTime;

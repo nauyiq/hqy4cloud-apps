@@ -10,6 +10,11 @@ import java.util.Arrays;
 public enum ImMessageType {
 
     /**
+     * 系统消息
+     */
+    SYSTEM("system"),
+
+    /**
      * 文本
      */
     TEXT("text"),

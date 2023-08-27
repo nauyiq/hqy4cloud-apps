@@ -5,6 +5,8 @@ import com.hqy.cloud.elasticsearch.service.ElasticService;
 import com.hqy.cloud.message.bind.dto.MessagesRequestParamDTO;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
 
+import java.util.List;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -19,4 +21,12 @@ public interface ImMessageElasticService extends ElasticService<Long, ImMessageD
      * @return       result
      */
     PageResult<ImMessageDoc> queryPage(Long id, MessagesRequestParamDTO params);
+
+    /**
+     * query unread messages
+     * @param from send message user id
+     * @param to   receive message user id
+     * @return     unread messages.
+     */
+    List<ImMessageDoc> queryUnreadMessages(Long from, Long to);
 }

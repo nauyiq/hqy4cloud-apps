@@ -10,9 +10,11 @@ import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.base.config.ConfigConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
+import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatus;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatusManager;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
+import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.dto.MessagesRequestParamDTO;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.bind.vo.UserInfoVO;
@@ -42,6 +44,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_MESSAGE_FAILED;
@@ -104,8 +107,8 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         if (result == null || CollectionUtils.isEmpty(result.getResultList())) {
             return R.ok(new PageResult<>());
         }
+
         List<ImMessageDoc> resultList = result.getResultList();
-        //abstain users info
         List<Long> ids;
         if (imConversation.getGroup()) {
             ids = resultList.parallelStream().map(ImMessageDoc::getFrom).distinct().collect(Collectors.toList());
@@ -135,7 +138,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
                     .type(doc.getType())
                     .sendTime(doc.getCreated())
                     .build();
-        }).toList();
+        }).filter(Objects::nonNull).sorted((m1, m2) -> (int) (m1.getSendTime() - m2.getSendTime())).toList();
         return R.ok(new PageResult<>(result.getCurrentPage(), params.getLimit(), result.getTotal(), messages));
     }
 
@@ -154,5 +157,22 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         }
         ImMessageVO messageVo = messageOperationsService.sendImMessage(id, message);
         return R.ok(messageVo);
+    }
+
+    @Override
+    public R<List<String>> setMessageRead(Long id, MessageUnreadDTO dto) {
+        //query conversation from db.
+        ImConversation conversation;
+        if (dto.getConversationId() != null) {
+            conversation = conversationTkService.queryById(dto.getConversationId());
+        } else {
+            conversation = conversationTkService.queryOne(ImConversation.of(dto.getFrom(), dto.getTo(), false));
+        }
+        //check conversation
+        if (conversation == null || !id.equals(conversation.getUserId())) {
+            return R.failed(ResultCode.ERROR_PARAM);
+        }
+        List<String> messageIds = messageOperationsService.readMessages(conversation);
+        return R.ok(messageIds);
     }
 }

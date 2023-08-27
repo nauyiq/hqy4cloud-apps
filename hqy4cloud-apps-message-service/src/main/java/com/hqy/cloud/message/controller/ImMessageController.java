@@ -6,18 +6,17 @@ import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.foundation.common.authentication.AuthenticationRequestContext;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
+import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.dto.MessagesRequestParamDTO;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.service.request.ImMessageRequestService;
 import com.hqy.foundation.common.bind.SocketIoConnection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * @author qiyuan.hong
@@ -82,6 +81,23 @@ public class ImMessageController {
         return requestService.sendImMessage(authentication.getId(), message);
     }
 
+    /**
+     * setting conversation messages is read.
+     * @param request HttpServletRequest.
+     * @param dto     {@link MessageUnreadDTO}
+     * @return        R.
+     */
+    @PutMapping("/im/messages/read")
+    public R<List<String>> setMessagesRead(HttpServletRequest request, MessageUnreadDTO dto) {
+        AuthenticationInfo authentication = AuthenticationRequestContext.getAuthentication(request);
+        if (authentication == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        if (dto == null || !dto.isEnabled()) {
+            return R.failed(ResultCode.ERROR_PARAM_UNDEFINED);
+        }
+        return requestService.setMessageRead(authentication.getId(), dto);
+    }
 
 
 

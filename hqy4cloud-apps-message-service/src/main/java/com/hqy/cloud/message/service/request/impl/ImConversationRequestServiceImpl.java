@@ -55,7 +55,7 @@ public class ImConversationRequestServiceImpl implements ImConversationRequestSe
         //所有会话列表
         List<ConversationVO> all = friendConversationVos;
         //获取所有会话列表的未读消息
-        Map<String, Integer> unreadMap = messageOperationsService.getConversationUnread(id, all.parallelStream().map(vo -> MessageUnreadDTO.builder()
+        Map<String, Integer> unreadMap = messageOperationsService.getConversationUnread(id, all.parallelStream().filter(ConversationVO::getIsNotice).map(vo -> MessageUnreadDTO.builder()
                 .conversationId(Long.parseLong(vo.getConversationId()))
                 .from(Long.parseLong(vo.getId()))
                 .to(id)

@@ -49,4 +49,9 @@ public class ImMessageTkServiceImpl extends BaseTkServiceImpl<ImMessage, Long> i
         groupConversations.addAll(privateConversations);
         return groupConversations;
     }
+
+    @Override
+    public boolean updateMessagesRead(List<Long> unreadMessageIds) {
+        return mapper.updateMessagesRead(unreadMessageIds) > 0;
+    }
 }

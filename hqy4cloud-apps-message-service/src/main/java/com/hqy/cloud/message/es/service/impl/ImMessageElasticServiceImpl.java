@@ -9,7 +9,6 @@ import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.es.service.ImMessageElasticService;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.search.BooleanQuery;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
@@ -57,6 +56,14 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
         //order by `created` DESC
         queryBuilder.withSort(Sort.by(Sort.Direction.DESC, "created"));
         return pageQueryByBuilder(params.getPage(), params.getLimit(), queryBuilder);
+    }
+
+    @Override
+    public List<ImMessageDoc> queryUnreadMessages(Long from, Long to) {
+        NativeQueryBuilder queryBuilder = new NativeQueryBuilder();
+        queryBuilder.withQuery(getMustBooleanQuery(from, to));
+        queryBuilder.withQuery(q -> q.term(t -> t.field("read").value(false)));
+        return searchByQuery(queryBuilder.build());
     }
 
     private Query getMustBooleanQuery(Long from, Long to) {

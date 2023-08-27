@@ -1,9 +1,6 @@
 package com.hqy.cloud.message.server;
 
-import com.hqy.cloud.message.bind.event.support.AddGroupEvent;
-import com.hqy.cloud.message.bind.event.support.ContactOnlineOfflineEvent;
-import com.hqy.cloud.message.bind.event.support.GroupChatEvent;
-import com.hqy.cloud.message.bind.event.support.PrivateChatEvent;
+import com.hqy.cloud.message.bind.event.support.*;
 
 import java.util.List;
 
@@ -41,6 +38,13 @@ public interface ImEventListener {
      * @return      result.
      */
     boolean onGroupChat(GroupChatEvent event);
+
+    /**
+     * im read messages event.
+     * @param event {@link ReadMessagesEvent}
+     * @return      result.
+     */
+    boolean onReadMessages(ReadMessagesEvent event);
 
 
 }

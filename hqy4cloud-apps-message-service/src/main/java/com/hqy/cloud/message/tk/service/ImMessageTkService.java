@@ -20,4 +20,11 @@ public interface ImMessageTkService extends BaseTkService<ImMessage, Long> {
      * @return                  {@link MessageUnreadDTO}
      */
     List<MessageUnreadDTO> queryUnread(Long id, List<MessageUnreadDTO> messageUnreadList);
+
+    /**
+     * update message is read
+     * @param unreadMessageIds unread message ids.
+     * @return                 result.
+     */
+    boolean updateMessagesRead(List<Long> unreadMessageIds);
 }

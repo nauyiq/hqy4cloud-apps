@@ -3,6 +3,7 @@ package com.hqy.cloud.message.service;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
+import com.hqy.cloud.message.tk.entity.ImConversation;
 
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,28 @@ public interface ImMessageOperationsService {
      */
     Map<String, Integer> getConversationUnread(Long id, List<MessageUnreadDTO> messageUnreadList);
 
+
+    /**
+     * increase conversation unread `1`.
+     * @param id             user id
+     * @param conversationId conversation id
+     */
+    void increaseConversationUnread(Long id, Long conversationId);
+
+    /**
+     * im read conversation, to set conversation unread is `0`.
+     * @param id             user id
+     * @param conversationId conversation id
+     */
+    void readConversation(Long id, Long conversationId);
+
+    /**
+     * remove conversation unread
+     * @param id             user id
+     * @param conversationId conversation id
+     */
+    void removeConversationUnread(Long id, Long conversationId);
+
     /**
      * 发消息
      * @param id      from user id
@@ -29,4 +52,10 @@ public interface ImMessageOperationsService {
      */
     ImMessageVO sendImMessage(Long id, ImMessageDTO message);
 
+    /**
+     * read messages
+     * @param conversation conversation
+     * @return             read messages ids.
+     */
+    List<String> readMessages(ImConversation conversation);
 }

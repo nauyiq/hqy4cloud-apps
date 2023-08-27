@@ -20,4 +20,9 @@ public class MessageUnreadDTO {
     private Long to;
     private Boolean isGroup;
     private Integer unread = 0;
+
+    public boolean isEnabled() {
+        return conversationId != null && (from != null || to != null);
+    }
+
 }

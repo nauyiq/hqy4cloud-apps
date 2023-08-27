@@ -4,11 +4,8 @@ import com.hqy.cloud.common.base.project.MicroServiceConstants;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatus;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatusManager;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
-import com.hqy.cloud.message.bind.event.support.GroupChatEvent;
-import com.hqy.cloud.message.bind.event.support.PrivateChatEvent;
+import com.hqy.cloud.message.bind.event.support.*;
 import com.hqy.cloud.message.server.ImEventListener;
-import com.hqy.cloud.message.bind.event.support.AddGroupEvent;
-import com.hqy.cloud.message.bind.event.support.ContactOnlineOfflineEvent;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import com.hqy.cloud.rpc.core.Environment;
@@ -102,5 +99,23 @@ public class SocketIoImEventListener implements ImEventListener {
         SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
 
         return false;
+    }
+
+    @Override
+    public boolean onReadMessages(ReadMessagesEvent event) {
+        SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+        try {
+            if (query.isEnableMultiWsNode()) {
+                ThriftSocketIoPushService service = SocketIoConnectionUtil.getSocketIoPushService(event.getTo(), ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+                service.asyncPush(event.getTo(), event.name(), JsonUtil.toJson(event.getMessages()));
+            } else {
+                socketIoPushService.asyncPush(event.getTo(), event.name(), JsonUtil.toJson(event.getMessages()));
+            }
+            return true;
+        } catch (Throwable cause) {
+            log.error(cause.getMessage(), cause);
+            return false;
+        }
+
     }
 }
