@@ -1,9 +1,12 @@
 package com.hqy.cloud.message.service.impl;
 
+import cn.hutool.core.map.MapUtil;
+import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.message.bind.ConvertUtil;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.bind.enums.GroupRole;
+import com.hqy.cloud.message.cache.ImRelationshipCacheService;
 import com.hqy.cloud.message.server.ImEventListener;
 import com.hqy.cloud.message.service.ImGroupOperationsService;
 import com.hqy.cloud.message.bind.event.support.AddGroupEvent;
@@ -21,8 +24,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author qiyuan.hong
@@ -33,13 +39,13 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
+
     private final TransactionTemplate template;
-    private final ImConversationTkService contactTkService;
+    private final ImEventListener eventListener;
     private final ImGroupTkService groupTkService;
     private final ImGroupMemberTkService groupMemberTkService;
-    private final ImEventListener eventListener;
-
-
+    private final ImConversationTkService contactTkService;
+    private final ImRelationshipCacheService relationshipCacheService;
 
     @Override
     public boolean createGroup(Long id, GroupDTO createGroup) {
@@ -153,9 +159,45 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
 
     @Override
     public boolean isGroupMember(Long id, Long groupId) {
-        ImGroupMember member = groupMemberTkService.queryOne(new ImGroupMember(groupId, id));
-        return member != null;
+        Boolean result = relationshipCacheService.isGroupMember(groupId, id);
+        if (result == null) {
+            // query from db.
+            ImGroupMember member = groupMemberTkService.queryOne(new ImGroupMember(groupId, id));
+            if (member == null) {
+                return false;
+            }
+            relationshipCacheService.addGroupMemberRelationship(groupId, id, StringUtils.isBlank(member.getDisplayName()) ? StringConstants.TRUE: member.getDisplayName());
+            return true;
+        }
+        return false;
     }
 
-
+    @Override
+    public Map<Long, String> getGroupMemberRemark(Long groupId, List<Long> members) {
+        Map<Long, String> resultMap = MapUtil.newHashMap(members.size());
+        List<String> groupRemarks = relationshipCacheService.getGroupRemarks(groupId, members);
+        if (CollectionUtils.isEmpty(groupRemarks)) {
+            return resultMap;
+        }
+        List<Long> queryDbs = new ArrayList<>();
+        for (int i = 0; i < groupRemarks.size(); i++) {
+            String remark = groupRemarks.get(i);
+            Long memberId = members.get(i);
+            if (StringUtils.isBlank(remark) ) {
+                queryDbs.add(memberId);
+            } else if (!remark.equals(StringConstants.TRUE) && !remark.equals(StringConstants.FALSE)) {
+                resultMap.put(memberId, remark);
+            }
+        }
+        //query from db and fresh redis cache.
+        if (CollectionUtils.isNotEmpty(queryDbs)) {
+            List<ImGroupMember> groupMembers = groupMemberTkService.queryGroupMembers(groupId, queryDbs);
+            if (CollectionUtils.isNotEmpty(groupMembers)) {
+                Map<Long, String> map = groupMembers.stream().collect(Collectors.
+                        toMap(ImGroupMember::getUserId, member -> StringUtils.isBlank(member.getDisplayName()) ? StringConstants.TRUE : member.getDisplayName()));
+                relationshipCacheService.addGroupMembersRelationship(groupId, map);
+            }
+        }
+        return resultMap;
+    }
 }

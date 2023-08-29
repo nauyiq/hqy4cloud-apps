@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.server.support;
 
+import cn.hutool.core.map.MapUtil;
 import com.hqy.cloud.common.base.project.MicroServiceConstants;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatus;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatusManager;
@@ -19,6 +20,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -63,54 +65,64 @@ public class SocketIoImEventListener implements ImEventListener {
 
     @Override
     public boolean onAddGroup(List<AddGroupEvent> events) {
-        SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
-        for (AddGroupEvent event : events) {
-            try {
-                if (!query.isEnableMultiWsNode()) {
-                    socketIoPushService.asyncPush(event.getId(), event.name(), JsonUtil.toJson(event));
-                } else {
-                    ThriftSocketIoPushService service = SocketIoConnectionUtil.getSocketIoPushService(event.getId(), ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
-                    service.asyncPush(event.getId(), event.name(), JsonUtil.toJson(event));
+        try {
+            SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+            Set<String> ids = events.parallelStream().map(AddGroupEvent::getId).collect(Collectors.toSet());
+            if (query.isEnableMultiWsNode()) {
+                Map<String, ThriftSocketIoPushService> map = SocketIoConnectionUtil.getMultipleSocketIoPushService(ids, ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+                if (MapUtil.isNotEmpty(map)) {
+                    events.forEach(event -> map.getOrDefault(event.getId(), socketIoPushService).asyncPush(event.getId(), event.name(), JsonUtil.toJson(event)));
+                    return true;
                 }
-            } catch (Throwable cause) {
-                log.error(cause.getMessage());
             }
+            events.forEach(event -> socketIoPushService.asyncPush(event.getId(), event.name(), JsonUtil.toJson(event)));
+            return true;
+        } catch (Throwable cause) {
+            log.warn(cause.getMessage(), cause);
+            return false;
         }
-        return true;
     }
 
     @Override
     public boolean onPrivateChat(PrivateChatEvent event) {
         ImMessageDTO messageDTO = event.getMessageDTO();
-        SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
         String to = messageDTO.getToContactId();
-        if (query.isEnableMultiWsNode()) {
-            ThriftSocketIoPushService service = SocketIoConnectionUtil.getSocketIoPushService(to, ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
-            service.asyncPush(to, event.name(), JsonUtil.toJson(messageDTO));
-        } else {
-            String json = JsonUtil.toJson(messageDTO);
-            socketIoPushService.asyncPush(to, event.name(), json);
+        try {
+            ThriftSocketIoPushService socketIoPushService = SocketIoConnectionUtil.getSocketIoPushService(to, ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+            socketIoPushService.asyncPush(to, event.name(), JsonUtil.toJson(messageDTO));
+            return true;
+        } catch (Throwable cause) {
+            log.error(cause.getMessage(), cause);
+            return false;
         }
-        return true;
     }
 
     @Override
     public boolean onGroupChat(GroupChatEvent event) {
-        SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
-
-        return false;
+        try {
+            SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+            Set<String> ids = event.getIds();
+            String message = JsonUtil.toJson(event.getMessage());
+            if (query.isEnableMultiWsNode()) {
+                Map<String, ThriftSocketIoPushService> map = SocketIoConnectionUtil.getMultipleSocketIoPushService(ids, ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+                if (MapUtil.isNotEmpty(map)) {
+                    ids.forEach(id -> map.get(id).asyncPush(id, event.name(), message));
+                    return true;
+                }
+            }
+            ids.forEach(id -> socketIoPushService.asyncPush(id, event.name(), message));
+            return true;
+        } catch (Throwable cause) {
+            log.error(cause.getMessage(), cause);
+            return false;
+        }
     }
 
     @Override
     public boolean onReadMessages(ReadMessagesEvent event) {
-        SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
         try {
-            if (query.isEnableMultiWsNode()) {
-                ThriftSocketIoPushService service = SocketIoConnectionUtil.getSocketIoPushService(event.getTo(), ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
-                service.asyncPush(event.getTo(), event.name(), JsonUtil.toJson(event.getMessages()));
-            } else {
-                socketIoPushService.asyncPush(event.getTo(), event.name(), JsonUtil.toJson(event.getMessages()));
-            }
+            ThriftSocketIoPushService socketIoPushService = SocketIoConnectionUtil.getSocketIoPushService(event.getTo(), ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+            socketIoPushService.asyncPush(event.getTo(), event.name(), JsonUtil.toJson(event.getMessages()));
             return true;
         } catch (Throwable cause) {
             log.error(cause.getMessage(), cause);

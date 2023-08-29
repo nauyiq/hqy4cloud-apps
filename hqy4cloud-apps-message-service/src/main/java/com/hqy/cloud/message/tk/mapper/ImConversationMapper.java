@@ -21,4 +21,12 @@ public interface ImConversationMapper extends BaseTkMapper<ImConversation, Long>
      * @return                result
      */
     int insertOrUpdate(@Param("conversations") List<ImConversation> imConversations);
+
+    /**
+     * search group conversation members.
+     * just return conversation id, userId, contactId
+     * @param groupId group id
+     * @return        group conversation members.
+     */
+    List<ImConversation> queryGroupConversationMembers(@Param("groupId") Long groupId);
 }

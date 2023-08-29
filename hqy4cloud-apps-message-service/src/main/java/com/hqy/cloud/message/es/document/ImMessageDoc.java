@@ -62,4 +62,8 @@ public class ImMessageDoc implements ElasticDocument<Long> {
         this.created = message.getCreated().getTime();
     }
 
+    public boolean isTextMessage() {
+        return this.type.equals(ImMessageType.TEXT.type) || this.type.equals(ImMessageType.SYSTEM.type);
+    }
+
 }

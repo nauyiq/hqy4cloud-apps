@@ -10,7 +10,6 @@ import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.dto.MessagesRequestParamDTO;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.service.request.ImMessageRequestService;
-import com.hqy.foundation.common.bind.SocketIoConnection;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -28,20 +27,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ImMessageController {
     private final ImMessageRequestService requestService;
-
-    /**
-     * 获取socket长连接
-     * @param request HttpServletRequest.
-     * @return        R.
-     */
-    @GetMapping("/im/connection")
-    public R<SocketIoConnection> genWsMessageConnection(HttpServletRequest request) {
-        AuthenticationInfo authentication = AuthenticationRequestContext.getAuthentication(request);
-        if (authentication == null) {
-            return R.failed(ResultCode.NOT_LOGIN);
-        }
-        return requestService.genWsMessageConnection(request, authentication.getId().toString());
-    }
 
 
     /**
@@ -88,7 +73,7 @@ public class ImMessageController {
      * @return        R.
      */
     @PutMapping("/im/messages/read")
-    public R<List<String>> setMessagesRead(HttpServletRequest request, MessageUnreadDTO dto) {
+    public R<List<String>> setMessagesRead(HttpServletRequest request, @RequestBody MessageUnreadDTO dto) {
         AuthenticationInfo authentication = AuthenticationRequestContext.getAuthentication(request);
         if (authentication == null) {
             return R.failed(ResultCode.NOT_LOGIN);

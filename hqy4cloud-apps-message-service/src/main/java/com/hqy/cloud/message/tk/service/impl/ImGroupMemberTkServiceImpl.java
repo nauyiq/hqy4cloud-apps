@@ -30,4 +30,9 @@ public class ImGroupMemberTkServiceImpl extends PrimaryLessTkServiceImpl<ImGroup
     public List<GroupMemberDTO> queryMembers(Long id, List<Long> groupIds) {
         return mapper.queryMembers(id, groupIds);
     }
+
+    @Override
+    public List<ImGroupMember> queryGroupMembers(Long groupId, List<Long> userIds) {
+        return mapper.queryGroupMembers(groupId, userIds);
+    }
 }

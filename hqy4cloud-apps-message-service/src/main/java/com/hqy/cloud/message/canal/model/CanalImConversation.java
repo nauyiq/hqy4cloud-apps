@@ -25,6 +25,7 @@ public class CanalImConversation {
     private Integer isGroup;
     private Integer isNotice;
     private Integer isTop;
+    private Integer isRemove;
     private Integer lastMessageFrom;
     private String lastMessageType;
     private String lastMessageContent;

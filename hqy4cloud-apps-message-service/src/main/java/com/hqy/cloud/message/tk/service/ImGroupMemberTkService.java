@@ -20,4 +20,12 @@ public interface ImGroupMemberTkService extends PrimaryLessTkService<ImGroupMemb
      * @return         {@link GroupMemberDTO}
      */
     List<GroupMemberDTO> queryMembers(Long id, List<Long> groupIds);
+
+    /**
+     * query group members
+     * @param groupId group id
+     * @param userIds user ids.
+     * @return        group members
+     */
+    List<ImGroupMember> queryGroupMembers(Long groupId, List<Long> userIds);
 }

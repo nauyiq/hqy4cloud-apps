@@ -6,9 +6,7 @@ import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.dto.MessagesRequestParamDTO;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
-import com.hqy.foundation.common.bind.SocketIoConnection;
 
-import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 /**
@@ -17,15 +15,6 @@ import java.util.List;
  * @date 2023/7/26 13:19
  */
 public interface ImMessageRequestService {
-
-
-    /**
-     * 获取socket.io连接
-     * @param request req
-     * @param bizId   socketio connection id
-     * @return {@link SocketIoConnection}
-     */
-    R<SocketIoConnection> genWsMessageConnection(HttpServletRequest request, String bizId);
 
     /**
      * 获取聊天记录

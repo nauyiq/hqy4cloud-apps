@@ -1,11 +1,13 @@
 package com.hqy.cloud.message.service.impl;
 
 import cn.hutool.core.map.MapUtil;
-import com.hqy.cloud.common.base.project.MicroServiceConstants;
-import com.hqy.cloud.foundation.cache.redis.support.SmartRedisManager;
+import com.hqy.cloud.common.base.lang.StringConstants;
+import com.hqy.cloud.message.cache.ImRelationshipCacheService;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
+import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.entity.ImFriend;
 import com.hqy.cloud.message.tk.entity.ImFriendApplication;
+import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import com.hqy.cloud.util.AssertUtil;
 import lombok.RequiredArgsConstructor;
@@ -13,14 +15,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-
-import static com.hqy.cloud.common.base.lang.StringConstants.Symbol.UNION;
 
 /**
+ * ImFriendOperationsService.
  * @author qiyuan.hong
  * @version 1.0
  * @date 2023/8/14 14:23
@@ -29,51 +32,50 @@ import static com.hqy.cloud.common.base.lang.StringConstants.Symbol.UNION;
 @Service
 @RequiredArgsConstructor
 public class ImFriendOperationsServiceImpl implements ImFriendOperationsService {
+    private final TransactionTemplate template;
     private final ImFriendTkService friendTkService;
-    private static final String KEY = MicroServiceConstants.MESSAGE_NETTY_SERVICE + UNION + "IM_FRIEND";
-    private static final String REMARK_KEY = MicroServiceConstants.MESSAGE_NETTY_SERVICE + UNION + "IM_FRIEND_REMARK";
-    private static final String TRUE = "1";
-    private static final String FALSE = "0";
+    private final ImConversationTkService imConversationTkService;
+    private final ImRelationshipCacheService relationshipCacheService;
 
     @Override
     public boolean addFriend(ImFriendApplication application) {
         AssertUtil.notNull(application, "ImFriendApplication should not be null.");
         Long from = application.getId();
         Long to = application.getUserId();
-        //创建好友实体类, 并且为新增两条记录， 分别都是对方的好友.
         List<ImFriend> imFriends = ImFriend.of(from, to, application.getRemark());
-        if (!friendTkService.insertList(imFriends)) {
-            return false;
-        }
-        String key = genKey(from, to);
-        SmartRedisManager.getInstance().set(key, TRUE);
-        //TODO 异步发送系统消息.
-        return true;
+        List<ImConversation> conversations = ImConversation.ofFriend(from, to, application.getRemark());
+        Boolean execute = template.execute(status -> {
+            try {
+                AssertUtil.isTrue(imConversationTkService.insertList(conversations), "Failed execute to insert conversations by addFriend.");
+                AssertUtil.isTrue(friendTkService.insertList(imFriends), "Failed execute to insert friends by addFriend.");
+                return relationshipCacheService.addFriendRelationship(from, to, null);
+            } catch (Throwable cause) {
+                status.setRollbackOnly();
+                return false;
+            }
+        });
+        return Boolean.TRUE.equals(execute);
     }
 
     @Override
     public boolean isFriend(Long from, Long to) {
-        String fromKey = genKey(from, to);
-        String toKey = genKey(to, from);
-        String valueFrom = SmartRedisManager.getInstance().get(fromKey);
-        if (StringUtils.isNotBlank(valueFrom)) {
-            return TRUE.equals(valueFrom);
+        Boolean result = relationshipCacheService.isFriend(from, to);
+        if (result == null) {
+            // cache not found friend relationship, search from db.
+            boolean isFriend = false;
+            ImFriend friend = ImFriend.of(from, to, true);
+            friend = friendTkService.queryOne(friend);
+            String remark;
+            if (friend == null) {
+                remark = StringConstants.FALSE;
+            } else {
+                remark = StringUtils.isBlank(friend.getRemark()) ? StringConstants.TRUE : friend.getRemark();
+                isFriend = true;
+            }
+            relationshipCacheService.addFriendRelationship(from, to, remark);
+            return isFriend;
         }
-        String valueTo = SmartRedisManager.getInstance().get(toKey);
-        if (StringUtils.isNotBlank(valueTo)) {
-            return TRUE.equals(valueTo);
-        }
-
-        //从数据库中查询好友关系
-        ImFriend friend = ImFriend.of(from, to, true);
-        friend = friendTkService.queryOne(friend);
-        if (friend == null) {
-            SmartRedisManager.getInstance().set(fromKey, FALSE);
-            return false;
-        } else {
-            SmartRedisManager.getInstance().set(fromKey, TRUE);
-            return true;
-        }
+        return result;
     }
 
     @Override
@@ -84,43 +86,46 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
             return true;
         }
         if (friendTkService.removeFriend(from, to)) {
-            String fromKey = genKey(from, to);
-            String toKey = genKey(to, from);
-            SmartRedisManager.getInstance().del(fromKey, toKey);
-            return true;
+            return Boolean.TRUE.equals(relationshipCacheService.removeFriend(from, to));
         }
         return false;
     }
 
     @Override
-    public Map<String, String> getFriendRemarks(Long id) {
-        String key = genRemarkKey(id);
-        Map<String, String> map = SmartRedisManager.getInstance().hGetAll(key);
-        if (map.isEmpty()) {
-            //search from db.
-            List<ImFriend> imFriends = friendTkService.queryList(ImFriend.of(id, null));
-            if (CollectionUtils.isEmpty(imFriends)) {
-                map = MapUtil.newHashMap(2);
-                map.put(id.toString(), StringUtils.EMPTY);
-            } else {
-                map = imFriends.stream().collect(Collectors.toMap(f -> f.getUserId().toString(), ImFriend::getRemark));
+    public Map<Long, String> getFriendRemarks(Long id, List<Long> friendIds) {
+        // query from redis
+        List<String> friendRemarks = relationshipCacheService.getFriendRemarks(id, friendIds);
+        Map<Long, String> resultMap = MapUtil.newHashMap(friendIds.size());
+        List<Long> queryDbs = new ArrayList<>();
+        for (int i = 0; i < friendRemarks.size(); i++) {
+            String remark = friendRemarks.get(i);
+            Long friendId = friendIds.get(i);
+            if (StringUtils.isBlank(remark)) {
+                queryDbs.add(id);
+            } else if (!remark.equals(StringConstants.TRUE) && !remark.equals(StringConstants.FALSE)){
+                resultMap.put(friendId, remark);
             }
-            SmartRedisManager.getInstance().hmSet(key, map);
         }
-        return map;
+        if (CollectionUtils.isNotEmpty(queryDbs)) {
+            // query from db.
+            List<ImFriend> friends = friendTkService.queryFriends(id, queryDbs);
+            if (CollectionUtils.isNotEmpty(friends)) {
+                Map<Long, String> updateCache = new HashMap<>(friends.size());
+                for (ImFriend friend : friends) {
+                    Long friendUserId = friend.getUserId();
+                    String remark = friend.getRemark();
+                    if (StringUtils.isNotBlank(remark)) {
+                        resultMap.put(friendUserId, remark);
+                        updateCache.put(friendUserId, remark);
+                    } else {
+                        updateCache.put(friendUserId, StringConstants.TRUE);
+                    }
+                }
+                relationshipCacheService.addFriendsRelationship(id, updateCache);
+            }
+        }
+        return resultMap;
     }
-
-
-    private String genKey(Long from, Long to) {
-        return KEY + UNION + from + UNION + to;
-    }
-
-    private String genRemarkKey(Long id) {
-        return REMARK_KEY + UNION + id;
-    }
-
-
-
 
 
 }

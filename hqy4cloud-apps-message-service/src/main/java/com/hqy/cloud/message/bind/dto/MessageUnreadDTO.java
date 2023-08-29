@@ -22,7 +22,7 @@ public class MessageUnreadDTO {
     private Integer unread = 0;
 
     public boolean isEnabled() {
-        return conversationId != null && (from != null || to != null);
+        return conversationId != null || (from != null && to != null);
     }
 
 }

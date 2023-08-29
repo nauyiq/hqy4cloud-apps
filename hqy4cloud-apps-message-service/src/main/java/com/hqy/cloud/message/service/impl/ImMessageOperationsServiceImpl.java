@@ -2,13 +2,14 @@ package com.hqy.cloud.message.service.impl;
 
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
-import com.hqy.cloud.common.base.project.MicroServiceConstants;
 import com.hqy.cloud.foundation.id.DistributedIdGen;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
+import com.hqy.cloud.message.bind.event.support.GroupChatEvent;
 import com.hqy.cloud.message.bind.event.support.PrivateChatEvent;
 import com.hqy.cloud.message.bind.event.support.ReadMessagesEvent;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
+import com.hqy.cloud.message.cache.ImUnreadCacheService;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.es.service.ImMessageElasticService;
 import com.hqy.cloud.message.server.ImEventListener;
@@ -21,9 +22,6 @@ import com.hqy.cloud.util.AssertUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.jetbrains.annotations.NotNull;
-import org.redisson.api.RMapCache;
-import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -32,9 +30,9 @@ import java.util.stream.Collectors;
 
 import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_MESSAGE_FAILED;
 import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_MESSAGE_SUCCESS;
-import static com.hqy.cloud.common.base.lang.StringConstants.Symbol.UNION;
 
 /**
+ * ImMessageOperationsService.
  * @author qiyuan.hong
  * @date 2023-08-20 21:41
  */
@@ -42,55 +40,39 @@ import static com.hqy.cloud.common.base.lang.StringConstants.Symbol.UNION;
 @Service
 @RequiredArgsConstructor
 public class ImMessageOperationsServiceImpl implements ImMessageOperationsService {
-    private static final String UNREAD_KEY = MicroServiceConstants.MESSAGE_NETTY_SERVICE + UNION + "IM_UNREAD";
-
     private final TransactionTemplate template;
     private final ImEventListener eventListener;
     private final ImConversationTkService conversationTkService;
     private final ImMessageTkService messageTkService;
     private final ImMessageElasticService imMessageElasticService;
-
-    private final RedissonClient redissonClient;
-    private final Map<String, RMapCache<String, Integer>> privateUnreadConversationCache = MapUtil.newConcurrentHashMap();
-
+    private final ImUnreadCacheService imUnreadCacheService;
 
     @Override
     public Map<String, Integer> getConversationUnread(Long id, List<MessageUnreadDTO> messageUnreadList) {
         if (CollectionUtils.isEmpty(messageUnreadList)) {
             return MapUtil.newHashMap();
         }
-        final String key = genUnreadKey(id);
-        RMapCache<String, Integer> cache = this.privateUnreadConversationCache.computeIfAbsent(key, k -> redissonClient.getMapCache(key));
-        if (cache.isEmpty()) {
-            messageUnreadList = messageTkService.queryUnread(id, messageUnreadList);
-            Map<String, Integer> map = messageUnreadList.stream().collect(Collectors.toMap(k -> k.getConversationId().toString(), MessageUnreadDTO::getUnread));
-            cache.putAll(map);
+        Map<Boolean, List<MessageUnreadDTO>> map = messageUnreadList.stream().collect(Collectors.groupingBy(MessageUnreadDTO::getIsGroup));
+        List<MessageUnreadDTO> groupUnreadList = map.get(Boolean.TRUE);
+        List<MessageUnreadDTO> privateUnreadList = map.get(Boolean.FALSE);
+
+        Map<String, Integer> resultMap = MapUtil.newHashMap(messageUnreadList.size());
+        // search group unread result.
+        if (CollectionUtils.isNotEmpty(groupUnreadList)) {
+            List<Long> groupIds = groupUnreadList.stream().map(MessageUnreadDTO::getFrom).toList();
+            Map<Long, Integer> unread = imUnreadCacheService.groupConversationsUnread(id, groupIds);
+            groupUnreadList.forEach(groupDTO -> {
+                Integer groupUnread = unread.getOrDefault(groupDTO.getFrom(), 0);
+                resultMap.put(groupDTO.getConversationId().toString(), groupUnread);
+            });
         }
-        return cache;
-    }
-
-    @Override
-    public void increaseConversationUnread(Long id, Long conversationId) {
-        String key = genUnreadKey(id);
-        RMapCache<String, Integer> cache = this.privateUnreadConversationCache.computeIfAbsent(key, k -> redissonClient.getMapCache(key));
-        String field = conversationId.toString();
-        cache.put(field, cache.getOrDefault(field, 0) + 1);
-    }
-
-    @Override
-    public void readConversation(Long id, Long conversationId) {
-        String key = genUnreadKey(id);
-        RMapCache<String, Integer> cache = this.privateUnreadConversationCache.computeIfAbsent(key, k -> redissonClient.getMapCache(key));
-        String field = conversationId.toString();
-        cache.put(field, 0);
-    }
-
-    @Override
-    public void removeConversationUnread(Long id, Long conversationId) {
-        String key = genUnreadKey(id);
-        RMapCache<String, Integer> cache = this.privateUnreadConversationCache.computeIfAbsent(key, k -> redissonClient.getMapCache(key));
-        String field = conversationId.toString();
-        cache.remove(field);
+        // search private unread result.
+        if (CollectionUtils.isNotEmpty(privateUnreadList)) {
+            List<Long> privateIds = privateUnreadList.stream().map(MessageUnreadDTO::getFrom).toList();
+            Map<Long, Integer> unread = imUnreadCacheService.privateConversationsUnread(id, privateIds);
+            unread.keySet().forEach(k -> resultMap.put(k.toString(), unread.getOrDefault(k, 0)));
+        }
+        return resultMap;
     }
 
     @Override
@@ -119,10 +101,14 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         message.setMessageId(im == null ? StrUtil.EMPTY : im.getId().toString());
         if (im != null) {
             // send socket message.
-            boolean result = false;
-            String eventName = "";
+            boolean result;
+            String eventName;
             if (im.getGroup()) {
-                //TODO
+                //send groupChat event.
+                Set<String> members = imConversations.stream().map(groupIm -> groupIm.getUserId().toString()).filter(userId -> !userId.equals(id.toString())).collect(Collectors.toSet());
+                GroupChatEvent event = new GroupChatEvent(members, message);
+                eventName = event.name();
+                result = eventListener.onGroupChat(event);
             } else {
                 //send privateChat event.
                 PrivateChatEvent event = new PrivateChatEvent(message);
@@ -161,7 +147,11 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         if (Boolean.TRUE.equals(execute)) {
             List<String> ids = unreadMessageIds.parallelStream().map(Object::toString).toList();
             // remove redis conversation unread.
-            this.readConversation(conversation.getUserId(), conversation.getId());
+            if (conversation.getGroup()) {
+                imUnreadCacheService.readPrivateConversationUnread(conversation.getUserId(), conversation.getId());
+            } else {
+                imUnreadCacheService.readGroupConversationUnread(conversation.getUserId(), conversation.getContactId());
+            }
             // send read messages event.
             ReadMessagesEvent event = new ReadMessagesEvent(conversation.getContactId().toString(), ids);
             eventListener.onReadMessages(event);
@@ -173,33 +163,35 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
     private List<ImConversation> buildConversations(Long id, ImMessageDTO message) {
         Long to = Long.valueOf(message.getToContactId());
         Date date = new Date();
-        //from conversations
-        ImConversation fromConversation = getImConversation(id, to, message, date);
-        //to conversations
-        ImConversation toConversations = getImConversation(to, id, message, date);
-        return Arrays.asList(fromConversation, toConversations);
+        if (message.getIsGroup()) {
+            // build group conversations.
+            // search group members.
+            List<ImConversation> groupConversations = conversationTkService.queryGroupConversationMembers(to);
+            AssertUtil.notEmpty(groupConversations, "Group members should not be empty.");
+            return groupConversations.stream().map(conversation -> buildSendMessageConversation(conversation.getUserId(), to, message, date, conversation.getId())).toList();
+        } else {
+            // build private conversations.
+            ImConversation fromConversation = buildSendMessageConversation(id, to, message, date, null);
+            ImConversation toConversations = buildSendMessageConversation(to, id, message, date, null);
+            return Arrays.asList(fromConversation, toConversations);
+        }
     }
 
-    @NotNull
-    private ImConversation getImConversation(Long id, Long to, ImMessageDTO message, Date date) {
+    private ImConversation buildSendMessageConversation(Long id, Long to, ImMessageDTO message, Date date, Long conversationId) {
         ImConversation conversation = new ImConversation(id, to, message.getIsGroup());
+        conversation.setId(conversationId);
+        conversation.setGroup(message.getIsGroup());
+        conversation.setTop(false);
+        conversation.setNotice(true);
+        conversation.setRemove(false);
+        conversation.setLastMessageFrom(id.toString().equals(message.getFromUser().getId()));
         conversation.setLastMessageContent(message.getContent());
         conversation.setLastMessageType(message.getType());
         conversation.setLastMessageTime(new Date(message.getSendTime()));
         conversation.setCreated(date);
         conversation.setUpdated(date);
-        conversation.setLastMessageFrom(id.toString().equals(message.getFromUser().getId()));
         return conversation;
     }
-
-    private String genUnreadKey(Long id) {
-        return UNREAD_KEY + UNION + id;
-    }
-
-    private String genUnreadGroupKey(Long userId, Long groupId) {
-        return UNREAD_KEY + groupId + userId;
-    }
-
 
 
 }

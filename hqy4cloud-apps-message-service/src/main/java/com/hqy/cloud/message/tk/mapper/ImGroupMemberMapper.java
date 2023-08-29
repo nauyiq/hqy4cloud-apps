@@ -23,4 +23,12 @@ public interface ImGroupMemberMapper extends PrimaryLessTkMapper<ImGroupMember> 
      * @return         {@link GroupMemberDTO}
      */
     List<GroupMemberDTO> queryMembers(@Param("id") Long id, @Param("groupIds") List<Long> groupIds);
+
+    /**
+     * query group members
+     * @param groupId group id
+     * @param userIds user ids.
+     * @return        group members
+     */
+    List<ImGroupMember> queryGroupMembers(@Param("groupId") Long groupId,@Param("userIds") List<Long> userIds);
 }

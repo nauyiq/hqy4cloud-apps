@@ -3,6 +3,9 @@ package com.hqy.cloud.message.service;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 
+import java.util.List;
+import java.util.Map;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -48,4 +51,12 @@ public interface ImGroupOperationsService {
      * @return        result
      */
     boolean isGroupMember(Long id, Long groupId);
+
+    /**
+     * return group members remark
+     * @param groupId group id.
+     * @param members group members id
+     * @return        group members remark
+     */
+    Map<Long, String> getGroupMemberRemark(Long groupId, List<Long> members);
 }

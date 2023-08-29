@@ -13,5 +13,13 @@
             #{groupId}
         </foreach>
     </select>
+    <select id="queryGroupMembers" resultType="com.hqy.cloud.message.tk.entity.ImGroupMember">
+        SELECT group_id,user_id,display_name,`role`,is_top top,is_notice notice
+        FROM t_im_group_member
+        WHERE group_id = #{groupId} AND user_id IN
+        <foreach collection="userIds" separator="," item="userId" open="(" close=")">
+            #{userId}
+        </foreach>
+    </select>
 
 </mapper>

@@ -35,6 +35,15 @@
         WHERE f.`id` = #{id}
     </select>
 
+    <select id="queryFriends" resultType="com.hqy.cloud.message.tk.entity.ImFriend">
+        SELECT id,user_id,remark,`index`,is_notice notice,is_top top,`status`
+        FROM t_im_friend
+        WHERE id = #{id} AND user_id IN
+        <foreach collection="userIds" item="userId" separator="," open="(" close=")">
+            #{userId}
+        </foreach>
+    </select>
+
     <update id="removeFriend">
         UPDATE t_im_friend SET `status` = 0
         WHERE (id = #{from} AND user_id = #{to}) OR (id = #{to} AND user_id = #{from})

@@ -29,4 +29,9 @@ public class ImConversationTkServiceImpl extends BaseTkServiceImpl<ImConversatio
     public boolean insertOrUpdate(List<ImConversation> imConversations) {
         return mapper.insertOrUpdate(imConversations) > 0;
     }
+
+    @Override
+    public List<ImConversation> queryGroupConversationMembers(Long groupId) {
+        return mapper.queryGroupConversationMembers(groupId);
+    }
 }

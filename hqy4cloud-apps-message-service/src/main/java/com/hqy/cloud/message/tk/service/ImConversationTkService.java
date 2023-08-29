@@ -18,4 +18,11 @@ public interface ImConversationTkService extends BaseTkService<ImConversation, L
      * @return                result
      */
     boolean insertOrUpdate(List<ImConversation> imConversations);
+
+    /**
+     * query group conversation.
+     * @param groupId group id.
+     * @return        group member conversation
+     */
+    List<ImConversation> queryGroupConversationMembers(Long groupId);
 }

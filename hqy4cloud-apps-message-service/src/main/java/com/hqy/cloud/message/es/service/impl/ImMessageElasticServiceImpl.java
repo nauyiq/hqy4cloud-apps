@@ -9,11 +9,14 @@ import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.es.service.ImMessageElasticService;
 import org.apache.commons.lang3.StringUtils;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -61,8 +64,12 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
     @Override
     public List<ImMessageDoc> queryUnreadMessages(Long from, Long to) {
         NativeQueryBuilder queryBuilder = new NativeQueryBuilder();
-        queryBuilder.withQuery(getMustBooleanQuery(from, to));
-        queryBuilder.withQuery(q -> q.term(t -> t.field("read").value(false)));
+        Query fromQuery = Query.of(q -> q.term(t -> t.field("from").value(from)));
+        Query toQuery = Query.of(q -> q.term(t -> t.field("to").value(to)));
+        Query readQuery = Query.of(q -> q.term(t -> t.field("read").value(false)));
+        queryBuilder.withQuery(q -> q.bool(b -> b.must(Arrays.asList(fromQuery, toQuery, readQuery))));
+        queryBuilder.withMaxResults(10000);
+        queryBuilder.withFields("id");
         return searchByQuery(queryBuilder.build());
     }
 
@@ -71,4 +78,6 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
         Query toQuery = Query.of(q -> q.term(t -> t.field("to").value(to)));
         return Query.of(q -> q.bool(b -> b.must(fromQuery, toQuery)));
     }
+
+
 }

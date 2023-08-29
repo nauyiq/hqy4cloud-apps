@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.tk.entity;
 
 import com.hqy.cloud.db.tk.model.BaseEntity;
+import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -9,6 +10,7 @@ import lombok.NoArgsConstructor;
 import javax.persistence.Column;
 import javax.persistence.Table;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -30,9 +32,11 @@ public class ImConversation extends BaseEntity<Long> {
     @Column(name = "is_group")
     private Boolean group;
     @Column(name = "is_notice")
-    private Boolean notice = true;
+    private Boolean notice;
     @Column(name = "is_top")
-    private Boolean top = false;
+    private Boolean top;
+    @Column(name = "is_remove")
+    private Boolean remove;
     private Boolean lastMessageFrom;
     private String lastMessageType;
     private String lastMessageContent;
@@ -71,6 +75,24 @@ public class ImConversation extends BaseEntity<Long> {
 
     public static ImConversation ofGroup(Long userId, Long groupId) {
         return new ImConversation(userId, groupId, new Date(), true);
+    }
+
+    public static List<ImConversation> ofFriend(Long from, Long to, String remark) {
+        Date now = new Date();
+        ImConversation fromConversation = ofFriend(from, to, remark, now);
+        ImConversation toConversation = ofFriend(to, from, remark, now);
+        return Arrays.asList(fromConversation, toConversation);
+    }
+
+    private static ImConversation ofFriend(Long from, Long to, String remark, Date now) {
+        ImConversation imConversation = new ImConversation(from, to, now, false);
+        imConversation.setNotice(true);
+        imConversation.setTop(false);
+        imConversation.setRemove(false);
+        imConversation.setLastMessageType(ImMessageType.SYSTEM.type);
+        imConversation.setLastMessageTime(now);
+        imConversation.setLastMessageContent(remark);
+        return imConversation;
     }
 
     public static List<ImConversation> ofGroup(Long groupId, Long id, List<Long> userIds) {

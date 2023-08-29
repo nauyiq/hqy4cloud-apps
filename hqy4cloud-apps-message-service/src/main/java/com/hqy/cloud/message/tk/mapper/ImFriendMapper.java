@@ -6,6 +6,8 @@ import com.hqy.cloud.message.tk.entity.ImFriend;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -29,4 +31,12 @@ public interface ImFriendMapper extends PrimaryLessTkMapper<ImFriend> {
      * @return       {@link ContactDTO}
      */
     ContactDTO queryUserContacts(@Param("id") Long userId);
+
+    /**
+     * query friends by user ids
+     * @param id      current user id.
+     * @param userIds user ids.
+     * @return        friends result
+     */
+    List<ImFriend> queryFriends(@Param("id") Long id, @Param("userIds") List<Long> userIds);
 }

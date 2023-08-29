@@ -8,6 +8,8 @@ import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -26,5 +28,10 @@ public class ImFriendTkServiceImpl extends PrimaryLessTkServiceImpl<ImFriend> im
     @Override
     public boolean removeFriend(Long from, Long to) {
         return mapper.removeFriend(from, to) > 0;
+    }
+
+    @Override
+    public List<ImFriend> queryFriends(Long id, List<Long> userIds) {
+        return mapper.queryFriends(id, userIds);
     }
 }

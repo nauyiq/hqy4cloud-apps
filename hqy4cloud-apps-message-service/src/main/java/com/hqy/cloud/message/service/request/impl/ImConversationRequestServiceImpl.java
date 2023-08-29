@@ -40,7 +40,9 @@ public class ImConversationRequestServiceImpl implements ImConversationRequestSe
 
     @Override
     public R<List<ConversationVO>> getConversations(Long id) {
-        List<ImConversation> conversations = conversationTkService.queryList(ImConversation.of(id));
+        ImConversation of = ImConversation.of(id);
+        of.setRemove(false);
+        List<ImConversation> conversations = conversationTkService.queryList(of);
         if (CollectionUtils.isEmpty(conversations)) {
             return R.ok(Collections.emptyList());
         }
@@ -98,7 +100,7 @@ public class ImConversationRequestServiceImpl implements ImConversationRequestSe
             }).collect(Collectors.toList());
 
         } else {
-            Map<String, String> friendRemarks = friendOperationsService.getFriendRemarks(id);
+            Map<Long, String> friendRemarks = friendOperationsService.getFriendRemarks(id, ids);
             Map<Long, AccountBaseInfoStruct> infoStructMap = AccountRpcUtil.getAccountBaseInfoMap(ids);
             return conversations.parallelStream().map(conversation -> {
                 Long contactId = conversation.getContactId();
@@ -106,7 +108,7 @@ public class ImConversationRequestServiceImpl implements ImConversationRequestSe
                 if (struct == null) {
                     return null;
                 }
-                String remark = friendRemarks.get(contactId.toString());
+                String remark = friendRemarks.get(contactId);
                 return ConversationVO.builder()
                         .id(contactId.toString())
                         .conversationId(conversation.getId().toString())

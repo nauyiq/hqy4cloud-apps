@@ -3,9 +3,9 @@ package com.hqy.cloud.message.canal.listener;
 import com.hqy.cloud.canal.core.processor.BaseCanalBinlogEventProcessor;
 import com.hqy.cloud.canal.model.CanalBinLogResult;
 import com.hqy.cloud.message.bind.ImMessageConverter;
+import com.hqy.cloud.message.cache.ImUnreadCacheService;
 import com.hqy.cloud.message.canal.model.CanalImConversation;
 import com.hqy.cloud.message.common.im.enums.ImMessageType;
-import com.hqy.cloud.message.service.ImMessageOperationsService;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +21,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ImConversationCanalListener extends BaseCanalBinlogEventProcessor<CanalImConversation> {
+    private final ImUnreadCacheService imUnreadCacheService;
     private final ImConversationTkService imConversationTkService;
-    private final ImMessageOperationsService imMessageOperationsService;
 
     @Override
     protected void processInsertInternal(CanalBinLogResult<CanalImConversation> result) {
@@ -54,33 +54,20 @@ public class ImConversationCanalListener extends BaseCanalBinlogEventProcessor<C
                // ignore system message
                return;
            }
-           if (data.getLastMessageFrom().equals(1)) {
+           if (data.getLastMessageFrom().equals(1) || data.getIsRemove().equals(1)) {
                // ignore self message.
                return;
            }
 
-           // increase toContact user unread count.
-           imMessageOperationsService.increaseConversationUnread(data.getUserId(), primaryKey);
+           Integer isGroup = data.getIsGroup();
+           if (isGroup != 1) {
+               // increase toContact user unread count.
+               imUnreadCacheService.addPrivateConversationUnread(data.getUserId(), primaryKey, 1L);
+           } else {
+               imUnreadCacheService.addGroupConversationUnread(data.getUserId(), data.getContactId(), 1L);
+           }
        } catch (Throwable cause) {
            log.error(cause.getMessage(), cause);
        }
-    }
-
-    @Override
-    protected void processDeleteInternal(CanalBinLogResult<CanalImConversation> result) {
-        try {
-            Long primaryKey = result.getPrimaryKey();
-            if (primaryKey == null) {
-                log.warn("Receive delete event by t_im_conversation, but primaryKey in null.");
-                return;
-            }
-            CanalImConversation data = result.getBeforeData();
-            if (data == null || ImMessageType.SYSTEM.type.equals(data.getLastMessageType())) {
-                return;
-            }
-            imMessageOperationsService.removeConversationUnread(data.getContactId(), primaryKey);
-        } catch (Throwable cause) {
-            log.error(cause.getMessage(), cause);
-        }
     }
 }
