@@ -25,4 +25,6 @@ public interface ImConversationTkService extends BaseTkService<ImConversation, L
      * @return        group member conversation
      */
     List<ImConversation> queryGroupConversationMembers(Long groupId);
+
+
 }

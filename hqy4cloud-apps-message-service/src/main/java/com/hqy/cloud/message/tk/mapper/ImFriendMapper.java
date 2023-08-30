@@ -1,7 +1,7 @@
 package com.hqy.cloud.message.tk.mapper;
 
 import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
-import com.hqy.cloud.message.bind.dto.ContactDTO;
+import com.hqy.cloud.message.bind.dto.ContactsDTO;
 import com.hqy.cloud.message.tk.entity.ImFriend;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -24,14 +24,6 @@ public interface ImFriendMapper extends PrimaryLessTkMapper<ImFriend> {
      */
     int removeFriend(@Param("from") Long from, @Param("to") Long to);
 
-
-    /**
-     * 获取用户通讯录列表
-     * @param userId 用户id
-     * @return       {@link ContactDTO}
-     */
-    ContactDTO queryUserContacts(@Param("id") Long userId);
-
     /**
      * query friends by user ids
      * @param id      current user id.
@@ -39,4 +31,11 @@ public interface ImFriendMapper extends PrimaryLessTkMapper<ImFriend> {
      * @return        friends result
      */
     List<ImFriend> queryFriends(@Param("id") Long id, @Param("userIds") List<Long> userIds);
+
+    /**
+     * 获取用户通讯录列表
+     * @param userId 用户id
+     * @return       {@link ContactsDTO}
+     */
+    ContactsDTO queryUserContacts(@Param("id") Long userId);
 }

@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.tk.service;
 
 import com.hqy.cloud.db.tk.PrimaryLessTkService;
+import com.hqy.cloud.message.bind.dto.ContactsDTO;
 import com.hqy.cloud.message.tk.entity.ImFriend;
 
 import java.util.List;
@@ -27,4 +28,16 @@ public interface ImFriendTkService extends PrimaryLessTkService<ImFriend> {
      * @return        friends result
      */
     List<ImFriend> queryFriends(Long id, List<Long> userIds);
+
+
+    /**
+     * query contact list
+     * @param userId user id.
+     * @return      {@link ContactsDTO}
+     */
+    ContactsDTO queryContactByUserId(Long userId);
+
+
+
+
 }

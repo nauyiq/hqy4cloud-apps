@@ -5,9 +5,11 @@ import com.hqy.account.struct.AccountBaseInfoStruct;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
+import com.hqy.cloud.message.bind.dto.ContactsDTO;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
 import com.hqy.cloud.message.bind.dto.GroupContactDTO;
 import com.hqy.cloud.message.bind.vo.ContactVO;
+import com.hqy.cloud.message.bind.vo.ContactsVO;
 import com.hqy.cloud.message.bind.vo.FriendVO;
 import com.hqy.cloud.message.bind.vo.UserImSettingVO;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
@@ -54,7 +56,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
 
     @Override
     public R<List<FriendVO>> getImFriends(Long id) {
-        List<ImFriend> imFriends = friendTkService.queryList(ImFriend.of(id, null, true));
+        List<ImFriend> imFriends = friendTkService.queryList(ImFriend.of(id, null, ImFriend.AGREE));
         if (CollectionUtils.isEmpty(imFriends)) {
             return R.ok(Collections.emptyList());
         }
@@ -77,36 +79,41 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
     }
 
     @Override
-    public R<List<ContactVO>> getUserImContacts(Long userId) {
+    public R<ContactsVO> getUserImContacts(Long userId) {
         List<ContactVO> contacts = new ArrayList<>();
-        //获取群聊
+        // query group contacts.
         List<GroupContactDTO> groupContacts = groupTkService.queryGroupContact(userId);
         if (CollectionUtils.isNotEmpty(groupContacts)) {
             contacts.addAll(groupContacts.parallelStream().map(ContactVO::new).toList());
         }
-        //获取好友
-        List<ImFriend> imFriends = friendTkService.queryList(ImFriend.of(userId, null));
-        if (CollectionUtils.isNotEmpty(imFriends)) {
-            List<Long> ids = imFriends.parallelStream().map(ImFriend::getUserId).toList();
-            Map<Long, AccountBaseInfoStruct> structMap = AccountRpcUtil.getAccountBaseInfoMap(ids);
-            List<ContactVO> vos = imFriends.parallelStream().map(friend -> {
-                AccountBaseInfoStruct struct = structMap.get(friend.getUserId());
-                if (struct == null) {
-                    return null;
-                }
-                return ContactVO.builder()
-                        .id(friend.getUserId().toString())
-                        .displayName(StringUtils.isBlank(friend.getRemark()) ? struct.nickname : friend.getRemark())
-                        .avatar(struct.avatar)
-                        .isGroup(false)
-                        .isNotice(friend.getNotice())
-                        .isTop(friend.getTop())
-                        .index(friend.getIndex()).build();
-            }).filter(Objects::nonNull).toList();
-            contacts.addAll(vos);
+        // query friend contacts.
+        ContactsDTO contact = friendTkService.queryContactByUserId(userId);
+        if (contact == null) {
+            return R.ok(ContactsVO.of(0, contacts));
+        } else {
+            int unread = contact.getUnread() == null ? 0 : contact.getUnread();
+            List<ImFriend> imFriends = contact.getContacts();
+            if (CollectionUtils.isNotEmpty(imFriends)) {
+                List<Long> ids = imFriends.parallelStream().map(ImFriend::getUserId).toList();
+                Map<Long, AccountBaseInfoStruct> structMap = AccountRpcUtil.getAccountBaseInfoMap(ids);
+                List<ContactVO> vos = imFriends.parallelStream().map(friend -> {
+                    AccountBaseInfoStruct struct = structMap.get(friend.getUserId());
+                    if (struct == null) {
+                        return null;
+                    }
+                    return ContactVO.builder()
+                            .id(friend.getUserId().toString())
+                            .displayName(StringUtils.isBlank(friend.getRemark()) ? struct.nickname : friend.getRemark())
+                            .avatar(struct.avatar)
+                            .isGroup(false)
+                            .isNotice(friend.getNotice())
+                            .isTop(friend.getTop())
+                            .index(friend.getIndex()).build();
+                }).filter(Objects::nonNull).toList();
+                contacts.addAll(vos);
+            }
+            return R.ok(ContactsVO.of(unread, contacts));
         }
-
-        return R.ok(contacts);
     }
 
 
@@ -163,7 +170,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
         if (!imFriendOperationsService.isFriend(id, userId)) {
             return R.failed(AppsResultCode.IM_NOT_FRIEND);
         }
-        ImFriend friend = ImFriend.of(id, userId, true);
+        ImFriend friend = ImFriend.of(id, userId, ImFriend.AGREE);
         friend.setRemark(mark);
         return friendTkService.updateSelective(friend) ? R.ok() : R.failed();
     }

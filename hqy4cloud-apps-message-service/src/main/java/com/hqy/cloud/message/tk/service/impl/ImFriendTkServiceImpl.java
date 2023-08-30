@@ -2,6 +2,7 @@ package com.hqy.cloud.message.tk.service.impl;
 
 import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
 import com.hqy.cloud.db.tk.support.PrimaryLessTkServiceImpl;
+import com.hqy.cloud.message.bind.dto.ContactsDTO;
 import com.hqy.cloud.message.tk.entity.ImFriend;
 import com.hqy.cloud.message.tk.mapper.ImFriendMapper;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
@@ -33,5 +34,10 @@ public class ImFriendTkServiceImpl extends PrimaryLessTkServiceImpl<ImFriend> im
     @Override
     public List<ImFriend> queryFriends(Long id, List<Long> userIds) {
         return mapper.queryFriends(id, userIds);
+    }
+
+    @Override
+    public ContactsDTO queryContactByUserId(Long userId) {
+        return mapper.queryUserContacts(userId);
     }
 }

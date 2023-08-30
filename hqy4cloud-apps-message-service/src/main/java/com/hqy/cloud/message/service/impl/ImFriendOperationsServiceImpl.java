@@ -42,7 +42,7 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
         AssertUtil.notNull(application, "ImFriendApplication should not be null.");
         Long from = application.getId();
         Long to = application.getUserId();
-        List<ImFriend> imFriends = ImFriend.of(from, to, application.getRemark());
+        List<ImFriend> imFriends = ImFriend.addFriend(from, to, application.getRemark());
         List<ImConversation> conversations = ImConversation.ofFriend(from, to, application.getRemark());
         Boolean execute = template.execute(status -> {
             try {
@@ -63,7 +63,7 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
         if (result == null) {
             // cache not found friend relationship, search from db.
             boolean isFriend = false;
-            ImFriend friend = ImFriend.of(from, to, true);
+            ImFriend friend = ImFriend.of(from, to, ImFriend.AGREE);
             friend = friendTkService.queryOne(friend);
             String remark;
             if (friend == null) {
@@ -74,13 +74,14 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
             }
             relationshipCacheService.addFriendRelationship(from, to, remark);
             return isFriend;
+        } else {
+            return result;
         }
-        return result;
     }
 
     @Override
     public boolean removeFriend(Long from, Long to) {
-        ImFriend fromFriend = ImFriend.of(from, to, true);
+        ImFriend fromFriend = ImFriend.of(from, to, ImFriend.AGREE);
         fromFriend = friendTkService.queryOne(fromFriend);
         if (fromFriend == null) {
             return true;

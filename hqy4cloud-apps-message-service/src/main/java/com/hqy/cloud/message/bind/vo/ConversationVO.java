@@ -52,6 +52,11 @@ public class ConversationVO {
     private Boolean isTop;
 
     /**
+     * 是否移除聊天
+     */
+    private Boolean isRemove;
+
+    /**
      * 未读消息数
      */
     private Integer unread;

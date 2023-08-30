@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -16,7 +17,15 @@ import java.util.List;
 @AllArgsConstructor
 public class ContactsVO {
 
-    private Integer inviteMessages;
+    private Integer unread;
     private List<ContactVO> contacts;
+
+    public static ContactsVO of() {
+        return of(0, Collections.emptyList());
+    }
+
+    public static ContactsVO of(Integer unread, List<ContactVO> contacts) {
+        return new ContactsVO(unread, contacts);
+    }
 
 }

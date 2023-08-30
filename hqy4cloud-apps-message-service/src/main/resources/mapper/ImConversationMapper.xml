@@ -3,6 +3,11 @@
 
 <mapper namespace="com.hqy.cloud.message.tk.mapper.ImConversationMapper">
 
+    <select id="queryGroupConversationMembers" resultType="com.hqy.cloud.message.tk.entity.ImConversation">
+        SELECT id,user_id,contact_id
+        FROM t_im_conversation
+        WHERE contact_id = #{groupId} AND is_group = 1
+    </select>
 
     <insert id="insertOrUpdate" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO t_im_conversation
@@ -43,10 +48,6 @@
         updated = VALUES(updated)
     </insert>
 
-    <select id="queryGroupConversationMembers" resultType="com.hqy.cloud.message.tk.entity.ImConversation">
-        SELECT id,user_id,contact_id
-        FROM t_im_conversation
-        WHERE contact_id = #{groupId} AND is_group = 1
-    </select>
+
 
 </mapper>

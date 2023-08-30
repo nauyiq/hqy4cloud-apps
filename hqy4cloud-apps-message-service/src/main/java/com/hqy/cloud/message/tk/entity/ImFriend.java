@@ -23,6 +23,9 @@ import java.util.List;
 @AllArgsConstructor
 @Table(name = "t_im_friend")
 public class ImFriend implements PrimaryLessBaseEntity {
+    public static final int NOT_VERIFY = 0;
+    public static final int AGREE = 0;
+    public static final int REFUSE = 0;
 
     @Id
     private Long id;
@@ -35,7 +38,8 @@ public class ImFriend implements PrimaryLessBaseEntity {
     private Boolean notice;
     @Column(name = "is_top")
     private Boolean top;
-    private Boolean status;
+    private Integer status;
+    private Boolean deleted = false;
     private Date created;
     private Date updated;
 
@@ -44,16 +48,16 @@ public class ImFriend implements PrimaryLessBaseEntity {
         this.userId = userId;
     }
 
-    public ImFriend(Long id, Long userId, boolean status) {
+    public ImFriend(Long id, Long userId, int status) {
         this.id = id;
         this.userId = userId;
         this.status = status;
     }
 
-    public static List<ImFriend> of(Long id, Long userId, String mark) {
+    public static List<ImFriend> addFriend(Long id, Long userId, String mark) {
         Date now = new Date();
-        ImFriend from = new ImFriend(id, userId, mark, "", true, false, true, now, now);
-        ImFriend to = new ImFriend(userId, id, StrUtil.EMPTY, "", true, false, true, now, now);
+        ImFriend from = new ImFriend(id, userId, mark, "", true, false, AGREE, false, now, now);
+        ImFriend to = new ImFriend(userId, id, StrUtil.EMPTY, "", true, false, AGREE, false, now, now);
         return Arrays.asList(from, to);
     }
 
@@ -61,7 +65,7 @@ public class ImFriend implements PrimaryLessBaseEntity {
         return new ImFriend(id, userId);
     }
 
-    public static ImFriend of(Long id, Long userId, boolean status) {
+    public static ImFriend of(Long id, Long userId, int status) {
         return new ImFriend(id, userId, status);
     }
 

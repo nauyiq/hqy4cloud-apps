@@ -34,4 +34,6 @@ public class ImConversationTkServiceImpl extends BaseTkServiceImpl<ImConversatio
     public List<ImConversation> queryGroupConversationMembers(Long groupId) {
         return mapper.queryGroupConversationMembers(groupId);
     }
+
+
 }

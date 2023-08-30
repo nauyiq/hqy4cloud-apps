@@ -4,48 +4,47 @@
 <mapper namespace="com.hqy.cloud.message.tk.mapper.ImFriendMapper">
 
 
-    <resultMap id="ContactResultMap" type="com.hqy.cloud.message.bind.dto.ContactDTO">
-        <collection property="groupContacts" ofType="com.hqy.cloud.message.bind.dto.GroupContactDTO">
-            <id column="groupId" property="groupId"/>
-            <id column="name" property="name"/>
-            <id column="groupIndex" property="groupIndex"/>
-            <id column="groupAvatar" property="groupAvatar"/>
-            <id column="creator" property="creator"/>
-            <id column="groupNotice" property="groupNotice"/>
-            <id column="groupInvite" property="groupInvite"/>
-            <id column="groupTop" property="groupTop"/>
-        </collection>
-        <collection property="friendContacts" ofType="com.hqy.cloud.message.bind.dto.FriendContactDTO">
-            <id column="id" property="id"/>
-            <result column="remark" property="remark"/>
-            <result column="isNotice" property="isNotice"/>
-            <result column="is_top" property="isTop"/>
-            <result column="index" property="index"/>
-        </collection>
-    </resultMap>
-
-    <select id="queryUserContacts" resultType="com.hqy.cloud.message.bind.dto.ContactDTO">
-        SELECT g.id groupId, g.name, g.index groupIndex, g.avatar groupAvatar, g.creator, g.is_notice groupNotice,
-               g.is_invite groupInvite, g.is_top groupTop, f.id, f.remark, f.index, f.is_notice, f.is_top
-        FROM `t_im_friend` f,
-             (SELECT a.id, a.`name`, a.`creator`, a.avatar, a.`index`, a.`is_invite`, b.`is_notice`,  b.`is_top`
-              FROM `t_im_group` a
-                       LEFT JOIN `t_im_group_member` b ON a.id = b.group_id
-              WHERE a.`creator` = #{id} AND b.user_id = #{id}) g
-        WHERE f.`id` = #{id}
-    </select>
-
     <select id="queryFriends" resultType="com.hqy.cloud.message.tk.entity.ImFriend">
         SELECT id,user_id,remark,`index`,is_notice notice,is_top top,`status`
         FROM t_im_friend
-        WHERE id = #{id} AND user_id IN
+        WHERE id = #{id} AND `deleted` = 0 AND user_id IN
         <foreach collection="userIds" item="userId" separator="," open="(" close=")">
             #{userId}
         </foreach>
     </select>
 
+    <resultMap id="ContactResultMap" type="com.hqy.cloud.message.bind.dto.ContactsDTO">
+        <result column="unread" property="unread"/>
+        <collection property="contacts" ofType="com.hqy.cloud.message.tk.entity.ImFriend">
+            <result column="id" property="id"/>
+            <result column="userId" property="userId"/>
+            <result column="remark" property="remark"/>
+            <result column="index" property="index"/>
+            <result column="isNotice" property="notice"/>
+            <result column="isTop" property="top"/>
+            <result column="status" property="status"/>
+            <result column="created" property="created"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryUserContacts" resultMap="ContactResultMap">
+        SELECT
+            c.id,
+            c.user_id userId,
+            c.remark,
+            c.index,
+            c.is_notice isNotice,
+            c.is_top isTop,
+            c.status,
+            c.created,
+            a.unread
+        FROM `t_im_friend` c,
+             (SELECT COUNT(*) unread FROM `t_im_friend_application` WHERE id = #{id} AND status = 0) a
+        WHERE c.id = #{id} AND deleted = 0
+    </select>
+
     <update id="removeFriend">
-        UPDATE t_im_friend SET `status` = 0
+        UPDATE t_im_friend SET `deleted` = 1
         WHERE (id = #{from} AND user_id = #{to}) OR (id = #{to} AND user_id = #{from})
     </update>
 
