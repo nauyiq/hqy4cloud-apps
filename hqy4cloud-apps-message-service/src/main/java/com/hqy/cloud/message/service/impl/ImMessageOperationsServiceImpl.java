@@ -68,7 +68,7 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         }
         // search private unread result.
         if (CollectionUtils.isNotEmpty(privateUnreadList)) {
-            List<Long> privateIds = privateUnreadList.stream().map(MessageUnreadDTO::getFrom).toList();
+            List<Long> privateIds = privateUnreadList.stream().map(MessageUnreadDTO::getConversationId).toList();
             Map<Long, Integer> unread = imUnreadCacheService.privateConversationsUnread(id, privateIds);
             unread.keySet().forEach(k -> resultMap.put(k.toString(), unread.getOrDefault(k, 0)));
         }
@@ -148,9 +148,9 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
             List<String> ids = unreadMessageIds.parallelStream().map(Object::toString).toList();
             // remove redis conversation unread.
             if (conversation.getGroup()) {
-                imUnreadCacheService.readPrivateConversationUnread(conversation.getUserId(), conversation.getId());
-            } else {
                 imUnreadCacheService.readGroupConversationUnread(conversation.getUserId(), conversation.getContactId());
+            } else {
+                imUnreadCacheService.readPrivateConversationUnread(conversation.getUserId(), conversation.getId());
             }
             // send read messages event.
             ReadMessagesEvent event = new ReadMessagesEvent(conversation.getContactId().toString(), ids);

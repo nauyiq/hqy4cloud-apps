@@ -63,7 +63,7 @@ public class ImUnreadCacheServiceImpl extends ImCache implements ImUnreadCacheSe
             return;
         }
         String key = genConversationKey(userId);
-        RedisManager.getInstance().hDel(key, userId);
+        RedisManager.getInstance().hDel(key, conversationId);
     }
 
     @Override
