@@ -40,6 +40,11 @@ public class ImUserController extends BaseController {
         return requestService.getUserImSetting(accountId);
     }
 
+    /**
+     * 获取通讯录列表
+     * @param request HttpServletRequest.
+     * @return        R.
+     */
     @GetMapping("/contacts")
     public R<List<ContactVO>> getUserImContacts(HttpServletRequest request) {
         Long userId = getAccessAccountId(request);
@@ -49,6 +54,11 @@ public class ImUserController extends BaseController {
         return requestService.getUserImContacts(userId);
     }
 
+    /**
+     * 获取当前im用户所有好友列表
+     * @param request HttpServletRequest.
+     * @return        R.
+     */
     @GetMapping("/friends")
     public R<List<FriendVO>> getFriends(HttpServletRequest request) {
         Long id = getAccessAccountId(request);
