@@ -18,11 +18,14 @@ import java.util.Date;
 @AllArgsConstructor
 @Table(name = "t_im_friend_application")
 public class ImFriendApplication implements PrimaryLessBaseEntity {
+    public static final int NOT_VERIFY = 0;
+    public static final int AGREE = 1;
+    public static final int REFUSE = 2;
 
     private Long id;
     private Long userId;
     private String remark;
-    private Boolean status;
+    private Integer status;
     private Date created;
     private Date updated;
 
@@ -40,6 +43,7 @@ public class ImFriendApplication implements PrimaryLessBaseEntity {
         application.setId(id);
         application.setUserId(userId);
         application.setRemark(remark);
+        application.setStatus(NOT_VERIFY);
         Date now = new Date();
         application.setCreated(now);
         application.setUpdated(now);

@@ -2,14 +2,13 @@ package com.hqy.cloud.message.controller;
 
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
+import com.hqy.cloud.message.bind.dto.ImChatConfigDTO;
 import com.hqy.cloud.message.bind.vo.ConversationVO;
 import com.hqy.cloud.message.service.request.ImConversationRequestService;
 import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -40,6 +39,44 @@ public class ImConversationController extends BaseController {
         }
         return requestService.getConversations(id);
     }
+
+    /**
+     * update chat top.
+     * @param request    HttpServletRequest.
+     * @param chatConfig {@link ImChatConfigDTO}
+     * @return           R.
+     */
+    @PutMapping("/chat/top")
+    public R<Boolean> updateChatTop(HttpServletRequest request, @RequestBody ImChatConfigDTO chatConfig) {
+        Long id = getAccessAccountId(request);
+        if (id == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        if (chatConfig == null || !chatConfig.isEnabled()) {
+            return R.failed(ResultCode.ERROR_PARAM_UNDEFINED);
+        }
+        return requestService.updateChatTop(id, chatConfig);
+    }
+
+    /**
+     * update chat notice.
+     * @param request    HttpServletRequest.
+     * @param chatConfig {@link ImChatConfigDTO}
+     * @return           R.
+     */
+    @PutMapping("/chat/notice")
+    public R<Boolean> updateChatNotice(HttpServletRequest request, @RequestBody ImChatConfigDTO chatConfig) {
+        Long id = getAccessAccountId(request);
+        if (id == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        if (chatConfig == null || !chatConfig.isEnabled()) {
+            return R.failed(ResultCode.ERROR_PARAM_UNDEFINED);
+        }
+        return requestService.updateChatNotice(id, chatConfig);
+    }
+
+
 
 
 

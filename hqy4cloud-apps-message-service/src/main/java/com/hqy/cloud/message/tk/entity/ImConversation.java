@@ -102,4 +102,18 @@ public class ImConversation extends BaseEntity<Long> {
         userIds.forEach(userId -> contacts.add(new ImConversation(userId, groupId, now,true)));
         return contacts;
     }
+
+    public static ImConversation ofTop(Long id, Long contactId, Boolean isGroup, Boolean status) {
+        ImConversation imConversation = of(id, contactId, isGroup);
+        imConversation.setTop(status);
+        return imConversation;
+    }
+
+    public static ImConversation ofNotice(Long id, Long contactId, Boolean isGroup, Boolean status) {
+        ImConversation imConversation = of(id, contactId, isGroup);
+        imConversation.setNotice(status);
+        return imConversation;
+    }
+
+
 }

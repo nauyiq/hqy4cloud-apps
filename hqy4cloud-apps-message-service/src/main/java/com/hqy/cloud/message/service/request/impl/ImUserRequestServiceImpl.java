@@ -3,15 +3,13 @@ package com.hqy.cloud.message.service.request.impl;
 import com.hqy.account.dto.AccountInfoDTO;
 import com.hqy.account.struct.AccountBaseInfoStruct;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
+import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.ContactsDTO;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
 import com.hqy.cloud.message.bind.dto.GroupContactDTO;
-import com.hqy.cloud.message.bind.vo.ContactVO;
-import com.hqy.cloud.message.bind.vo.ContactsVO;
-import com.hqy.cloud.message.bind.vo.FriendVO;
-import com.hqy.cloud.message.bind.vo.UserImSettingVO;
+import com.hqy.cloud.message.bind.vo.*;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
 import com.hqy.cloud.message.service.request.ImUserRequestService;
 import com.hqy.cloud.message.tk.entity.ImFriend;
@@ -56,7 +54,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
 
     @Override
     public R<List<FriendVO>> getImFriends(Long id) {
-        List<ImFriend> imFriends = friendTkService.queryList(ImFriend.of(id, null, ImFriend.AGREE));
+        List<ImFriend> imFriends = friendTkService.queryList(ImFriend.of(id, null));
         if (CollectionUtils.isEmpty(imFriends)) {
             return R.ok(Collections.emptyList());
         }
@@ -76,6 +74,25 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
                     .build();
         }).filter(Objects::nonNull).toList();
         return R.ok(vos);
+    }
+
+    @Override
+    public R<UserCardVO> getImUserCardInfo(Long id, Long userId) {
+        //query info by userId.
+        AccountInfoDTO accountInfo = AccountRpcUtil.getAccountInfo(userId);
+        if (accountInfo == null) {
+            return R.failed(ResultCode.USER_NOT_FOUND);
+        }
+        UserCardVO vo = new UserCardVO(accountInfo.getId().toString(), accountInfo.getUsername(), accountInfo.getNickname(), accountInfo.getAvatar(), accountInfo.getIntro());
+        if (id != null) {
+            // query is friend.
+            ImFriend imFriend = friendTkService.queryOne(ImFriend.of(id, userId));
+            if (imFriend != null) {
+                UserCardVO.FriendVO friendVO = new UserCardVO.FriendVO(imFriend.getTop(), imFriend.getNotice(), imFriend.getRemark());
+                vo.setFriend(friendVO);
+            }
+        }
+        return R.ok(vo);
     }
 
     @Override
@@ -140,7 +157,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
         if (application.getStatus() != null) {
             return R.ok();
         }
-        application.setStatus(friendDTO.getStatus());
+        application.setStatus(friendDTO.getStatus() ? ImFriendApplication.AGREE : ImFriendApplication.REFUSE);
         application.setRemark(friendDTO.getRemark());
 
         //拒接添加好友的申请
@@ -170,7 +187,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
         if (!imFriendOperationsService.isFriend(id, userId)) {
             return R.failed(AppsResultCode.IM_NOT_FRIEND);
         }
-        ImFriend friend = ImFriend.of(id, userId, ImFriend.AGREE);
+        ImFriend friend = ImFriend.of(id, userId);
         friend.setRemark(mark);
         return friendTkService.updateSelective(friend) ? R.ok() : R.failed();
     }

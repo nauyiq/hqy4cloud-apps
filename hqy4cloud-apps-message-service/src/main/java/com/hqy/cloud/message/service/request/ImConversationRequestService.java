@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.service.request;
 
 import com.hqy.cloud.common.bind.R;
+import com.hqy.cloud.message.bind.dto.ImChatConfigDTO;
 import com.hqy.cloud.message.bind.vo.ConversationVO;
 
 import java.util.List;
@@ -19,4 +20,19 @@ public interface ImConversationRequestService {
      */
     R<List<ConversationVO>> getConversations(Long id);
 
+    /**
+     * update chat top.
+     * @param id          user id.
+     * @param chatConfig {@link ImChatConfigDTO}
+     * @return           R.
+     */
+    R<Boolean> updateChatTop(Long id, ImChatConfigDTO chatConfig);
+
+    /**
+     * update chat notice.
+     * @param id          user id.
+     * @param chatConfig {@link ImChatConfigDTO}
+     * @return           R.
+     */
+    R<Boolean> updateChatNotice(Long id, ImChatConfigDTO chatConfig);
 }

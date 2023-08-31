@@ -1,12 +1,11 @@
 package com.hqy.cloud.message.controller;
 
+import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
+import com.hqy.cloud.foundation.common.authentication.AuthenticationRequestContext;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
-import com.hqy.cloud.message.bind.vo.ContactVO;
-import com.hqy.cloud.message.bind.vo.ContactsVO;
-import com.hqy.cloud.message.bind.vo.FriendVO;
-import com.hqy.cloud.message.bind.vo.UserImSettingVO;
+import com.hqy.cloud.message.bind.vo.*;
 import com.hqy.cloud.message.service.request.ImUserRequestService;
 import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
@@ -68,6 +67,22 @@ public class ImUserController extends BaseController {
         }
         return requestService.getImFriends(id);
     }
+
+    /**
+     * return user info by user id.
+     * @param request HttpServletRequest.
+     * @param userId  user id.
+     * @return        R.
+     */
+    @GetMapping("/{userId}")
+    public R<UserCardVO> getImUserCardInfo(HttpServletRequest request, @PathVariable("userId") Long userId) {
+        if (userId == null) {
+            return R.failed(ResultCode.ERROR_PARAM_UNDEFINED);
+        }
+        Long id = getAccessAccountId(request);
+        return requestService.getImUserCardInfo(id, userId);
+    }
+
 
     /**
      * 申请添加好友

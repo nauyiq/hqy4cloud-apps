@@ -63,7 +63,7 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
         if (result == null) {
             // cache not found friend relationship, search from db.
             boolean isFriend = false;
-            ImFriend friend = ImFriend.of(from, to, ImFriend.AGREE);
+            ImFriend friend = ImFriend.of(from, to);
             friend = friendTkService.queryOne(friend);
             String remark;
             if (friend == null) {
@@ -81,7 +81,7 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
 
     @Override
     public boolean removeFriend(Long from, Long to) {
-        ImFriend fromFriend = ImFriend.of(from, to, ImFriend.AGREE);
+        ImFriend fromFriend = ImFriend.of(from, to);
         fromFriend = friendTkService.queryOne(fromFriend);
         if (fromFriend == null) {
             return true;

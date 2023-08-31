@@ -1,11 +1,9 @@
 package com.hqy.cloud.message.service.request;
 
+import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
-import com.hqy.cloud.message.bind.vo.ContactVO;
-import com.hqy.cloud.message.bind.vo.ContactsVO;
-import com.hqy.cloud.message.bind.vo.FriendVO;
-import com.hqy.cloud.message.bind.vo.UserImSettingVO;
+import com.hqy.cloud.message.bind.vo.*;
 
 import java.util.List;
 
@@ -28,6 +26,14 @@ public interface ImUserRequestService {
      * @return   R.
      */
     R<List<FriendVO>> getImFriends(Long id);
+
+    /**
+     * return im userInfo by user id.
+     * @param id     current user id.
+     * @param userId search user id.
+     * @return       R.
+     */
+    R<UserCardVO> getImUserCardInfo(Long id, Long userId);
 
     /**
      * 获取通讯录列表
