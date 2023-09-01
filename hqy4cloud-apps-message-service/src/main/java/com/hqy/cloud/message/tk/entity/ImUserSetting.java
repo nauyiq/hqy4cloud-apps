@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Table;
+import java.util.Date;
 
 /**
  * @author qiyuan.hong
@@ -26,6 +27,10 @@ public class ImUserSetting extends BaseEntity<Long> {
     @Column(name = "is_clear_msg")
     private Boolean clearMsg;
     private Integer clearMsgDate;
+
+    public ImUserSetting(Long userId) {
+        setId(userId);
+    }
 
     public Boolean getPrivateChat() {
         return privateChat;
@@ -66,4 +71,14 @@ public class ImUserSetting extends BaseEntity<Long> {
     public void setClearMsgDate(Integer clearMsgDate) {
         this.clearMsgDate = clearMsgDate;
     }
+
+    public static ImUserSetting of(Long userId) {
+        ImUserSetting userSetting = new ImUserSetting(false, true, true, true, 30);
+        Date now = new Date();
+        userSetting.setCreated(now);
+        userSetting.setUpdated(now);
+        userSetting.setId(userId);
+        return userSetting;
+    }
+
 }

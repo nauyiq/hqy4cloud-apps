@@ -3,7 +3,6 @@ package com.hqy.cloud.message.service.request.impl;
 import com.hqy.account.dto.AccountInfoDTO;
 import com.hqy.account.struct.AccountBaseInfoStruct;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
-import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.ContactsDTO;
@@ -31,6 +30,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.*;
 
 /**
+ * ImUserRequestService
  * @author qiyuan.hong
  * @date 2023-08-12 12:12
  */
@@ -48,8 +48,24 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
     @Override
     public R<UserImSettingVO> getUserImSetting(Long id) {
         ImUserSetting imUserSetting = userSettingTkService.queryById(id);
-        UserImSettingVO vo = imUserSetting == null ? UserImSettingVO.of() : UserImSettingVO.of(imUserSetting);
+        if (imUserSetting == null) {
+            // insert default im setting.
+            imUserSetting = ImUserSetting.of(id);
+            userSettingTkService.insert(imUserSetting);
+        }
+        UserImSettingVO vo = UserImSettingVO.of(imUserSetting);
         return R.ok(vo);
+    }
+
+    @Override
+    public R<Boolean> updateUserImSetting(Long userId, UserImSettingVO setting) {
+        ImUserSetting imUserSetting = new ImUserSetting(userId);
+        imUserSetting.setOline(setting.getIsOnline());
+        imUserSetting.setInviteGroup(setting.getIsInviteGroup());
+        imUserSetting.setPrivateChat(setting.getIsPrivateChat());
+        imUserSetting.setClearMsg(setting.getIsClearMsg());
+        imUserSetting.setClearMsgDate(setting.getClearMessageDate());
+        return userSettingTkService.updateSelective(imUserSetting) ? R.ok() : R.failed();
     }
 
     @Override

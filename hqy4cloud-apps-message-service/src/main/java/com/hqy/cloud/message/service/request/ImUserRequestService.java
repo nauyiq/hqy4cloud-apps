@@ -21,6 +21,14 @@ public interface ImUserRequestService {
     R<UserImSettingVO> getUserImSetting(Long id);
 
     /**
+     * update user im setting.
+     * @param userId  user id.
+     * @param setting request params {@link UserImSettingVO}
+     * @return R.
+     */
+    R<Boolean> updateUserImSetting(Long userId, UserImSettingVO setting);
+
+    /**
      * 获取通讯录中的好友
      * @param id 用户id
      * @return   R.
@@ -74,7 +82,6 @@ public interface ImUserRequestService {
      * @return       R.
      */
     R<Boolean> removeFriend(Long id, Long userId);
-
 
 
 }

@@ -69,7 +69,14 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 .from(Long.parseLong(vo.getId()))
                 .to(id)
                 .isGroup(vo.getIsGroup()).build()).collect(Collectors.toList()));
-        all = all.parallelStream().peek(vo -> vo.setUnread(unreadMap.getOrDefault(vo.getConversationId(), 0))).collect(Collectors.toList());
+        all = all.parallelStream().peek(vo -> vo.setUnread(unreadMap.getOrDefault(vo.getConversationId(), 0)))
+                .sorted((v1, v2) -> {
+                    if (v1.getIsTop().equals(v2.getIsTop())) {
+                        return (int)(v2.getLastSendTime() - v1.getLastSendTime());
+                    }
+                    return v1.getIsTop() ? 1 : -1;
+                })
+                .collect(Collectors.toList());
         return all;
     }
 

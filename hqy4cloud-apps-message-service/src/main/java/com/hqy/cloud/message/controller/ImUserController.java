@@ -1,11 +1,12 @@
 package com.hqy.cloud.message.controller;
 
-import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
-import com.hqy.cloud.foundation.common.authentication.AuthenticationRequestContext;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
-import com.hqy.cloud.message.bind.vo.*;
+import com.hqy.cloud.message.bind.vo.ContactsVO;
+import com.hqy.cloud.message.bind.vo.FriendVO;
+import com.hqy.cloud.message.bind.vo.UserCardVO;
+import com.hqy.cloud.message.bind.vo.UserImSettingVO;
 import com.hqy.cloud.message.service.request.ImUserRequestService;
 import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,24 @@ public class ImUserController extends BaseController {
             return R.failed(ResultCode.NOT_LOGIN);
         }
         return requestService.getUserImSetting(accountId);
+    }
+
+    /**
+     * update user im setting.
+     * @param request HttpServletRequest.
+     * @param setting request params {@link UserImSettingVO}
+     * @return R.
+     */
+    @PutMapping("/setting")
+    public R<Boolean> updateUserImSetting(HttpServletRequest request, @RequestBody UserImSettingVO setting) {
+        Long userId = getAccessAccountId(request);
+        if (userId == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        if (setting == null) {
+            return R.failed(ResultCode.ERROR_PARAM_UNDEFINED);
+        }
+        return requestService.updateUserImSetting(userId, setting);
     }
 
     /**
