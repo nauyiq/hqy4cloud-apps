@@ -24,7 +24,8 @@ public interface ImMessageConverter {
     @Mapping(target = "isTop", source = "top", qualifiedByName = "booleanToInteger")
     @Mapping(target = "lastMessageFrom", source = "lastMessageFrom", qualifiedByName = "booleanToInteger")
     CanalImConversation convert(ImConversation conversation);
-
+    @Mapping(target = "lastMessageFrom", source = "lastMessageFrom", qualifiedByName = "IntegerToBoolean")
+    ImConversation convert(CanalImConversation imConversation);
 
 
 

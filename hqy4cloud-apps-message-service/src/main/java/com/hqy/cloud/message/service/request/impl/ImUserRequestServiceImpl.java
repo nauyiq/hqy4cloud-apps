@@ -1,7 +1,8 @@
 package com.hqy.cloud.message.service.request.impl;
 
-import com.hqy.account.dto.AccountInfoDTO;
-import com.hqy.account.struct.AccountBaseInfoStruct;
+import com.hqy.cloud.account.dto.AccountInfoDTO;
+import com.hqy.cloud.account.struct.AccountProfileStruct;
+import com.hqy.cloud.account.struct.AccountStruct;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
@@ -75,10 +76,10 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
             return R.ok(Collections.emptyList());
         }
         List<Long> ids = imFriends.parallelStream().map(ImFriend::getUserId).toList();
-        Map<Long, AccountBaseInfoStruct> map = AccountRpcUtil.getAccountBaseInfoMap(ids);
+        Map<Long, AccountProfileStruct> map = AccountRpcUtil.getAccountProfileMap(ids);
         List<FriendVO> vos = imFriends.stream().map(friend -> {
             Long userId = friend.getUserId();
-            AccountBaseInfoStruct struct = map.get(userId);
+            AccountProfileStruct struct = map.get(userId);
             if (struct == null) {
                 return null;
             }
@@ -95,11 +96,14 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
     @Override
     public R<UserCardVO> getImUserCardInfo(Long id, Long userId) {
         //query info by userId.
-        AccountInfoDTO accountInfo = AccountRpcUtil.getAccountInfo(userId);
+        AccountInfoDTO accountInfo = AccountRpcUtil.getAccount(userId);
         if (accountInfo == null) {
             return R.failed(ResultCode.USER_NOT_FOUND);
         }
-        UserCardVO vo = new UserCardVO(accountInfo.getId().toString(), accountInfo.getUsername(), accountInfo.getNickname(), accountInfo.getAvatar(), accountInfo.getIntro());
+        //query user setting vo.
+        ImUserSetting imUserSetting = userSettingTkService.queryById(userId);
+        UserCardVO vo = new UserCardVO(accountInfo.getId().toString(), accountInfo.getUsername(), accountInfo.getNickname(), accountInfo.getAvatar(), accountInfo.getIntro(),
+                imUserSetting == null || imUserSetting.getPrivateChat(), imUserSetting == null || imUserSetting.getInviteGroup());
         if (id != null) {
             // query is friend.
             ImFriend imFriend = friendTkService.queryOne(ImFriend.of(id, userId));
@@ -128,9 +132,9 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
             List<ImFriend> imFriends = contact.getContacts();
             if (CollectionUtils.isNotEmpty(imFriends)) {
                 List<Long> ids = imFriends.parallelStream().map(ImFriend::getUserId).toList();
-                Map<Long, AccountBaseInfoStruct> structMap = AccountRpcUtil.getAccountBaseInfoMap(ids);
+                Map<Long, AccountProfileStruct> structMap = AccountRpcUtil.getAccountProfileMap(ids);
                 List<ContactVO> vos = imFriends.parallelStream().map(friend -> {
-                    AccountBaseInfoStruct struct = structMap.get(friend.getUserId());
+                    AccountProfileStruct struct = structMap.get(friend.getUserId());
                     if (struct == null) {
                         return null;
                     }
@@ -152,8 +156,8 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
 
     @Override
     public R<Boolean> addImFriend(Long id, FriendDTO add) {
-        AccountInfoDTO accountInfo = AccountRpcUtil.getAccountInfo(add.getUserId());
-        if (accountInfo == null || !accountInfo.getStatus()) {
+        AccountStruct struct = AccountRpcUtil.getAccountInfo(add.getUserId());
+        if (struct == null || !struct.getStatus()) {
             return R.failed(ResultCode.USER_NOT_FOUND);
         }
         ImFriendApplication application = ImFriendApplication.of(add.getUserId(), id, add.getRemark());

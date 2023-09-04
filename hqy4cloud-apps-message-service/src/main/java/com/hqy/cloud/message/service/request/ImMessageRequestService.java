@@ -39,4 +39,12 @@ public interface ImMessageRequestService {
      * @return    R.
      */
     R<List<String>> setMessageRead(Long id, MessageUnreadDTO dto);
+
+    /**
+     * undo message
+     * @param id        current user id
+     * @param messageId message id
+     * @return          R
+     */
+    R<Boolean> undoMessage(Long id, Long messageId);
 }

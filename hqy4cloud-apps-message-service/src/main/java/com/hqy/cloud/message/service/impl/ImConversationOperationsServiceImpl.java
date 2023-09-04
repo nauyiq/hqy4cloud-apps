@@ -1,10 +1,17 @@
 package com.hqy.cloud.message.service.impl;
 
-import com.hqy.account.struct.AccountBaseInfoStruct;
-import com.hqy.cloud.common.bind.R;
+import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.pinyin.PinyinUtil;
+import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
+import com.hqy.cloud.message.bind.event.support.AppendChatEvent;
+import com.hqy.cloud.message.bind.event.support.ImNoticeChatEvent;
+import com.hqy.cloud.message.bind.event.support.ImTopChatEvent;
+import com.hqy.cloud.message.bind.vo.ContactVO;
 import com.hqy.cloud.message.bind.vo.ConversationVO;
+import com.hqy.cloud.message.server.ImEventListener;
 import com.hqy.cloud.message.service.ImConversationOperationsService;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
 import com.hqy.cloud.message.service.ImMessageOperationsService;
@@ -43,6 +50,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
     private final ImGroupMemberTkService imGroupMemberTkService;
     private final ImFriendTkService imFriendTkService;
     private final ImFriendOperationsService friendOperationsService;
+    private final ImEventListener imEventListener;
     private final ImMessageOperationsService messageOperationsService;
 
     @Override
@@ -69,6 +77,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 .from(Long.parseLong(vo.getId()))
                 .to(id)
                 .isGroup(vo.getIsGroup()).build()).collect(Collectors.toList()));
+        // sort by message and setting unread.
         all = all.parallelStream().peek(vo -> vo.setUnread(unreadMap.getOrDefault(vo.getConversationId(), 0)))
                 .sorted((v1, v2) -> {
                     if (v1.getIsTop().equals(v2.getIsTop())) {
@@ -103,7 +112,11 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 return false;
             }
         });
-        return Boolean.TRUE.equals(execute);
+        if (Boolean.TRUE.equals(execute)) {
+            sendTopChatEvent(conversation);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -129,7 +142,11 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 return false;
             }
         });
-        return Boolean.TRUE.equals(execute);
+        if (Boolean.TRUE.equals(execute)) {
+            sendTopChatEvent(conversation);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -156,7 +173,11 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 return false;
             }
         });
-        return Boolean.TRUE.equals(execute);
+        if (Boolean.TRUE.equals(execute)) {
+            sendNoticeChatEvent(conversation);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -183,7 +204,50 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 return false;
             }
         });
-        return Boolean.TRUE.equals(execute);
+        if (Boolean.TRUE.equals(execute)) {
+            sendNoticeChatEvent(conversation);
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean sendAppendPrivateChatEvent(ImConversation imConversation) {
+        Long userId = imConversation.getUserId();
+        Long contactId = imConversation.getContactId();
+        AccountProfileStruct profile = AccountRpcUtil.getAccountProfile(contactId);
+        if (profile == null || profile.getId() == null) {
+            log.warn("Failed execute to send append private chat contact, because not found user profile, contactId: {}.", contactId);
+            return false;
+        }
+        //query remark.
+        Map<Long, String> map = friendOperationsService.getFriendRemarks(userId, Collections.singletonList(contactId));
+        String remark = MapUtil.isNotEmpty(map) ? map.get(contactId) : StrUtil.EMPTY;
+        //build conversation vo
+        ConversationVO conversation = buildPrivateChatConversationVO(remark, profile, imConversation);
+        //build contact vo
+        char fistChar = StringUtils.isBlank(remark) ? profile.nickname.charAt(0) : remark.charAt(0);
+        ContactVO contact = ContactVO.builder()
+                .id(contactId.toString())
+                .index(PinyinUtil.getFirstLetter(fistChar) + "")
+                .displayName(StringUtils.isBlank(remark) ? profile.nickname : remark)
+                .avatar(profile.avatar)
+                .isTop(conversation.getIsTop())
+                .isNotice(conversation.getIsNotice()).build();
+        AppendChatEvent chatEvent = AppendChatEvent.of(false, Collections.singletonList(userId.toString()), conversation, contact);
+        return imEventListener.onImAppendChatEvent(chatEvent);
+    }
+
+    private void sendTopChatEvent(ImConversation conversation) {
+        ImTopChatEvent event = ImTopChatEvent.of(conversation.getUserId().toString(), conversation.getContactId().toString(),
+                conversation.getId().toString(), conversation.getTop());
+        imEventListener.onImTopChatEvent(event);
+    }
+
+    private void sendNoticeChatEvent(ImConversation conversation) {
+        ImNoticeChatEvent event = ImNoticeChatEvent.of(conversation.getUserId().toString(), conversation.getContactId().toString(),
+                conversation.getId().toString(), conversation.getTop());
+        imEventListener.onImNoticeChatEvent(event);
     }
 
     private List<ConversationVO> convert(final Long id, final List<ImConversation> conversations, boolean isGroup) {
@@ -222,29 +286,34 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
 
         } else {
             Map<Long, String> friendRemarks = friendOperationsService.getFriendRemarks(id, ids);
-            Map<Long, AccountBaseInfoStruct> infoStructMap = AccountRpcUtil.getAccountBaseInfoMap(ids);
+            Map<Long, AccountProfileStruct> infoStructMap = AccountRpcUtil.getAccountProfileMap(ids);
             return conversations.parallelStream().map(conversation -> {
                 Long contactId = conversation.getContactId();
-                AccountBaseInfoStruct struct = infoStructMap.get(contactId);
+                AccountProfileStruct struct = infoStructMap.get(contactId);
                 if (struct == null) {
                     return null;
                 }
                 String remark = friendRemarks.get(contactId);
-                return ConversationVO.builder()
-                        .id(contactId.toString())
-                        .conversationId(conversation.getId().toString())
-                        .displayName(StringUtils.isBlank(remark) ? struct.nickname : remark)
-                        .avatar(struct.avatar)
-                        .isGroup(false)
-                        .isRemove(conversation.getRemove())
-                        .isNotice(conversation.getNotice())
-                        .isTop(conversation.getTop())
-                        .type(conversation.getLastMessageType())
-                        .lastSendTime(conversation.getLastMessageTime().getTime())
-                        .lastContent(conversation.getLastMessageContent()).build();
+                return buildPrivateChatConversationVO(remark, struct, conversation);
             }).filter(Objects::nonNull).collect(Collectors.toList());
         }
 
     }
+
+    private ConversationVO buildPrivateChatConversationVO(String remark, AccountProfileStruct struct, ImConversation conversation) {
+        return ConversationVO.builder()
+                .id(conversation.getContactId().toString())
+                .conversationId(conversation.getId().toString())
+                .displayName(StringUtils.isBlank(remark) ? struct.nickname : remark)
+                .avatar(struct.avatar)
+                .isGroup(false)
+                .isRemove(conversation.getRemove())
+                .isNotice(conversation.getNotice())
+                .isTop(conversation.getTop())
+                .type(conversation.getLastMessageType())
+                .lastSendTime(conversation.getLastMessageTime().getTime())
+                .lastContent(conversation.getLastMessageContent()).build();
+    }
+
 
 }

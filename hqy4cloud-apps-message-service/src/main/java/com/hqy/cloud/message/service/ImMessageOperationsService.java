@@ -4,6 +4,7 @@ import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.tk.entity.ImConversation;
+import com.hqy.cloud.message.tk.entity.ImMessage;
 
 import java.util.List;
 import java.util.Map;
@@ -31,9 +32,25 @@ public interface ImMessageOperationsService {
     ImMessageVO sendImMessage(Long id, ImMessageDTO message);
 
     /**
+     * insert message
+     * @param id       from user id
+     * @param message         {@link ImMessageDTO}
+     * @param imConversation  {@link ImConversation}
+     * @return                {@link ImMessageVO}
+     */
+//    ImMessageVO insertImMessage(Long id, ImMessageDTO message, ImConversation imConversation);
+
+    /**
      * read messages
      * @param conversation conversation
      * @return             read messages ids.
      */
     List<String> readMessages(ImConversation conversation);
+
+    /**
+     * undo im message
+     * @param imMessage message entity.
+     * @return          result.
+     */
+    boolean undoMessage(ImMessage imMessage);
 }

@@ -3,7 +3,7 @@ package com.hqy.cloud.apps.blog.service.request.impl;
 import cn.hutool.core.map.MapUtil;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.hqy.account.struct.AccountBaseInfoStruct;
+import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.apps.blog.converter.ArticleConverter;
 import com.hqy.cloud.apps.blog.dto.AccountAccessArticleStatusDTO;
 import com.hqy.cloud.apps.blog.dto.ArticleDTO;
@@ -171,8 +171,8 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
 
         //获取Article Author NAME.
         Long author = articleDoc.getAuthor();
-        AccountBaseInfoStruct accountBaseInfo = AccountRpcUtil.getAccountBaseInfo(author);
-        String authorName = accountBaseInfo == null ? StringConstants.EMPTY : accountBaseInfo.nickname;
+        AccountProfileStruct struct = AccountRpcUtil.getAccountProfile(author);
+        String authorName = struct == null ? StringConstants.EMPTY : struct.nickname;
 
         //获取当前文章的统计数据.
         StatisticsDTO statistics = articleStatisticsServer.getStatistics(id);

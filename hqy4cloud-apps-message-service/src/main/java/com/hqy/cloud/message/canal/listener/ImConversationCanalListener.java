@@ -5,7 +5,7 @@ import com.hqy.cloud.canal.model.CanalBinLogResult;
 import com.hqy.cloud.message.bind.ImMessageConverter;
 import com.hqy.cloud.message.cache.ImUnreadCacheService;
 import com.hqy.cloud.message.canal.model.CanalImConversation;
-import com.hqy.cloud.message.common.im.enums.ImMessageType;
+import com.hqy.cloud.message.service.ImConversationOperationsService;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import lombok.RequiredArgsConstructor;
@@ -23,18 +23,20 @@ import org.springframework.stereotype.Component;
 public class ImConversationCanalListener extends BaseCanalBinlogEventProcessor<CanalImConversation> {
     private final ImUnreadCacheService imUnreadCacheService;
     private final ImConversationTkService imConversationTkService;
+    private final ImConversationOperationsService imConversationOperationsService;
 
     @Override
     protected void processInsertInternal(CanalBinLogResult<CanalImConversation> result) {
-        doEvent(result);
+        doEvent(result, true);
     }
 
     @Override
     protected void processUpdateInternal(CanalBinLogResult<CanalImConversation> result) {
-        doEvent(result);
+        doEvent(result, false);
     }
 
-    private void doEvent(CanalBinLogResult<CanalImConversation> result) {
+
+    private void doEvent(CanalBinLogResult<CanalImConversation> result, boolean insert) {
        try {
            Long primaryKey = result.getPrimaryKey();
            if (primaryKey == null) {
@@ -50,21 +52,25 @@ public class ImConversationCanalListener extends BaseCanalBinlogEventProcessor<C
                }
                data = ImMessageConverter.CONVERTER.convert(conversation);
            }
-           if (ImMessageType.SYSTEM.type.equals(data.getLastMessageType())) {
+
+          /* if (ImMessageType.SYSTEM.type.equals(data.getLastMessageType())) {
                // ignore system message
                return;
-           }
+           }*/
+
+           // ignore self message.
            if (data.getLastMessageFrom().equals(1) || data.getIsRemove().equals(1)) {
-               // ignore self message.
                return;
            }
-
-           Integer isGroup = data.getIsGroup();
-           if (isGroup != 1) {
-               // increase toContact user unread count.
-               imUnreadCacheService.addPrivateConversationUnread(data.getUserId(), primaryKey, 1L);
-           } else {
+           // increase toContact user unread count.
+           if (data.getIsGroup() == 1) {
                imUnreadCacheService.addGroupConversationUnread(data.getUserId(), data.getContactId(), 1L);
+           } else {
+               imUnreadCacheService.addPrivateConversationUnread(data.getUserId(), primaryKey, 1L);
+               //send insert conversation event.
+               if (insert) {
+                   imConversationOperationsService.sendAppendPrivateChatEvent(ImMessageConverter.CONVERTER.convert(data));
+               }
            }
        } catch (Throwable cause) {
            log.error(cause.getMessage(), cause);

@@ -1,16 +1,18 @@
 package com.hqy.cloud.message.service.request.impl;
 
-import com.hqy.account.struct.AccountBaseInfoStruct;
+import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.common.result.ResultCode;
+import com.hqy.cloud.message.bind.ConvertUtil;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.dto.MessagesRequestParamDTO;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.bind.vo.UserInfoVO;
+import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.es.service.ImMessageElasticService;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
@@ -18,7 +20,9 @@ import com.hqy.cloud.message.service.ImGroupOperationsService;
 import com.hqy.cloud.message.service.ImMessageOperationsService;
 import com.hqy.cloud.message.service.request.ImMessageRequestService;
 import com.hqy.cloud.message.tk.entity.ImConversation;
+import com.hqy.cloud.message.tk.entity.ImMessage;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
+import com.hqy.cloud.message.tk.service.ImMessageTkService;
 import com.hqy.cloud.message.tk.service.ImUserSettingTkService;
 import com.hqy.cloud.util.thread.ParentExecutorService;
 import com.hqy.cloud.web.common.AccountRpcUtil;
@@ -43,12 +47,14 @@ import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_MESSA
 @Service
 @RequiredArgsConstructor
 public class ImMessageRequestServiceImpl implements ImMessageRequestService {
+
     private final ImUserSettingTkService imUserSettingTkService;
     private final ImConversationTkService conversationTkService;
     private final ImMessageElasticService imMessageElasticService;
     private final ImMessageOperationsService messageOperationsService;
     private final ImFriendOperationsService friendOperationsService;
     private final ImGroupOperationsService groupOperationsService;
+    private final ImMessageTkService imMessageTkService;
 
     @Override
     public R<PageResult<ImMessageVO>> getImMessages(Long id, MessagesRequestParamDTO params) {
@@ -62,7 +68,19 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         if (result == null || CollectionUtils.isEmpty(result.getResultList())) {
             return R.ok(new PageResult<>());
         }
+        long total = result.getTotal();
+        // remove self system message
         List<ImMessageDoc> resultList = result.getResultList();
+        if (result.getCurrentPage() >= result.getPages()) {
+            Iterator<ImMessageDoc> iterator = resultList.iterator();
+            if (iterator.hasNext()) {
+                ImMessageDoc doc = iterator.next();
+                if (ImMessageType.SYSTEM.type.equals(doc.getType()) && id.equals(doc.getFrom())) {
+                    iterator.remove();
+                    total--;
+                }
+            }
+        }
         // query account info by account rpc.
         List<Long> ids;
         if (imConversation.getGroup()) {
@@ -70,15 +88,15 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         } else {
             ids = Arrays.asList(imConversation.getUserId(), imConversation.getContactId());
         }
-        Map<Long, AccountBaseInfoStruct> infoMap = AccountRpcUtil.getAccountBaseInfoMap(ids);
+        Map<Long, AccountProfileStruct> profileMap = AccountRpcUtil.getAccountProfileMap(ids);
         //update unread message.
         ParentExecutorService.getInstance().execute(() -> messageOperationsService.readMessages(imConversation));
         //convert to message vo
-        List<ImMessageVO> messages = convertMessages(resultList, infoMap, ids, imConversation);
-        return R.ok(new PageResult<>(result.getCurrentPage(), params.getLimit(), result.getTotal(), messages));
+        List<ImMessageVO> messages = convertMessages(resultList, profileMap, ids, imConversation);
+        return R.ok(new PageResult<>(result.getCurrentPage(), params.getLimit(), total, messages));
     }
 
-    private List<ImMessageVO> convertMessages(List<ImMessageDoc> resultList, Map<Long, AccountBaseInfoStruct> infoMap, List<Long> ids, ImConversation imConversation) {
+    private List<ImMessageVO> convertMessages(List<ImMessageDoc> resultList, Map<Long, AccountProfileStruct> profileMap, List<Long> ids, ImConversation imConversation) {
         Map<Long, String> remarks;
         if (imConversation.getGroup()) {
             remarks = groupOperationsService.getGroupMemberRemark(imConversation.getContactId(), ids);
@@ -88,7 +106,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         return resultList.stream().map(doc -> {
             Long from = doc.getFrom();
             //from user account info.
-            AccountBaseInfoStruct struct = infoMap.get(from);
+            AccountProfileStruct struct = profileMap.get(from);
             if (struct == null) {
                 return null;
             }
@@ -100,7 +118,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
                     .isRead(doc.getRead())
                     .fromUser(new UserInfoVO(from.toString(), struct.username, struct.nickname, struct.avatar, remark))
                     .toContactId(doc.getTo().toString())
-                    .content(doc.isTextMessage() ? doc.getContent() : doc.getPath())
+                    .content(ConvertUtil.getMessageContent(imConversation.getUserId(), doc))
                     .status(doc.getStatus() ? IM_MESSAGE_SUCCESS : IM_MESSAGE_FAILED)
                     .type(doc.getType())
                     .sendTime(doc.getCreated())
@@ -140,5 +158,14 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         }
         List<String> messageIds = messageOperationsService.readMessages(conversation);
         return R.ok(messageIds);
+    }
+
+    @Override
+    public R<Boolean> undoMessage(Long id, Long messageId) {
+        ImMessage imMessage = imMessageTkService.queryById(messageId);
+        if (imMessage == null || !id.equals(imMessage.getFrom())) {
+            return R.failed(ResultCode.ERROR_PARAM);
+        }
+        return messageOperationsService.undoMessage(imMessage) ? R.ok() : R.failed();
     }
 }

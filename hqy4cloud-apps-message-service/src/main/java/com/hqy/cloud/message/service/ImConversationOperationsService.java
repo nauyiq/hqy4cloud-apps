@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.service;
 
 import com.hqy.cloud.message.bind.vo.ConversationVO;
+import com.hqy.cloud.message.tk.entity.ImConversation;
 
 import java.util.List;
 
@@ -53,4 +54,11 @@ public interface ImConversationOperationsService {
      * @return          result.
      */
     boolean updatePrivateChatNoticeStatus(Long id, Long contactId, Boolean status);
+
+    /**
+     * send append private chat event.
+     * @param imConversation {@link ImConversation}
+     * @return               result.
+     */
+    boolean sendAppendPrivateChatEvent(ImConversation imConversation);
 }

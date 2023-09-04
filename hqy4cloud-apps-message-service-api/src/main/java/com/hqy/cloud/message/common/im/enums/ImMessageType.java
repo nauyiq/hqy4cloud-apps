@@ -20,6 +20,16 @@ public enum ImMessageType {
     TEXT("text"),
 
     /**
+     * 事件消息
+     */
+    EVENT("event"),
+
+    /**
+     * 图片消息
+     */
+    IMAGE("image"),
+
+    /**
      * 文件
      */
     FILE("file"),

@@ -2,18 +2,18 @@ package com.hqy.cloud.apps.blog.service.request.impl;
 
 import cn.hutool.core.lang.Validator;
 import cn.hutool.core.util.StrUtil;
-import com.hqy.account.dto.AccountInfoDTO;
-import com.hqy.account.service.RemoteAccountProfileService;
-import com.hqy.account.service.RemoteAccountService;
-import com.hqy.account.struct.AccountProfileStruct;
-import com.hqy.account.struct.AccountStruct;
-import com.hqy.account.struct.RegistryAccountStruct;
+import com.hqy.cloud.account.dto.AccountInfoDTO;
+import com.hqy.cloud.account.service.RemoteAccountProfileService;
+import com.hqy.cloud.account.service.RemoteAccountService;
+import com.hqy.cloud.account.struct.AccountProfileStruct;
+import com.hqy.cloud.account.struct.AccountStruct;
+import com.hqy.cloud.account.struct.RegistryAccountStruct;
+import com.hqy.cloud.apps.blog.converter.Converter;
 import com.hqy.cloud.apps.blog.dto.AccountRegistryDTO;
 import com.hqy.cloud.apps.blog.dto.BlogUserProfileDTO;
 import com.hqy.cloud.apps.blog.dto.ForgetPasswordDTO;
 import com.hqy.cloud.apps.blog.service.request.UserRequestService;
 import com.hqy.cloud.apps.blog.vo.AccountProfileVO;
-import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.foundation.common.account.AccountAuthRandomCodeServer;
@@ -21,11 +21,9 @@ import com.hqy.cloud.foundation.common.account.AccountRandomCodeServer;
 import com.hqy.cloud.rpc.nacos.client.RPCClient;
 import com.hqy.cloud.rpc.thrift.struct.CommonResultStruct;
 import com.hqy.cloud.service.EmailRemoteService;
-import com.hqy.cloud.util.JsonUtil;
 import com.hqy.cloud.web.common.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
@@ -47,21 +45,24 @@ public class UserRequestServiceImpl implements UserRequestService {
 
     @Override
     public R<AccountProfileVO> getUserProfile(Long id) {
-        AccountInfoDTO accountInfo = AccountRpcUtil.getAccountInfo(id);
-        if (accountInfo == null) {
+        AccountInfoDTO account = AccountRpcUtil.getAccount(id);
+        if (account == null || account.getId() == null) {
             return R.failed(USER_NOT_FOUND);
         }
-        return R.ok(new AccountProfileVO(accountInfo));
+        return R.ok(Converter.INSTANCE.convert(account));
     }
 
     @Override
     public R<Boolean> updateUserProfile(BlogUserProfileDTO profile) {
         String avatar = profile.getAvatar();
         log.info("Upload user avatar: {}, id = {}.", avatar, profile.getId());
-        AccountProfileStruct struct = new AccountProfileStruct(profile.getId(), profile.getNickname(), avatar, profile.getIntro(), profile.getBirthday());
-        if (profile.getChatgptConfigStruct() != null) {
-            struct.chatgptConfig = profile.getChatgptConfigStruct();
-        }
+        AccountProfileStruct struct = AccountProfileStruct.builder()
+                .id(profile.getId())
+                .avatar(avatar)
+                .birthday(profile.getBirthday())
+                .nickname(profile.getNickname())
+                .intro(profile.getIntro())
+                .sex(profile.getSex()).build();
         RemoteAccountProfileService remoteService = RPCClient.getRemoteService(RemoteAccountProfileService.class);
         boolean update = remoteService.uploadAccountProfile(struct);
         return update ? R.ok() : R.failed();
@@ -70,12 +71,11 @@ public class UserRequestServiceImpl implements UserRequestService {
     @Override
     public R<Boolean> sendEmailCode(String usernameOrEmail) {
         RemoteAccountService remoteService = RPCClient.getRemoteService(RemoteAccountService.class);
-        AccountStruct struct = remoteService.getAccountStructByUsernameOrEmail(usernameOrEmail);
-        if (Objects.isNull(struct) || Objects.isNull(struct.id)) {
+        AccountStruct account = remoteService.getAccountByUsernameOrEmail(usernameOrEmail);
+        if (Objects.isNull(account) || Objects.isNull(account.id)) {
             return R.failed(USER_NOT_FOUND);
         }
-
-        String code = randomCodeServer.randomCode(StrUtil.EMPTY, struct.email, 6);
+        String code = randomCodeServer.randomCode(StrUtil.EMPTY, account.email, 6);
         EmailRemoteService emailRemoteService = RPCClient.getRemoteService(EmailRemoteService.class);
         emailRemoteService.sendVerifyCodeEmail(usernameOrEmail, code);
         return R.ok();
@@ -119,20 +119,20 @@ public class UserRequestServiceImpl implements UserRequestService {
     @Override
     public R<Boolean> resetPassword(ForgetPasswordDTO passwordDTO) {
         RemoteAccountService remoteService = RPCClient.getRemoteService(RemoteAccountService.class);
-        String usernameOrEmail = passwordDTO.getUsernameOrEmail();
-        if (!Validator.isEmail(usernameOrEmail)) {
-            AccountStruct struct = remoteService.getAccountStructByUsernameOrEmail(usernameOrEmail);
+        String email = passwordDTO.getUsernameOrEmail();
+        if (!Validator.isEmail(email)) {
+            //query account
+            AccountStruct struct = remoteService.getAccountByUsernameOrEmail(email);
             if (Objects.isNull(struct)) {
                 return R.failed(USER_NOT_FOUND);
             }
-            usernameOrEmail = struct.email;
+            email = struct.email;
         }
         //校验邮箱验证码是否准确
-        if (!randomCodeServer.isExist(StrUtil.EMPTY, usernameOrEmail, passwordDTO.getCode())) {
+        if (!randomCodeServer.isExist(StrUtil.EMPTY, email, passwordDTO.getCode())) {
             return R.failed(VERIFY_CODE_ERROR);
         }
-        //修改用户密码
-        CommonResultStruct commonResultStruct = remoteService.updateAccountPassword(usernameOrEmail, passwordDTO.getPassword());
+        CommonResultStruct commonResultStruct = remoteService.updateAccountPassword(email, passwordDTO.getPassword());
         if (!commonResultStruct.isResult()) {
             return R.failed(commonResultStruct.message, commonResultStruct.code);
         }

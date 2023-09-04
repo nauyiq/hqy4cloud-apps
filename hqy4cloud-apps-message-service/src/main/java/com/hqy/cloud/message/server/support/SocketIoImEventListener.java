@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,6 +129,67 @@ public class SocketIoImEventListener implements ImEventListener {
             log.error(cause.getMessage(), cause);
             return false;
         }
-
     }
+
+    @Override
+    public boolean onImTopChatEvent(ImTopChatEvent event) {
+        try {
+            ThriftSocketIoPushService socketIoPushService = SocketIoConnectionUtil.getSocketIoPushService(event.getTo(), ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+            socketIoPushService.asyncPush(event.getTo(), event.name(), event.message());
+            return true;
+        } catch (Throwable cause) {
+            log.error(cause.getMessage(), cause);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean onImNoticeChatEvent(ImNoticeChatEvent event) {
+        try {
+            ThriftSocketIoPushService socketIoPushService = SocketIoConnectionUtil.getSocketIoPushService(event.getTo(), ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+            socketIoPushService.asyncPush(event.getTo(), event.name(), event.message());
+            return true;
+        } catch (Throwable cause) {
+            log.error(cause.getMessage(), cause);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean onImAppendChatEvent(AppendChatEvent event) {
+        try {
+            String message = event.message();
+            if (!event.isGroup()) {
+                // private conversation chat.
+                String to = event.getUsers().get(0);
+                ThriftSocketIoPushService socketIoPushService = SocketIoConnectionUtil.getSocketIoPushService(to, ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+                socketIoPushService.asyncPush(to, event.name(), message);
+            } else {
+                Set<String> ids = new HashSet<>(event.getUsers());
+                SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+                if (query.isEnableMultiWsNode()) {
+                    Map<String, ThriftSocketIoPushService> pushServiceMap = SocketIoConnectionUtil.getMultipleSocketIoPushService(ids, ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
+                    if (MapUtil.isNotEmpty(pushServiceMap)) {
+                        ids.forEach(id -> pushServiceMap.get(id).asyncPush(id, event.name(), message));
+                        return true;
+                    }
+                }
+                socketIoPushService.asyncPushMultiple(ids, event.name(), message);
+            }
+            return true;
+        } catch (Throwable cause) {
+            log.error(cause.getMessage(), cause);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean onImUndoMessageEvent(UndoMessageEvent event) {
+        return false;
+    }
+
+
+
+
+
 }

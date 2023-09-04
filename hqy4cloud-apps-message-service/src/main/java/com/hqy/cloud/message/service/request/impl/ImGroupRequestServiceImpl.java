@@ -3,12 +3,12 @@ package com.hqy.cloud.message.service.request.impl;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
-import com.hqy.account.struct.AccountBaseInfoStruct;
+import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
-import com.hqy.cloud.message.bind.enums.GroupRole;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
+import com.hqy.cloud.message.bind.enums.GroupRole;
 import com.hqy.cloud.message.bind.vo.GroupMemberVO;
 import com.hqy.cloud.message.bind.vo.UserInfoVO;
 import com.hqy.cloud.message.service.ImGroupOperationsService;
@@ -80,14 +80,14 @@ public class ImGroupRequestServiceImpl implements ImGroupRequestService {
             return R.ok(Collections.emptyList());
         }
         List<Long> userIds = groupMembers.stream().map(ImGroupMember::getUserId).toList();
-        Map<Long, AccountBaseInfoStruct> infos = AccountRpcUtil.getAccountBaseInfoMap(userIds);
+        Map<Long, AccountProfileStruct> infos = AccountRpcUtil.getAccountProfileMap(userIds);
         if (MapUtil.isEmpty(infos)) {
             return R.ok(Collections.emptyList());
         }
         return R.ok(convertGroupMembers(groupMembers, infos));
     }
 
-    private List<GroupMemberVO> convertGroupMembers(List<ImGroupMember> groupMembers, Map<Long, AccountBaseInfoStruct> infos) {
+    private List<GroupMemberVO> convertGroupMembers(List<ImGroupMember> groupMembers, Map<Long, AccountProfileStruct> infos) {
         return groupMembers.parallelStream().map(member -> {
             Long userId = member.getUserId();
             String displayName = member.getDisplayName();
@@ -95,8 +95,8 @@ public class ImGroupRequestServiceImpl implements ImGroupRequestService {
                 return null;
             }
             GroupMemberVO vo = new GroupMemberVO(member.getUserId().toString(), member.getRole(), DateUtil.formatDateTime(member.getCreated()));
-            AccountBaseInfoStruct infoStruct = infos.get(userId);
-            UserInfoVO userInfoVO = new UserInfoVO(userId.toString(), infoStruct.username, infoStruct.nickname, infoStruct.avatar,
+            AccountProfileStruct struct = infos.get(userId);
+            UserInfoVO userInfoVO = new UserInfoVO(userId.toString(), struct.username, struct.nickname, struct.avatar,
                     StringUtils.isEmpty(displayName) ? StrUtil.EMPTY : displayName);
             vo.setUserInfo(userInfoVO);
             return vo;

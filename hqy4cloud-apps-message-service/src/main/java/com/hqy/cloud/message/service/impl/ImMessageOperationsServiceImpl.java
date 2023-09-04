@@ -2,6 +2,7 @@ package com.hqy.cloud.message.service.impl;
 
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
+import com.hqy.cloud.apps.commom.constants.AppsConstants;
 import com.hqy.cloud.foundation.id.DistributedIdGen;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
@@ -10,6 +11,7 @@ import com.hqy.cloud.message.bind.event.support.PrivateChatEvent;
 import com.hqy.cloud.message.bind.event.support.ReadMessagesEvent;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.cache.ImUnreadCacheService;
+import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.es.service.ImMessageElasticService;
 import com.hqy.cloud.message.server.ImEventListener;
@@ -120,6 +122,7 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         return message;
     }
 
+
     @Override
     public List<String> readMessages(ImConversation conversation) {
         List<ImMessageDoc> unreadMessages = imMessageElasticService.queryUnreadMessages(conversation.getContactId(), conversation.getUserId());
@@ -143,7 +146,6 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
                 return false;
             }
         });
-
         if (Boolean.TRUE.equals(execute)) {
             List<String> ids = unreadMessageIds.parallelStream().map(Object::toString).toList();
             // remove redis conversation unread.
@@ -158,6 +160,34 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
             return ids;
         }
         return Collections.emptyList();
+    }
+
+    @Override
+    public boolean undoMessage(ImMessage imMessage) {
+        ImConversation conversation = ImConversation.of(imMessage.getFrom(), imMessage.getTo(), imMessage.getGroup());
+        // update undo entity.
+        conversation.setLastMessageFrom(true);
+        conversation.setLastMessageType(ImMessageType.EVENT.type);
+        conversation.setLastMessageContent(AppsConstants.Message.UNDO_FROM_MESSAGE_CONTENT);
+        conversation.setLastMessageTime(imMessage.getCreated());
+        imMessage.setContent(AppsConstants.Message.UNDO_FROM_MESSAGE_CONTENT);
+        imMessage.setType(ImMessageType.TEXT.type);
+        Boolean execute = template.execute(status -> {
+            try {
+                AssertUtil.isTrue(conversationTkService.updateSelective(conversation), "Failed execute to update conversation.");
+                AssertUtil.isTrue(messageTkService.updateSelective(imMessage), "Failed execute to update im message.");
+                imMessageElasticService.save(new ImMessageDoc(imMessage));
+                return true;
+            } catch (Throwable cause) {
+                log.error(cause.getMessage());
+                status.setRollbackOnly();
+                return false;
+            }
+        });
+        if (Boolean.TRUE.equals(execute)) {
+            return true;
+        }
+        return false;
     }
 
     private List<ImConversation> buildConversations(Long id, ImMessageDTO message) {

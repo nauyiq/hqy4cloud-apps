@@ -46,5 +46,32 @@ public interface ImEventListener {
      */
     boolean onReadMessages(ReadMessagesEvent event);
 
+    /**
+     * set chat top status event.
+     * @param event {@link ImTopChatEvent}
+     * @return      result.
+     */
+    boolean onImTopChatEvent(ImTopChatEvent event);
+
+    /**
+     * set chat notice status event.
+     * @param event {@link ImNoticeChatEvent}
+     * @return      result.
+     */
+    boolean onImNoticeChatEvent(ImNoticeChatEvent event);
+
+    /**
+     * append im chat event.
+     * @param event {@link AppendChatEvent}
+     * @return       result.
+     */
+    boolean onImAppendChatEvent(AppendChatEvent event);
+
+    /**
+     * undo message event.
+     * @param event {@link UndoMessageEvent}
+     * @return      result.
+     */
+    boolean onImUndoMessageEvent(UndoMessageEvent event);
 
 }

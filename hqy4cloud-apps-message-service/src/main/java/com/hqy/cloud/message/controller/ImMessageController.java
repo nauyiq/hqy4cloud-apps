@@ -10,6 +10,7 @@ import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.dto.MessagesRequestParamDTO;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.service.request.ImMessageRequestService;
+import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +26,7 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-public class ImMessageController {
+public class ImMessageController extends BaseController {
     private final ImMessageRequestService requestService;
 
 
@@ -82,6 +83,21 @@ public class ImMessageController {
             return R.failed(ResultCode.ERROR_PARAM_UNDEFINED);
         }
         return requestService.setMessageRead(authentication.getId(), dto);
+    }
+
+    /**
+     * undo a im message.
+     * @param request   HttpServletRequest.
+     * @param messageId message id.
+     * @return          result.
+     */
+    @PutMapping("/im/message/undo/{id}")
+    public R<Boolean> undoMessage(HttpServletRequest request, @PathVariable("id")Long messageId) {
+        Long id = getAccessAccountId(request);
+        if (id == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        return requestService.undoMessage(id, messageId);
     }
 
 

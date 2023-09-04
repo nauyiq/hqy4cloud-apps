@@ -4,6 +4,7 @@ import cn.hutool.core.map.MapUtil;
 import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.message.cache.ImRelationshipCacheService;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
+import com.hqy.cloud.message.service.ImMessageOperationsService;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.entity.ImFriend;
 import com.hqy.cloud.message.tk.entity.ImFriendApplication;
@@ -34,6 +35,7 @@ import java.util.Map;
 public class ImFriendOperationsServiceImpl implements ImFriendOperationsService {
     private final TransactionTemplate template;
     private final ImFriendTkService friendTkService;
+    private final ImMessageOperationsService imMessageOperationsService;
     private final ImConversationTkService imConversationTkService;
     private final ImRelationshipCacheService relationshipCacheService;
 
