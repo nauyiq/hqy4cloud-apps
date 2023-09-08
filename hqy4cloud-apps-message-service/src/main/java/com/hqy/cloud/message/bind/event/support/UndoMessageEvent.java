@@ -26,7 +26,7 @@ public class UndoMessageEvent implements ImEvent {
         return "undoMessage";
     }
 
-    private String message() {
+    public String message() {
         return JsonUtil.toJson(message);
     }
 

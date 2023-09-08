@@ -41,6 +41,21 @@ public class ImConversationController extends BaseController {
     }
 
     /**
+     * 新增会话, 需要新增会话的用户是你的好友或者允许陌生人聊天
+     * @param request HttpServletRequest.
+     * @param userId  用户id
+     * @return        R.
+     */
+    @PostMapping("/conversation/{userId}")
+    public R<ConversationVO> addConversation(HttpServletRequest request, @PathVariable("userId") Long userId) {
+        Long id = getAccessAccountId(request);
+        if (id == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        return requestService.addConversation(id, userId);
+    }
+
+    /**
      * update chat top.
      * @param request    HttpServletRequest.
      * @param chatConfig {@link ImChatConfigDTO}

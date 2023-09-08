@@ -1,10 +1,14 @@
 package com.hqy.cloud.message.service.request.impl;
 
 import com.hqy.cloud.common.bind.R;
+import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.ImChatConfigDTO;
 import com.hqy.cloud.message.bind.vo.ConversationVO;
 import com.hqy.cloud.message.service.ImConversationOperationsService;
+import com.hqy.cloud.message.service.ImFriendOperationsService;
 import com.hqy.cloud.message.service.request.ImConversationRequestService;
+import com.hqy.cloud.message.tk.entity.ImUserSetting;
+import com.hqy.cloud.message.tk.service.ImUserSettingTkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,11 +24,26 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ImConversationRequestServiceImpl implements ImConversationRequestService {
+    private final ImUserSettingTkService userSettingTkService;
+    private final ImFriendOperationsService friendOperationsService;
     private final ImConversationOperationsService imConversationOperationsService;
 
     @Override
     public R<List<ConversationVO>> getConversations(Long id) {
         return R.ok(imConversationOperationsService.getImConversations(id));
+    }
+
+    @Override
+    public R<ConversationVO> addConversation(Long id, Long userId) {
+        if (!friendOperationsService.isFriend(id, userId)) {
+            // 不是好友情况下查询该用户是否允许陌生人聊天
+            ImUserSetting imUserSetting = userSettingTkService.queryById(userId);
+            if (imUserSetting == null || !imUserSetting.getPrivateChat()) {
+                return R.failed(ResultCode.NOT_PERMISSION);
+            }
+        }
+        ConversationVO vo = imConversationOperationsService.addConversation(id, userId);
+        return vo == null ? R.failed(ResultCode.SYSTEM_BUSY) : R.ok(vo);
     }
 
     @Override

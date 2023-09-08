@@ -26,4 +26,10 @@
             updated = VALUES(updated)
     </insert>
 
+    <select id="queryFriendApplications" resultType="com.hqy.cloud.message.tk.entity.ImFriendApplication">
+        SELECT id, user_id, remark, status, created
+        FROM `t_im_friend_application`
+        WHERE id = #{userId} or user_id = #{userId} ORDER BY created DESC
+    </select>
+
 </mapper>

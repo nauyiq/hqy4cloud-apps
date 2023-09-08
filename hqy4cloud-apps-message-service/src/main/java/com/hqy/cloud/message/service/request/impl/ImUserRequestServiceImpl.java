@@ -1,15 +1,24 @@
 package com.hqy.cloud.message.service.request.impl;
 
+import cn.hutool.core.map.MapUtil;
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
 import com.hqy.cloud.account.dto.AccountInfoDTO;
+import com.hqy.cloud.account.service.RemoteAccountProfileService;
 import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.account.struct.AccountStruct;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.bind.R;
+import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.common.result.ResultCode;
+import com.hqy.cloud.message.bind.ImMessageConverter;
 import com.hqy.cloud.message.bind.dto.ContactsDTO;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
 import com.hqy.cloud.message.bind.dto.GroupContactDTO;
+import com.hqy.cloud.message.bind.event.support.ContactNameChangeEvent;
 import com.hqy.cloud.message.bind.vo.*;
+import com.hqy.cloud.message.cache.ImRelationshipCacheService;
+import com.hqy.cloud.message.server.ImEventListener;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
 import com.hqy.cloud.message.service.request.ImUserRequestService;
 import com.hqy.cloud.message.tk.entity.ImFriend;
@@ -19,12 +28,14 @@ import com.hqy.cloud.message.tk.service.ImFriendApplicationTkService;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import com.hqy.cloud.message.tk.service.ImGroupTkService;
 import com.hqy.cloud.message.tk.service.ImUserSettingTkService;
+import com.hqy.cloud.rpc.nacos.client.RPCClient;
 import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.web.common.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -43,8 +54,10 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
     private final ImFriendOperationsService imFriendOperationsService;
     private final ImFriendTkService friendTkService;
     private final ImGroupTkService groupTkService;
+    private final ImEventListener imEventListener;
     private final ImUserSettingTkService userSettingTkService;
     private final ImFriendApplicationTkService applicationTkService;
+    private final ImRelationshipCacheService relationshipCacheService;
 
     @Override
     public R<UserImSettingVO> getUserImSetting(Long id) {
@@ -103,7 +116,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
         //query user setting vo.
         ImUserSetting imUserSetting = userSettingTkService.queryById(userId);
         UserCardVO vo = new UserCardVO(accountInfo.getId().toString(), accountInfo.getUsername(), accountInfo.getNickname(), accountInfo.getAvatar(), accountInfo.getIntro(),
-                imUserSetting == null || imUserSetting.getPrivateChat(), imUserSetting == null || imUserSetting.getInviteGroup());
+                imUserSetting != null && imUserSetting.getPrivateChat(), imUserSetting == null || imUserSetting.getInviteGroup());
         if (id != null) {
             // query is friend.
             ImFriend imFriend = friendTkService.queryOne(ImFriend.of(id, userId));
@@ -113,6 +126,19 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
             }
         }
         return R.ok(vo);
+    }
+
+    @Override
+    public R<List<UserInfoVO>> searchImUsers(Long id, String name) {
+        RemoteAccountProfileService profileService = RPCClient.getRemoteService(RemoteAccountProfileService.class);
+        List<AccountProfileStruct> profiles = profileService.getAccountProfilesByName(name);
+        List<UserInfoVO> vos;
+        if (CollectionUtils.isEmpty(profiles)) {
+            vos = Collections.emptyList();
+        } else {
+            vos = profiles.stream().filter(profile -> !profile.id.equals(id)).map(ImMessageConverter.CONVERTER::convert).toList();
+        }
+        return R.ok(vos);
     }
 
     @Override
@@ -153,6 +179,44 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
         }
     }
 
+    @Override
+    public R<PageResult<UserApplicationVO>> queryPageUserApplications(Long userId, Integer pageNumber, Integer pageSize) {
+        PageHelper.startPage(pageNumber, pageSize);
+        List<ImFriendApplication> applications = applicationTkService.queryFriendApplications(userId);
+        if (CollectionUtils.isEmpty(applications)) {
+            return R.ok(new PageResult<>());
+        }
+        List<Long> ids = getUserIds(userId, applications);
+        Map<Long, AccountProfileStruct> profileMap = AccountRpcUtil.getAccountProfileMap(ids);
+        if (MapUtil.isEmpty(profileMap)) {
+            // search account rpc info is empty.
+            log.warn("Search account rpc return empty, ids: {}", ids);
+            return R.ok(new PageResult<>());
+        }
+        List<UserApplicationVO> vos = applications.stream().map(application -> {
+            AccountProfileStruct struct = profileMap.get(userId.equals(application.getId()) ? application.getUserId() : application.getId());
+            if (struct == null) {
+                return null;
+            }
+            return UserApplicationVO.builder()
+                    .receive(application.getId().toString())
+                    .send(application.getUserId().toString())
+                    .status(application.getStatus())
+                    .remark(application.getRemark())
+                    .info(new UserInfoVO(struct.id.toString(), struct.username, struct.nickname, struct.avatar, null)).build();
+        }).filter(Objects::nonNull).toList();
+        PageInfo<UserApplicationVO> pageInfo = new PageInfo<>(vos);
+        return R.ok(new PageResult<>(pageNumber, pageInfo.getTotal(), pageInfo.getPages(), vos));
+    }
+
+    @NotNull
+    private List<Long> getUserIds(Long userId, List<ImFriendApplication> applications) {
+        List<Long> ids = applications.parallelStream().map(ImFriendApplication::getId).filter(id -> !id.equals(userId)).toList();
+        List<Long> userIds = applications.parallelStream().map(ImFriendApplication::getUserId).filter(id -> !id.equals(userId)).toList();
+        List<Long> allUserIds = new ArrayList<>(ids);
+        allUserIds.addAll(userIds);
+        return allUserIds.stream().distinct().toList();
+    }
 
     @Override
     public R<Boolean> addImFriend(Long id, FriendDTO add) {
@@ -161,6 +225,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
             return R.failed(ResultCode.USER_NOT_FOUND);
         }
         ImFriendApplication application = ImFriendApplication.of(add.getUserId(), id, add.getRemark());
+        //TODO 如果对象已经申请添加了好友 并且状态是未确认的情况 应该直接同意好友申请....
         int i = applicationTkService.insertDuplicate(application);
         return i > 0 ? R.ok() : R.failed();
     }
@@ -209,7 +274,12 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
         }
         ImFriend friend = ImFriend.of(id, userId);
         friend.setRemark(mark);
-        return friendTkService.updateSelective(friend) ? R.ok() : R.failed();
+        if (friendTkService.updateSelective(friend)) {
+            relationshipCacheService.addFriendRelationship(id, userId, mark);
+            imEventListener.onContactNameChangeEvent(ContactNameChangeEvent.of(false, Collections.singletonList(id.toString()), userId.toString(), mark));
+            return R.ok();
+        }
+        return R.failed();
     }
 
     @Override

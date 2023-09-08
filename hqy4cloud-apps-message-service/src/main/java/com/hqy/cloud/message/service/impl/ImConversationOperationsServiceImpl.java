@@ -238,6 +238,22 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
         return imEventListener.onImAppendChatEvent(chatEvent);
     }
 
+    @Override
+    public ConversationVO addConversation(Long id, Long userId) {
+        AccountProfileStruct accountProfile = AccountRpcUtil.getAccountProfile(userId);
+        if (accountProfile == null) {
+            return null;
+        }
+        ImConversation conversation = conversationTkService.queryOne(ImConversation.of(id, userId, false));
+        if (conversation == null) {
+            conversation = ImConversation.ofDefault(id, userId, false);
+            if (!conversationTkService.insert(conversation)) {
+                return null;
+            }
+        }
+        return buildPrivateChatConversationVO(null, accountProfile, conversation);
+    }
+
     private void sendTopChatEvent(ImConversation conversation) {
         ImTopChatEvent event = ImTopChatEvent.of(conversation.getUserId().toString(), conversation.getContactId().toString(),
                 conversation.getId().toString(), conversation.getTop());
@@ -246,7 +262,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
 
     private void sendNoticeChatEvent(ImConversation conversation) {
         ImNoticeChatEvent event = ImNoticeChatEvent.of(conversation.getUserId().toString(), conversation.getContactId().toString(),
-                conversation.getId().toString(), conversation.getTop());
+                conversation.getId().toString(), conversation.getNotice());
         imEventListener.onImNoticeChatEvent(event);
     }
 
@@ -311,7 +327,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 .isNotice(conversation.getNotice())
                 .isTop(conversation.getTop())
                 .type(conversation.getLastMessageType())
-                .lastSendTime(conversation.getLastMessageTime().getTime())
+                .lastSendTime(conversation.getLastMessageTime() == null ? null : conversation.getLastMessageTime().getTime())
                 .lastContent(conversation.getLastMessageContent()).build();
     }
 

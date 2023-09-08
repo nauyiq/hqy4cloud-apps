@@ -24,7 +24,7 @@ public class AddGroupEvent implements ImEvent {
     private String id;
 
     /**
-     * 展示用户名
+     * 展示名
      */
     private String displayName;
 

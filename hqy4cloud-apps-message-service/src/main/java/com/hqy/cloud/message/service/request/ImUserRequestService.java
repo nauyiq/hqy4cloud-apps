@@ -2,6 +2,7 @@ package com.hqy.cloud.message.service.request;
 
 import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
+import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
 import com.hqy.cloud.message.bind.vo.*;
 
@@ -44,11 +45,28 @@ public interface ImUserRequestService {
     R<UserCardVO> getImUserCardInfo(Long id, Long userId);
 
     /**
+     * 根据用户名或昵称查询用户
+     * @param id   当前用户id
+     * @param name 用户名或昵称
+     * @return     R.
+     */
+    R<List<UserInfoVO>> searchImUsers(Long id, String name);
+
+    /**
      * 获取通讯录列表
      * @param userId 用户id
      * @return {@link ContactsVO}
      */
     R<ContactsVO> getUserImContacts(Long userId);
+
+    /**
+     * 分页查询好友申请列表
+     * @param userId     用户id
+     * @param pageNumber 当前页
+     * @param pageSize   每页大小
+     * @return           R.
+     */
+    R<PageResult<UserApplicationVO>> queryPageUserApplications(Long userId, Integer pageNumber, Integer pageSize);
 
     /**
      * 申请添加用户
@@ -82,6 +100,7 @@ public interface ImUserRequestService {
      * @return       R.
      */
     R<Boolean> removeFriend(Long id, Long userId);
+
 
 
 }

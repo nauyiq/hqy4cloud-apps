@@ -28,8 +28,8 @@ public class ImNoticeChatEvent implements ImEvent {
         return JsonUtil.toJson(payload);
     }
 
-    public static ImNoticeChatEvent of(String to, String id, String conversationId, Boolean isTop) {
-        return new ImNoticeChatEvent(to, new ImNoticeChatEvent.Payload(id, conversationId, isTop));
+    public static ImNoticeChatEvent of(String to, String id, String conversationId, Boolean isNotice) {
+        return new ImNoticeChatEvent(to, new ImNoticeChatEvent.Payload(id, conversationId, isNotice));
     }
 
     @Data

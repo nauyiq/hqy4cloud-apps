@@ -5,6 +5,8 @@ import com.hqy.cloud.message.tk.entity.ImFriendApplication;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -19,4 +21,11 @@ public interface ImFriendApplicationMapper extends PrimaryLessTkMapper<ImFriendA
      * @return            rows
      */
     int insertDuplicate(@Param("application") ImFriendApplication application);
+
+    /**
+     * 查询用户的申请列表
+     * @param userId 用户id
+     * @return       用户好友申请列表，包括申请的和接收到的
+     */
+    List<ImFriendApplication> queryFriendApplications(@Param("userId") Long userId);
 }

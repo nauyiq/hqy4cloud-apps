@@ -61,4 +61,12 @@ public interface ImConversationOperationsService {
      * @return               result.
      */
     boolean sendAppendPrivateChatEvent(ImConversation imConversation);
+
+    /**
+     * 新增会话
+     * @param id     登录用户id
+     * @param userId 联系人id
+     * @return       {@link ConversationVO}
+     */
+    ConversationVO addConversation(Long id, Long userId);
 }

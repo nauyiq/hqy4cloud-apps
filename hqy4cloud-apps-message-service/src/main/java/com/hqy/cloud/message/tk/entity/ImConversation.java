@@ -84,6 +84,18 @@ public class ImConversation extends BaseEntity<Long> {
         return Arrays.asList(fromConversation, toConversation);
     }
 
+    public static ImConversation ofDefault(Long from, Long to, Boolean isGroup) {
+        ImConversation conversation = new ImConversation(from, to, isGroup);
+        Date now = new Date();
+        conversation.setTop(false);
+        conversation.setNotice(true);
+        conversation.setRemove(false);
+        conversation.setLastMessageFrom(true);
+        conversation.setCreated(now);
+        conversation.setUpdated(now);
+        return conversation;
+    }
+
     private static ImConversation ofFriend(Long from, Long to, String remark, Date now) {
         ImConversation imConversation = new ImConversation(from, to, now, false);
         imConversation.setNotice(true);
@@ -102,18 +114,5 @@ public class ImConversation extends BaseEntity<Long> {
         userIds.forEach(userId -> contacts.add(new ImConversation(userId, groupId, now,true)));
         return contacts;
     }
-
-    public static ImConversation ofTop(Long id, Long contactId, Boolean isGroup, Boolean status) {
-        ImConversation imConversation = of(id, contactId, isGroup);
-        imConversation.setTop(status);
-        return imConversation;
-    }
-
-    public static ImConversation ofNotice(Long id, Long contactId, Boolean isGroup, Boolean status) {
-        ImConversation imConversation = of(id, contactId, isGroup);
-        imConversation.setNotice(status);
-        return imConversation;
-    }
-
 
 }

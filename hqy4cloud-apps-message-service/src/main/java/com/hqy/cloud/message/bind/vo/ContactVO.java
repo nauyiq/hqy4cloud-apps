@@ -49,7 +49,7 @@ public class ContactVO {
     private Boolean isTop;
 
     /**
-     * 是否接收群邀请
+     * 是否允许群邀请
      */
     private Boolean isInvite;
 

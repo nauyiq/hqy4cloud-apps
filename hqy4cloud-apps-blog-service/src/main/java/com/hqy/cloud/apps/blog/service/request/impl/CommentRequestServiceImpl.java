@@ -5,7 +5,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
-import com.hqy.account.struct.AccountBaseInfoStruct;
+import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.apps.blog.dto.ArticleCommentDTO;
 import com.hqy.cloud.apps.blog.dto.PublishCommentDTO;
 import com.hqy.cloud.apps.blog.dto.StatisticsDTO;
@@ -13,8 +13,8 @@ import com.hqy.cloud.apps.blog.entity.Article;
 import com.hqy.cloud.apps.blog.entity.Comment;
 import com.hqy.cloud.apps.blog.service.opeations.BlogDbOperationService;
 import com.hqy.cloud.apps.blog.service.request.CommentRequestService;
-import com.hqy.cloud.apps.blog.service.statistics.StatisticsTypeHashCache;
 import com.hqy.cloud.apps.blog.service.statistics.StatisticsType;
+import com.hqy.cloud.apps.blog.service.statistics.StatisticsTypeHashCache;
 import com.hqy.cloud.apps.blog.vo.AdminPageCommentsVO;
 import com.hqy.cloud.apps.blog.vo.ArticleCommentVO;
 import com.hqy.cloud.apps.blog.vo.ChildArticleCommentVO;
@@ -58,8 +58,8 @@ public class CommentRequestServiceImpl implements CommentRequestService {
         if (CollectionUtils.isEmpty(comments)) {
             pageResult = new PageResult<>();
         } else {
-            Map<Long, AccountBaseInfoStruct> accountBaseInfoMap = AccountRpcUtil.getAccountBaseInfoMap(comments.stream().map(Comment::getCommenter).distinct().collect(Collectors.toList()));
-            List<AdminPageCommentsVO> pageComments = comments.stream().map(comment -> convert(comment, accountBaseInfoMap)).collect(Collectors.toList());
+            Map<Long, AccountProfileStruct> profileMap = AccountRpcUtil.getAccountProfileMap(comments.stream().map(Comment::getCommenter).distinct().collect(Collectors.toList()));
+            List<AdminPageCommentsVO> pageComments = comments.stream().map(comment -> convert(comment, profileMap)).collect(Collectors.toList());
             pageResult = new PageResult<>(pageInfo.getPageNum(), pageInfo.getTotal(), pageInfo.getPages(), pageComments);
         }
         return R.ok(pageResult);
@@ -125,12 +125,12 @@ public class CommentRequestServiceImpl implements CommentRequestService {
             }
         }
         //账号RPC 获取用户信息
-        List<AccountBaseInfoStruct> accountBaseInfos =
-                AccountRpcUtil.getAccountBaseInfos(accountIds.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()));
+        List<AccountProfileStruct> accountBaseInfos =
+                AccountRpcUtil.getAccountProfiles(accountIds.stream().filter(Objects::nonNull).distinct().collect(Collectors.toList()));
         if (CollectionUtils.isEmpty(accountBaseInfos)) {
             return MapUtil.newHashMap(0);
         }
-        return accountBaseInfos.stream().collect(Collectors.toMap(AccountBaseInfoStruct::getId, e -> new ArticleCommentVO.User(e.id.toString(), e.avatar, e.nickname)));
+        return accountBaseInfos.stream().collect(Collectors.toMap(AccountProfileStruct::getId, e -> new ArticleCommentVO.User(e.id.toString(), e.avatar, e.nickname)));
     }
 
 
@@ -173,13 +173,13 @@ public class CommentRequestServiceImpl implements CommentRequestService {
         return R.ok();
     }
 
-    private AdminPageCommentsVO convert(Comment comment, Map<Long, AccountBaseInfoStruct> map) {
+    private AdminPageCommentsVO convert(Comment comment, Map<Long, AccountProfileStruct> map) {
         return new AdminPageCommentsVO(comment.getId().toString(), comment.getArticleId().toString(), comment.getContent(), getShowName(comment.getCommenter(), map),
                 getShowName(comment.getReplier(), map), comment.getLevel() ,DateUtil.date(comment.getCreated()).toString(), comment.getDeleted());
     }
 
-    private String getShowName(Long id, Map<Long, AccountBaseInfoStruct> map) {
-        AccountBaseInfoStruct struct = map.get(id);
+    private String getShowName(Long id, Map<Long, AccountProfileStruct> map) {
+        AccountProfileStruct struct = map.get(id);
         if (struct == null) {
             return StringConstants.EMPTY;
         }

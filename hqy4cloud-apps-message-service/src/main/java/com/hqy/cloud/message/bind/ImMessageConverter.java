@@ -1,6 +1,8 @@
 package com.hqy.cloud.message.bind;
 
+import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.common.base.converter.CommonConverter;
+import com.hqy.cloud.message.bind.vo.UserInfoVO;
 import com.hqy.cloud.message.canal.model.CanalImConversation;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import org.mapstruct.Mapper;
@@ -24,9 +26,12 @@ public interface ImMessageConverter {
     @Mapping(target = "isTop", source = "top", qualifiedByName = "booleanToInteger")
     @Mapping(target = "lastMessageFrom", source = "lastMessageFrom", qualifiedByName = "booleanToInteger")
     CanalImConversation convert(ImConversation conversation);
+
     @Mapping(target = "lastMessageFrom", source = "lastMessageFrom", qualifiedByName = "IntegerToBoolean")
     ImConversation convert(CanalImConversation imConversation);
 
+    @Mapping(target = "id", source = "id", qualifiedByName = "longToString")
+    UserInfoVO convert(AccountProfileStruct struct);
 
 
 

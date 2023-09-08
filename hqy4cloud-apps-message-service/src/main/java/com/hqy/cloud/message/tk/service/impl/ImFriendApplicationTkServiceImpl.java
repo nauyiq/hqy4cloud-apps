@@ -8,6 +8,8 @@ import com.hqy.cloud.message.tk.service.ImFriendApplicationTkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -26,5 +28,10 @@ public class ImFriendApplicationTkServiceImpl extends PrimaryLessTkServiceImpl<I
     @Override
     public int insertDuplicate(ImFriendApplication application) {
         return mapper.insertDuplicate(application);
+    }
+
+    @Override
+    public List<ImFriendApplication> queryFriendApplications(Long userId) {
+        return mapper.queryFriendApplications(userId);
     }
 }

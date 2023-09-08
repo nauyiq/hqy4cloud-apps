@@ -74,4 +74,11 @@ public interface ImEventListener {
      */
     boolean onImUndoMessageEvent(UndoMessageEvent event);
 
+    /**
+     * 联系人名称变更事件
+     * @param event {@link ContactNameChangeEvent}
+     * @return      result.
+     */
+    boolean onContactNameChangeEvent(ContactNameChangeEvent event);
+
 }

@@ -1,12 +1,10 @@
 package com.hqy.cloud.message.controller;
 
 import com.hqy.cloud.common.bind.R;
+import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
-import com.hqy.cloud.message.bind.vo.ContactsVO;
-import com.hqy.cloud.message.bind.vo.FriendVO;
-import com.hqy.cloud.message.bind.vo.UserCardVO;
-import com.hqy.cloud.message.bind.vo.UserImSettingVO;
+import com.hqy.cloud.message.bind.vo.*;
 import com.hqy.cloud.message.service.request.ImUserRequestService;
 import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
@@ -100,6 +98,44 @@ public class ImUserController extends BaseController {
         }
         Long id = getAccessAccountId(request);
         return requestService.getImUserCardInfo(id, userId);
+    }
+
+    /**
+     * 根据用户名或昵称查询用户
+     * @param request HttpServletRequest.
+     * @param name    输入的名字
+     * @return        R.
+     */
+    @GetMapping("/search")
+    public R<List<UserInfoVO>> searchImUsers(HttpServletRequest request, String name) {
+        Long id = getAccessAccountId(request);
+        if (id == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        if (StringUtils.isEmpty(name)) {
+            return R.failed(ResultCode.ERROR_PARAM_UNDEFINED);
+        }
+        return requestService.searchImUsers(id, name);
+    }
+
+    /**
+     * 分页查询当前用户好友申请列表
+     * @param request    HttpServletRequest.
+     * @param pageNumber 当前页
+     * @param pageSize   每页大小
+     * @return           R.
+     */
+    @GetMapping("/applications")
+    public R<PageResult<UserApplicationVO>> queryPageUserApplications(HttpServletRequest request,
+                                                                      @RequestParam("page") Integer pageNumber,
+                                                                      @RequestParam("limit") Integer pageSize) {
+        Long userId = getAccessAccountId(request);
+        if (userId == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        pageNumber = pageNumber == null ? 1 : pageNumber;
+        pageSize = pageSize == null ? 10 : pageSize;
+        return requestService.queryPageUserApplications(userId, pageNumber, pageSize);
     }
 
 

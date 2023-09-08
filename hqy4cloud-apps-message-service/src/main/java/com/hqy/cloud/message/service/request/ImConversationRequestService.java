@@ -21,6 +21,14 @@ public interface ImConversationRequestService {
     R<List<ConversationVO>> getConversations(Long id);
 
     /**
+     * 新增会话
+     * @param id     登录用户id
+     * @param userId 联系人id
+     * @return       R.
+     */
+    R<ConversationVO> addConversation(Long id, Long userId);
+
+    /**
      * update chat top.
      * @param id          user id.
      * @param chatConfig {@link ImChatConfigDTO}
@@ -35,4 +43,6 @@ public interface ImConversationRequestService {
      * @return           R.
      */
     R<Boolean> updateChatNotice(Long id, ImChatConfigDTO chatConfig);
+
+
 }

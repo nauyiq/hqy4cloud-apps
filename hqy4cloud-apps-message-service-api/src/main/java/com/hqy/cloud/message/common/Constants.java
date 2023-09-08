@@ -8,7 +8,7 @@ package com.hqy.cloud.message.common;
  */
 public interface Constants {
 
-    int DEFAULT_SOCKET_PORT = 9007;
+    int DEFAULT_SOCKET_PORT = 7081;
     String DEFAULT_SOCKET_CONTEXT_PATH = "/message/websocket";
 
 
