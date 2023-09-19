@@ -101,6 +101,22 @@ public class ImUnreadCacheServiceImpl extends ImCache implements ImUnreadCacheSe
     }
 
     @Override
+    public void addGroupConversationsUnread(Set<Long> userIds, Long groupId, Long offset) {
+        if (CollectionUtils.isEmpty(userIds) || groupId == null) {
+            return;
+        }
+        if (offset == null) {
+            offset = 1L;
+        }
+        String key = genGroupUnreadKey(groupId);
+        Long finalOffset = offset;
+        RedisManager.getInstance().getRedisTemplate().executePipelined((RedisCallback<Object>) connection -> {
+            userIds.forEach(member -> connection.hashCommands().hIncrBy(key.getBytes(), member.toString().getBytes(), finalOffset));
+            return null;
+        });
+    }
+
+    @Override
     public void readGroupConversationUnread(Long userId, Long groupId) {
         if (userId == null || groupId == null) {
             log.warn("Ignore remove group conversation unread, request params is null.");

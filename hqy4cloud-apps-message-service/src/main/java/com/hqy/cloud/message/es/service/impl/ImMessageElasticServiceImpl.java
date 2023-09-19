@@ -1,6 +1,8 @@
 package com.hqy.cloud.message.es.service.impl;
 
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
+import co.elastic.clients.json.JsonData;
 import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.elasticsearch.mapper.ElasticMapper;
 import com.hqy.cloud.elasticsearch.service.impl.ElasticServiceImpl;
@@ -9,13 +11,12 @@ import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.es.service.ImMessageElasticService;
 import org.apache.commons.lang3.StringUtils;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,28 +37,17 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
     }
 
     @Override
-    public PageResult<ImMessageDoc> queryPage(Long from, MessagesRequestParamDTO params) {
-        String keywords = params.getKeywords();
-        String type = params.getType();
+    public PageResult<ImMessageDoc> queryPage(Long from, Long removeTime, MessagesRequestParamDTO params) {
         Long to = params.getToContactId();
+        //构建查询条件.
         NativeQueryBuilder queryBuilder = new NativeQueryBuilder();
-        // query by from.
-        Query fromQuery = getMustBooleanQuery(from, to);
-        // query by to.
-        Query toQuery = getMustBooleanQuery(to, from);
-        queryBuilder.withQuery(q -> q.bool(b -> b.should(fromQuery, toQuery)));
-        // query by term by `group`
-        queryBuilder.withQuery(q -> q.term(t -> t.field("group").value(params.getIsGroup())));
-        if (StringUtils.isNotBlank(type)) {
-            //query term by `type`
-            queryBuilder.withQuery(q -> q.term(t -> t.field("type").value(type)));
-        }
-        if (ImMessageType.TEXT.type.equals(type) && StringUtils.isNotBlank(keywords)) {
-            //对内容进行分词搜索 并且只有是文本类型的时候进行搜索.
-            queryBuilder.withQuery(q -> q.matchPhrase(m -> m.field("content").query(keywords)));
-        }
+        Query fromQuery = getMustBooleanQuery(from, to, params, removeTime);
+        Query toQuery = getMustBooleanQuery(to, from, params, removeTime);
+        List<Query> shouldQueries = Arrays.asList(fromQuery, toQuery);
+        queryBuilder.withQuery(q -> q.bool(b -> b.should(shouldQueries)));
         //order by `created` DESC
         queryBuilder.withSort(Sort.by(Sort.Direction.DESC, "created"));
+        System.out.println(queryBuilder.build().getQuery());
         return pageQueryByBuilder(params.getPage(), params.getLimit(), queryBuilder);
     }
 
@@ -76,7 +66,27 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
     private Query getMustBooleanQuery(Long from, Long to) {
         Query fromQuery = Query.of(q -> q.term(t -> t.field("from").value(from)));
         Query toQuery = Query.of(q -> q.term(t -> t.field("to").value(to)));
-        return Query.of(q -> q.bool(b -> b.must(fromQuery, toQuery)));
+        return Query.of(q -> q.bool(b -> b.must(Arrays.asList(fromQuery, toQuery))));
+    }
+
+    private Query getMustBooleanQuery(Long from, Long to, MessagesRequestParamDTO params, Long removeTime) {
+        List<Query> mustQueries = new ArrayList<>();
+        mustQueries.add(Query.of(q -> q.term(t -> t.field("from").value(from))));
+        mustQueries.add(Query.of(q -> q.term(t -> t.field("to").value(to))));
+        if (removeTime != null) {
+            mustQueries.add(QueryBuilders.range(m -> m.field("created").gt(JsonData.of(removeTime))));
+        }
+        if (params.getIsGroup() != null) {
+            mustQueries.add(QueryBuilders.term(m -> m.field("group").value(params.getIsGroup())));
+        }
+        String type = params.getType();
+        if (StringUtils.isNotBlank(type)) {
+            mustQueries.add(QueryBuilders.term(m -> m.field("type").value(type)));
+        }
+        if (ImMessageType.TEXT.type.equals(type) && StringUtils.isNotBlank(params.getKeywords())) {
+            mustQueries.add(QueryBuilders.matchPhrase(m -> m.field("content").query(params.getKeywords())));
+        }
+        return Query.of(q -> q.bool(b -> b.must(mustQueries)));
     }
 
 

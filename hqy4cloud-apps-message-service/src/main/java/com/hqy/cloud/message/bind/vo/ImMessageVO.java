@@ -1,7 +1,5 @@
 package com.hqy.cloud.message.bind.vo;
 
-import com.hqy.cloud.apps.commom.constants.AppsConstants;
-import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

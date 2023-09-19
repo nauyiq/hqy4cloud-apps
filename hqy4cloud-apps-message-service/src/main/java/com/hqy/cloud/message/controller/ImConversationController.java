@@ -91,6 +91,21 @@ public class ImConversationController extends BaseController {
         return requestService.updateChatNotice(id, chatConfig);
     }
 
+    /**
+     * 删除会话
+     * @param request        HttpServletRequest.
+     * @param conversationId 会话id
+     * @return               R.
+     */
+    @DeleteMapping("/conversation/{id}")
+    public R<Boolean> deleteConversation(HttpServletRequest request, @PathVariable("id") Long conversationId) {
+        Long userId = getAccessAccountId(request);
+        if (userId == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        return requestService.deleteConversation(userId, conversationId);
+    }
+
 
 
 

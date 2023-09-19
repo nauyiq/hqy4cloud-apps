@@ -7,7 +7,9 @@ import com.hqy.cloud.message.bind.vo.ConversationVO;
 import com.hqy.cloud.message.service.ImConversationOperationsService;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
 import com.hqy.cloud.message.service.request.ImConversationRequestService;
+import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.entity.ImUserSetting;
+import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import com.hqy.cloud.message.tk.service.ImUserSettingTkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import java.util.List;
 public class ImConversationRequestServiceImpl implements ImConversationRequestService {
     private final ImUserSettingTkService userSettingTkService;
     private final ImFriendOperationsService friendOperationsService;
+    private final ImConversationTkService imConversationTkService;
     private final ImConversationOperationsService imConversationOperationsService;
 
     @Override
@@ -62,7 +65,13 @@ public class ImConversationRequestServiceImpl implements ImConversationRequestSe
         return result ? R.ok() : R.failed();
     }
 
+    @Override
+    public R<Boolean> deleteConversation(Long userId, Long conversationId) {
+        ImConversation conversation = imConversationTkService.queryById(conversationId);
+        if (conversation == null || !conversation.getUserId().equals(userId)) {
+            return R.failed(ResultCode.ERROR_PARAM);
+        }
 
-
-
+        return null;
+    }
 }

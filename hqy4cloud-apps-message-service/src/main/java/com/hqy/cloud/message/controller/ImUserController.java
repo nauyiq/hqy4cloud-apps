@@ -1,7 +1,6 @@
 package com.hqy.cloud.message.controller;
 
 import com.hqy.cloud.common.bind.R;
-import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
 import com.hqy.cloud.message.bind.vo.*;
@@ -119,25 +118,18 @@ public class ImUserController extends BaseController {
     }
 
     /**
-     * 分页查询当前用户好友申请列表
+     * 查询当前用户好友申请列表
      * @param request    HttpServletRequest.
-     * @param pageNumber 当前页
-     * @param pageSize   每页大小
      * @return           R.
      */
     @GetMapping("/applications")
-    public R<PageResult<UserApplicationVO>> queryPageUserApplications(HttpServletRequest request,
-                                                                      @RequestParam("page") Integer pageNumber,
-                                                                      @RequestParam("limit") Integer pageSize) {
+    public R<List<UserApplicationVO>> queryUserApplications(HttpServletRequest request) {
         Long userId = getAccessAccountId(request);
         if (userId == null) {
             return R.failed(ResultCode.NOT_LOGIN);
         }
-        pageNumber = pageNumber == null ? 1 : pageNumber;
-        pageSize = pageSize == null ? 10 : pageSize;
-        return requestService.queryPageUserApplications(userId, pageNumber, pageSize);
+        return requestService.queryApplications(userId);
     }
-
 
     /**
      * 申请添加好友
@@ -157,6 +149,7 @@ public class ImUserController extends BaseController {
         return requestService.addImFriend(id, add);
     }
 
+
     /**
      * 同意或者拒绝添加好友申请
      * @param request   HttpServletRequest.
@@ -169,7 +162,7 @@ public class ImUserController extends BaseController {
         if (id == null) {
             return R.failed(ResultCode.NOT_LOGIN);
         }
-        if (friendDTO == null || friendDTO.getUserId() == null || friendDTO.getStatus() == null) {
+        if (friendDTO.getApplicationId() == null || friendDTO.getStatus() == null) {
             return R.failed(ResultCode.ERROR_PARAM_UNDEFINED);
         }
         return requestService.acceptOrRejectImFriend(id, friendDTO);

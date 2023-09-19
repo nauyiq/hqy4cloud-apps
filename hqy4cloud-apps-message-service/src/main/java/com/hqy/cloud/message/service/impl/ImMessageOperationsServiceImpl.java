@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.service.impl;
 
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.hqy.cloud.apps.commom.constants.AppsConstants;
@@ -15,16 +16,21 @@ import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.es.service.ImMessageElasticService;
 import com.hqy.cloud.message.server.ImEventListener;
+import com.hqy.cloud.message.service.ImConversationOperationsService;
 import com.hqy.cloud.message.service.ImMessageOperationsService;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.entity.ImMessage;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import com.hqy.cloud.message.tk.service.ImMessageTkService;
 import com.hqy.cloud.util.AssertUtil;
+import com.hqy.cloud.util.spring.SpringContextHolder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
@@ -79,15 +85,28 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
 
     @Override
     public ImMessageVO sendImMessage(Long id, ImMessageDTO message) {
-        List<ImConversation> imConversations = buildConversations(id, message);
+        Long to = Long.valueOf(message.getToContactId());
+        // 查询双方聊天会话.
+        List<ImConversation> imConversations = conversationTkService.queryConversations(id, to, message.getIsGroup());
+        if (CollectionUtils.isEmpty(imConversations)) {
+            log.warn("Failed execute to send im message, conversation should not be empty. userI: {}.", id);
+            return null;
+        }
+        // 当前用户和对方的会话一定是存在的， size == 1表示对方和自己的会话不存在.
+        boolean insert = imConversations.size() == 1 && !message.getIsGroup();
+        ImConversation toConversation = insert ? buildSendMessageConversation(id, to, message, new Date()) : null;
+        updateConversations(message, imConversations);
         ImMessage im = template.execute(status -> {
             try {
                 // insert or update conversations.
+                if (insert) {
+                    AssertUtil.isTrue(conversationTkService.insert(toConversation), "Failed execute to toConversation");
+                }
                 AssertUtil.isTrue(conversationTkService.insertOrUpdate(imConversations), "Failed execute to insert or update conversations by send im message.");
                 // insert message
                 ImMessage imMessage = ImMessage.of(DistributedIdGen.getSnowflakeId(), id, message);
                 AssertUtil.isTrue(messageTkService.insert(imMessage), "Failed execute to insert message bt send im message.");
-                // insert message doc to es.
+                // insert or update es
                 ImMessageDoc messageDoc = new ImMessageDoc(imMessage);
                 imMessageElasticService.save(messageDoc);
                 return imMessage;
@@ -99,19 +118,28 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         });
         String status = im == null ? IM_MESSAGE_FAILED : IM_MESSAGE_SUCCESS;
         message.setStatus(status);
-        message.setIsRead(false);
         message.setMessageId(im == null ? StrUtil.EMPTY : im.getId().toString());
         if (im != null) {
-            // send socket message.
             boolean result;
             String eventName;
             if (im.getGroup()) {
                 //send groupChat event.
                 Set<String> members = imConversations.stream().map(groupIm -> groupIm.getUserId().toString()).filter(userId -> !userId.equals(id.toString())).collect(Collectors.toSet());
+                // 未读数 + 1
+                imUnreadCacheService.addGroupConversationsUnread(members.parallelStream().map(Long::parseLong).collect(Collectors.toSet()), to, 1L);
                 GroupChatEvent event = new GroupChatEvent(members, message);
                 eventName = event.name();
                 result = eventListener.onGroupChat(event);
             } else {
+                // 未读数 + 1
+                Long toConversationId = insert ? toConversation.getId() :
+                        imConversations.stream().filter(conversation -> conversation.getUserId().equals(to)).toList().get(0).getId();
+                imUnreadCacheService.addPrivateConversationUnread(to, toConversationId, 1L);
+                if (insert) {
+                    // 发送新增联系人事件
+                    ImConversationOperationsService service = SpringContextHolder.getBean(ImConversationOperationsService.class);
+                    service.sendAppendPrivateChatEvent(toConversation);
+                }
                 //send privateChat event.
                 PrivateChatEvent event = new PrivateChatEvent(message);
                 eventName = event.name();
@@ -122,6 +150,24 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         return message;
     }
 
+    @Override
+    public void addSystemMessage(Long send, Long receive, String message) {
+        // insert message
+        ImMessage imMessage = new ImMessage(DistributedIdGen.getSnowflakeId(), new Date(), UUID.fastUUID().toString(), false, send, receive, ImMessageType.SYSTEM.type, message);
+        ImMessageDoc messageDoc = new ImMessageDoc(imMessage);
+        template.execute(new TransactionCallbackWithoutResult() {
+            @Override
+            protected void doInTransactionWithoutResult(@NotNull TransactionStatus status) {
+                try {
+                    AssertUtil.isTrue(messageTkService.insert(imMessage), "Failed execute to insert message bt send im message.");
+                    imMessageElasticService.save(messageDoc);
+                } catch (Throwable cause) {
+                    status.setRollbackOnly();
+                    log.error(cause.getMessage(), cause);
+                }
+            }
+        });
+    }
 
     @Override
     public List<String> readMessages(ImConversation conversation) {
@@ -166,7 +212,6 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
     public boolean undoMessage(ImMessage imMessage) {
         ImConversation conversation = ImConversation.of(imMessage.getFrom(), imMessage.getTo(), imMessage.getGroup());
         // update undo entity.
-        conversation.setLastMessageFrom(true);
         conversation.setLastMessageType(ImMessageType.EVENT.type);
         conversation.setLastMessageContent(AppsConstants.Message.UNDO_FROM_MESSAGE_CONTENT);
         conversation.setLastMessageTime(imMessage.getCreated());
@@ -190,31 +235,21 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         return false;
     }
 
-    private List<ImConversation> buildConversations(Long id, ImMessageDTO message) {
-        Long to = Long.valueOf(message.getToContactId());
+    private void updateConversations(ImMessageDTO message, List<ImConversation> imConversations) {
         Date date = new Date();
-        if (message.getIsGroup()) {
-            // build group conversations.
-            // search group members.
-            List<ImConversation> groupConversations = conversationTkService.queryGroupConversationMembers(to);
-            AssertUtil.notEmpty(groupConversations, "Group members should not be empty.");
-            return groupConversations.stream().map(conversation -> buildSendMessageConversation(conversation.getUserId(), to, message, date, conversation.getId())).toList();
-        } else {
-            // build private conversations.
-            ImConversation fromConversation = buildSendMessageConversation(id, to, message, date, null);
-            ImConversation toConversations = buildSendMessageConversation(to, id, message, date, null);
-            return Arrays.asList(fromConversation, toConversations);
-        }
+        imConversations.forEach(conversation -> {
+            conversation.setUpdated(date);
+            conversation.setLastMessageContent(message.getContent());
+            conversation.setLastMessageType(message.getType());
+            conversation.setLastMessageTime(new Date(message.getSendTime()));
+        });
     }
 
-    private ImConversation buildSendMessageConversation(Long id, Long to, ImMessageDTO message, Date date, Long conversationId) {
+    private ImConversation buildSendMessageConversation(Long id, Long to, ImMessageDTO message, Date date) {
         ImConversation conversation = new ImConversation(id, to, message.getIsGroup());
-        conversation.setId(conversationId);
         conversation.setGroup(message.getIsGroup());
         conversation.setTop(false);
         conversation.setNotice(true);
-        conversation.setRemove(false);
-        conversation.setLastMessageFrom(id.toString().equals(message.getFromUser().getId()));
         conversation.setLastMessageContent(message.getContent());
         conversation.setLastMessageType(message.getType());
         conversation.setLastMessageTime(new Date(message.getSendTime()));

@@ -36,8 +36,7 @@ public class ImConversation extends BaseEntity<Long> {
     @Column(name = "is_top")
     private Boolean top;
     @Column(name = "is_remove")
-    private Boolean remove;
-    private Boolean lastMessageFrom;
+    private Long remove;
     private String lastMessageType;
     private String lastMessageContent;
     private Date lastMessageTime;
@@ -77,10 +76,10 @@ public class ImConversation extends BaseEntity<Long> {
         return new ImConversation(userId, groupId, new Date(), true);
     }
 
-    public static List<ImConversation> ofFriend(Long from, Long to, String remark) {
+    public static List<ImConversation> ofFriend(Long from, Long to, String fromNickname, String toNickname) {
         Date now = new Date();
-        ImConversation fromConversation = ofFriend(from, to, remark, now);
-        ImConversation toConversation = ofFriend(to, from, remark, now);
+        ImConversation fromConversation = ofFriend(from, to, toNickname, now);
+        ImConversation toConversation = ofFriend(to, from, fromNickname, now);
         return Arrays.asList(fromConversation, toConversation);
     }
 
@@ -89,21 +88,20 @@ public class ImConversation extends BaseEntity<Long> {
         Date now = new Date();
         conversation.setTop(false);
         conversation.setNotice(true);
-        conversation.setRemove(false);
-        conversation.setLastMessageFrom(true);
+        conversation.setRemove(null);
         conversation.setCreated(now);
         conversation.setUpdated(now);
         return conversation;
     }
 
-    private static ImConversation ofFriend(Long from, Long to, String remark, Date now) {
+    public static ImConversation ofFriend(Long from, Long to, String nickname, Date now) {
         ImConversation imConversation = new ImConversation(from, to, now, false);
         imConversation.setNotice(true);
         imConversation.setTop(false);
-        imConversation.setRemove(false);
+        imConversation.setRemove(null);
         imConversation.setLastMessageType(ImMessageType.SYSTEM.type);
         imConversation.setLastMessageTime(now);
-        imConversation.setLastMessageContent(remark);
+        imConversation.setLastMessageContent(nickname);
         return imConversation;
     }
 

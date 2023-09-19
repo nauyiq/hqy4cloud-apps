@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.service.impl;
 
+import cn.hutool.core.lang.Validator;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
@@ -56,7 +57,6 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
     @Override
     public List<ConversationVO> getImConversations(Long id) {
         ImConversation of = ImConversation.of(id);
-        of.setRemove(false);
         List<ImConversation> conversations = conversationTkService.queryList(of);
         if (CollectionUtils.isEmpty(conversations)) {
             return Collections.emptyList();
@@ -97,7 +97,6 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
             return false;
         }
         conversation.setTop(status);
-        conversation.setLastMessageFrom(true);
         ImGroupMember member = ImGroupMember.of(groupId, id);
         member.setTop(status);
         //update db.
@@ -129,7 +128,6 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
         conversation.setTop(status);
         ImFriend imFriend = ImFriend.of(id, contactId);
         imFriend.setTop(status);
-        conversation.setLastMessageFrom(true);
         //update db.
         ImConversation finalConversation = conversation;
         Boolean execute = template.execute(transactionStatus -> {
@@ -157,7 +155,6 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
             return false;
         }
         conversation.setNotice(status);
-        conversation.setLastMessageFrom(true);
         ImGroupMember member = ImGroupMember.of(groupId, id);
         member.setNotice(status);
         //update db.
@@ -188,7 +185,6 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
             return false;
         }
         conversation.setNotice(status);
-        conversation.setLastMessageFrom(true);
         ImFriend imFriend = ImFriend.of(id, contactId);
         imFriend.setNotice(status);
         //update db.
@@ -227,9 +223,10 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
         ConversationVO conversation = buildPrivateChatConversationVO(remark, profile, imConversation);
         //build contact vo
         char fistChar = StringUtils.isBlank(remark) ? profile.nickname.charAt(0) : remark.charAt(0);
+        String fistChatStr = Character.toString(fistChar);
         ContactVO contact = ContactVO.builder()
                 .id(contactId.toString())
-                .index(PinyinUtil.getFirstLetter(fistChar) + "")
+                .index((Validator.isWord(fistChatStr) || Validator.isNumber(fistChatStr)) ? PinyinUtil.getFirstLetter(fistChar) + "" : "#")
                 .displayName(StringUtils.isBlank(remark) ? profile.nickname : remark)
                 .avatar(profile.avatar)
                 .isTop(conversation.getIsTop())
@@ -289,7 +286,6 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                         .displayName(member.getGroupName())
                         .avatar(member.getGroupAvatar())
                         .isGroup(true)
-                        .isRemove(conversation.getRemove())
                         .isNotice(conversation.getNotice())
                         .isTop(conversation.getTop())
                         .role(member.getRole())
@@ -323,7 +319,6 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 .displayName(StringUtils.isBlank(remark) ? struct.nickname : remark)
                 .avatar(struct.avatar)
                 .isGroup(false)
-                .isRemove(conversation.getRemove())
                 .isNotice(conversation.getNotice())
                 .isTop(conversation.getTop())
                 .type(conversation.getLastMessageType())

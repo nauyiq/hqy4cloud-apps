@@ -1,25 +1,26 @@
 package com.hqy.cloud.message.service.request.impl;
 
 import cn.hutool.core.map.MapUtil;
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
+import cn.hutool.core.util.StrUtil;
 import com.hqy.cloud.account.dto.AccountInfoDTO;
 import com.hqy.cloud.account.service.RemoteAccountProfileService;
 import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.account.struct.AccountStruct;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.bind.R;
-import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.ImMessageConverter;
 import com.hqy.cloud.message.bind.dto.ContactsDTO;
+import com.hqy.cloud.message.bind.dto.FriendApplicationDTO;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
 import com.hqy.cloud.message.bind.dto.GroupContactDTO;
 import com.hqy.cloud.message.bind.event.support.ContactNameChangeEvent;
+import com.hqy.cloud.message.bind.event.support.FriendApplicationEvent;
 import com.hqy.cloud.message.bind.vo.*;
 import com.hqy.cloud.message.cache.ImRelationshipCacheService;
 import com.hqy.cloud.message.server.ImEventListener;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
+import com.hqy.cloud.message.service.ImMessageOperationsService;
 import com.hqy.cloud.message.service.request.ImUserRequestService;
 import com.hqy.cloud.message.tk.entity.ImFriend;
 import com.hqy.cloud.message.tk.entity.ImFriendApplication;
@@ -30,6 +31,7 @@ import com.hqy.cloud.message.tk.service.ImGroupTkService;
 import com.hqy.cloud.message.tk.service.ImUserSettingTkService;
 import com.hqy.cloud.rpc.nacos.client.RPCClient;
 import com.hqy.cloud.util.AssertUtil;
+import com.hqy.cloud.util.thread.ParentExecutorService;
 import com.hqy.cloud.web.common.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -58,6 +60,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
     private final ImUserSettingTkService userSettingTkService;
     private final ImFriendApplicationTkService applicationTkService;
     private final ImRelationshipCacheService relationshipCacheService;
+    private final ImMessageOperationsService messageOperationsService;
 
     @Override
     public R<UserImSettingVO> getUserImSetting(Long id) {
@@ -180,39 +183,58 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
     }
 
     @Override
-    public R<PageResult<UserApplicationVO>> queryPageUserApplications(Long userId, Integer pageNumber, Integer pageSize) {
-        PageHelper.startPage(pageNumber, pageSize);
+    public R<List<UserApplicationVO>> queryApplications(Long userId) {
         List<ImFriendApplication> applications = applicationTkService.queryFriendApplications(userId);
         if (CollectionUtils.isEmpty(applications)) {
-            return R.ok(new PageResult<>());
+            return R.ok(Collections.emptyList());
         }
         List<Long> ids = getUserIds(userId, applications);
         Map<Long, AccountProfileStruct> profileMap = AccountRpcUtil.getAccountProfileMap(ids);
         if (MapUtil.isEmpty(profileMap)) {
             // search account rpc info is empty.
             log.warn("Search account rpc return empty, ids: {}", ids);
-            return R.ok(new PageResult<>());
+            return R.ok(Collections.emptyList());
         }
-        List<UserApplicationVO> vos = applications.stream().map(application -> {
-            AccountProfileStruct struct = profileMap.get(userId.equals(application.getId()) ? application.getUserId() : application.getId());
+        Map<Long, ImFriendApplication> resultMap = MapUtil.newHashMap(applications.size());
+        List<ImFriendApplication> unreadApplications = new ArrayList<>();
+        List<UserApplicationVO> vos = new ArrayList<>();
+        for (ImFriendApplication application : applications) {
+            Long displayUserId = userId.equals(application.getApply()) ? application.getReceive() : application.getApply();
+            AccountProfileStruct struct = profileMap.get(displayUserId);
             if (struct == null) {
-                return null;
+                continue;
             }
-            return UserApplicationVO.builder()
-                    .receive(application.getId().toString())
-                    .send(application.getUserId().toString())
-                    .status(application.getStatus())
+            if (resultMap.containsKey(displayUserId)) {
+                // 去除重复用户的申请, 或只展示最新申请的用户信息.
+                ImFriendApplication friendApplication = resultMap.get(displayUserId);
+                if (friendApplication.getCreated().getTime() >= application.getCreated().getTime()) {
+                    continue;
+                }
+            }
+            UserApplicationVO vo = UserApplicationVO.builder()
+                    .id(application.getId())
+                    .receive(application.getReceive().toString())
+                    .send(application.getApply().toString())
                     .remark(application.getRemark())
+                    .status(application.getStatus())
                     .info(new UserInfoVO(struct.id.toString(), struct.username, struct.nickname, struct.avatar, null)).build();
-        }).filter(Objects::nonNull).toList();
-        PageInfo<UserApplicationVO> pageInfo = new PageInfo<>(vos);
-        return R.ok(new PageResult<>(pageNumber, pageInfo.getTotal(), pageInfo.getPages(), vos));
+            if (application.getStatus() == null) {
+                unreadApplications.add(application);
+                vo.setStatus(ImFriendApplication.NOT_VERIFY);
+            }
+            vos.add(vo);
+        }
+        if (CollectionUtils.isNotEmpty(unreadApplications)) {
+            ParentExecutorService.getInstance().execute(() ->
+                    applicationTkService.updateApplicationStatus(unreadApplications.parallelStream().map(ImFriendApplication::getId).toList(), ImFriendApplication.NOT_VERIFY));
+        }
+        return R.ok(vos);
     }
 
     @NotNull
     private List<Long> getUserIds(Long userId, List<ImFriendApplication> applications) {
-        List<Long> ids = applications.parallelStream().map(ImFriendApplication::getId).filter(id -> !id.equals(userId)).toList();
-        List<Long> userIds = applications.parallelStream().map(ImFriendApplication::getUserId).filter(id -> !id.equals(userId)).toList();
+        List<Long> ids = applications.parallelStream().map(ImFriendApplication::getApply).filter(id -> !id.equals(userId)).toList();
+        List<Long> userIds = applications.parallelStream().map(ImFriendApplication::getReceive).filter(id -> !id.equals(userId)).toList();
         List<Long> allUserIds = new ArrayList<>(ids);
         allUserIds.addAll(userIds);
         return allUserIds.stream().distinct().toList();
@@ -220,26 +242,54 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
 
     @Override
     public R<Boolean> addImFriend(Long id, FriendDTO add) {
+        Long userId = add.getUserId();
+        if (imFriendOperationsService.isFriend(id, userId)) {
+            return R.ok();
+        }
         AccountStruct struct = AccountRpcUtil.getAccountInfo(add.getUserId());
         if (struct == null || !struct.getStatus()) {
             return R.failed(ResultCode.USER_NOT_FOUND);
         }
-        ImFriendApplication application = ImFriendApplication.of(add.getUserId(), id, add.getRemark());
-        //TODO 如果对象已经申请添加了好友 并且状态是未确认的情况 应该直接同意好友申请....
-        int i = applicationTkService.insertDuplicate(application);
-        return i > 0 ? R.ok() : R.failed();
+        FriendApplicationDTO friendApplication = applicationTkService.queryApplicationStatus(id, userId);
+        boolean result;
+        int unread = friendApplication.getUnread();
+        if (friendApplication.getStatus() != null && friendApplication.getStatus().equals(ImFriendApplication.NOT_VERIFY)) {
+            // 说明对方也申请添加好友 则直接添加该好友.
+            result = Boolean.TRUE.equals(template.execute(status -> {
+                try {
+                    AssertUtil.isTrue(applicationTkService.updateSelective(ImFriendApplication.of(id, ImFriendApplication.AGREE)), "Failed execute to update friend application.");
+                    AssertUtil.isTrue(imFriendOperationsService.addFriend(userId, id, StrUtil.EMPTY), "Failed execute to add friend.");
+                    return true;
+                } catch (Throwable cause) {
+                    log.error(cause.getMessage(), cause);
+                    status.setRollbackOnly();
+                    return false;
+                }
+            }));
+        } else {
+            ImFriendApplication application = ImFriendApplication.of(id, add.getUserId() , add.getRemark(), null);
+            result = applicationTkService.insertDuplicate(application);
+            unread++;
+        }
+        if (result && StringUtils.isNotBlank(add.getRemark())) {
+            //新增系统消息
+            ParentExecutorService.getInstance().execute(() -> messageOperationsService.addSystemMessage(id, userId, add.getRemark()));
+        }
+        if (result) {
+            return imEventListener.onAddFriendApplicationEvent(FriendApplicationEvent.of(userId.toString(), unread)) ? R.ok() : R.failed();
+        }
+        return R.failed();
     }
 
     @Override
     public R<Boolean> acceptOrRejectImFriend(Long id, FriendDTO friendDTO) {
         //查询好友申请表
-        ImFriendApplication application = ImFriendApplication.of(id, friendDTO.getUserId());
-        application = applicationTkService.queryOne(application);
-        if (application == null) {
-            return R.failed(ResultCode.DATA_EMPTY);
+        ImFriendApplication application = applicationTkService.queryById(friendDTO.getApplicationId());
+        if (application == null || id.equals(application.getApply())) {
+            return R.failed(ResultCode.ERROR_PARAM);
         }
-        //状态已经变更过.
-        if (application.getStatus() != null) {
+        Integer status = application.getStatus();
+        if (status != null && status != ImFriendApplication.NOT_VERIFY) {
             return R.ok();
         }
         application.setStatus(friendDTO.getStatus() ? ImFriendApplication.AGREE : ImFriendApplication.REFUSE);
@@ -249,17 +299,15 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
         if (!friendDTO.getStatus()) {
             return applicationTkService.updateSelective(application) ? R.ok() : R.failed();
         }
-
-        ImFriendApplication finalApplication = application;
-        Boolean execute = template.execute(status -> {
+        Boolean execute = template.execute(transactionStatus -> {
             try {
-                AssertUtil.isTrue(applicationTkService.updateSelective(finalApplication), "Failed execute to update friend application.");
+                AssertUtil.isTrue(applicationTkService.update(application), "Failed execute to update friend application.");
                 if (friendDTO.getStatus()) {
-                    AssertUtil.isTrue(imFriendOperationsService.addFriend(finalApplication), "Failed execute to add friend operations.");
+                    AssertUtil.isTrue(imFriendOperationsService.addFriend(application.getApply(), id, friendDTO.getRemark()), "Failed execute to add friend operations.");
                 }
                 return true;
             } catch (Throwable cause) {
-                status.setRollbackOnly();
+                transactionStatus.setRollbackOnly();
                 log.error(cause.getMessage(), cause);
                 return false;
             }

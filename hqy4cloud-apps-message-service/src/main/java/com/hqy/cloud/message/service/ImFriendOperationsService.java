@@ -1,7 +1,5 @@
 package com.hqy.cloud.message.service;
 
-import com.hqy.cloud.message.tk.entity.ImFriendApplication;
-
 import java.util.List;
 import java.util.Map;
 
@@ -14,11 +12,13 @@ import java.util.Map;
 public interface ImFriendOperationsService {
 
     /**
-     * 添加好友操作
-     * @param application {@link ImFriendApplication}
-     * @return 添加好友
+     * 添加好友
+     * @param apply   申请用户id
+     * @param receive 接收用户id
+     * @param remark  备注
+     * @return        是否添加成功
      */
-    boolean addFriend(ImFriendApplication application);
+    boolean addFriend(Long apply, Long receive, String remark);
 
     /**
      * 双方是否是好友关系

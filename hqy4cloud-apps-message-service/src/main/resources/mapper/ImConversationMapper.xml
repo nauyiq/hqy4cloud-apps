@@ -9,6 +9,12 @@
         WHERE contact_id = #{groupId} AND is_group = 1
     </select>
 
+    <select id="queryPrivateConversations" resultType="com.hqy.cloud.message.tk.entity.ImConversation">
+        SELECT id,user_id,contact_id,is_notice notice,is_group `group`,is_top top
+        FROM t_im_conversation WHERE
+        (user_id = #{id} AND contact_id = #{contactId} AND is_group = 0) OR (user_id = #{contactId} AND contact_id = #{id} AND is_group = 0)
+    </select>
+
     <insert id="insertOrUpdate" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO t_im_conversation
         (
@@ -17,7 +23,6 @@
             is_group,
             is_notice,
             is_top,
-            last_message_from,
             last_message_type,
             last_message_content,
             last_message_time,
@@ -31,7 +36,6 @@
              #{conversation.group},
              #{conversation.notice},
              #{conversation.top},
-             #{conversation.lastMessageFrom},
              #{conversation.lastMessageType},
              #{conversation.lastMessageContent},
              #{conversation.lastMessageTime},
@@ -41,7 +45,6 @@
         </foreach>
         ON DUPLICATE KEY UPDATE
         is_remove = VALUES(is_remove),
-        last_message_from = VALUES(last_message_from),
         last_message_type = VALUES(last_message_type),
         last_message_content = VALUES(last_message_content),
         last_message_time = VALUES(last_message_time),

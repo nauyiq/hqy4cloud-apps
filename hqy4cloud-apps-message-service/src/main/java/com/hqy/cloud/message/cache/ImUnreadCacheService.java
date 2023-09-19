@@ -2,6 +2,7 @@ package com.hqy.cloud.message.cache;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * cache message and conversation of unread service.
@@ -50,6 +51,14 @@ public interface ImUnreadCacheService {
      * @param offset  increase number
      */
     void addGroupConversationUnread(Long userId, Long groupId, Long offset);
+
+    /**
+     * 批量新增群聊成员未读消息
+     * @param userIds 群聊成员ids
+     * @param groupId 群聊id
+     * @param offset  未读消息数目.
+     */
+    void addGroupConversationsUnread(Set<Long> userIds, Long groupId, Long offset);
 
     /**
      * remove group conversation unread.

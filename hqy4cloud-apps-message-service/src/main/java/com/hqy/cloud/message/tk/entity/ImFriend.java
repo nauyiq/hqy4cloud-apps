@@ -1,13 +1,15 @@
 package com.hqy.cloud.message.tk.entity;
 
+import cn.hutool.core.lang.Validator;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.pinyin.PinyinUtil;
 import com.hqy.cloud.db.tk.PrimaryLessBaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.Column;
-import javax.persistence.Id;
 import javax.persistence.Table;
 import java.util.Arrays;
 import java.util.Date;
@@ -25,9 +27,7 @@ import java.util.List;
 public class ImFriend implements PrimaryLessBaseEntity {
 
 
-    @Id
     private Long id;
-    @Id
     private Long userId;
     private String remark;
     @Column(name = "`index`")
@@ -45,14 +45,23 @@ public class ImFriend implements PrimaryLessBaseEntity {
         this.id = id;
         this.userId = userId;
     }
-    public static List<ImFriend> addFriend(Long id, Long userId, String mark) {
+    public static List<ImFriend> addFriend(Long apply, Long receive, String mark, String applyNickname, String receiveNickname) {
         Date now = new Date();
-        ImFriend from = new ImFriend(id, userId, mark, "", true, false, true, false, now, now);
-        ImFriend to = new ImFriend(userId, id, StrUtil.EMPTY, "", true, false, true, false, now, now);
+        ImFriend from = new ImFriend(apply, receive, StrUtil.EMPTY, getIndex(receiveNickname), true, false, true, false, now, now);
+        ImFriend to = new ImFriend(receive, apply, mark , getIndex(applyNickname), true, false, true, false, now, now);
         return Arrays.asList(from, to);
     }
 
     public static ImFriend of(Long id, Long userId) {
         return new ImFriend(id, userId);
+    }
+
+    private static String getIndex(String nickname) {
+        if (StringUtils.isBlank(nickname)) {
+            return "#";
+        }
+        char fistChar = nickname.charAt(0);
+        String fistChatStr = Character.toString(fistChar);
+        return (Validator.isWord(fistChatStr) || Validator.isNumber(fistChatStr)) ? PinyinUtil.getFirstLetter(fistChar) + StrUtil.EMPTY : "#";
     }
 }

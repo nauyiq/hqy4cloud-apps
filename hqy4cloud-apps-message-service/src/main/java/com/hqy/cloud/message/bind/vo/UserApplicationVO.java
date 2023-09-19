@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class UserApplicationVO {
 
+    private Long id;
     private String receive;
     private String send;
     private String remark;

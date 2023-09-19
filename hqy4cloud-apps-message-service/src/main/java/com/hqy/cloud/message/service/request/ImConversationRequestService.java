@@ -44,5 +44,11 @@ public interface ImConversationRequestService {
      */
     R<Boolean> updateChatNotice(Long id, ImChatConfigDTO chatConfig);
 
-
+    /**
+     * 删除会话
+     * @param userId         用户id
+     * @param conversationId 会话id
+     * @return               R.
+     */
+    R<Boolean> deleteConversation(Long userId, Long conversationId);
 }

@@ -39,8 +39,8 @@
             c.created,
             a.unread
         FROM `t_im_friend` c,
-             (SELECT COUNT(*) unread FROM `t_im_friend_application` WHERE id = #{id} AND status = 0) a
-        WHERE c.id = #{id} AND deleted = 0
+             (SELECT COUNT(*) unread FROM `t_im_friend_application` WHERE user_id = #{id} AND status IS NULL) a
+        WHERE c.id = #{id} AND c.deleted = 0
     </select>
 
     <update id="removeFriend">

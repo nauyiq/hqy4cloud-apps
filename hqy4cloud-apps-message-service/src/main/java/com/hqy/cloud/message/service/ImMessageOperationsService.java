@@ -32,6 +32,14 @@ public interface ImMessageOperationsService {
     ImMessageVO sendImMessage(Long id, ImMessageDTO message);
 
     /**
+     * 添加系统消息
+     * @param send    发送人
+     * @param receive 接收人
+     * @param message 消息
+     */
+    void addSystemMessage(Long send, Long receive, String message);
+
+    /**
      * insert message
      * @param id       from user id
      * @param message         {@link ImMessageDTO}
@@ -53,4 +61,6 @@ public interface ImMessageOperationsService {
      * @return          result.
      */
     boolean undoMessage(ImMessage imMessage);
+
+
 }

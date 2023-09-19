@@ -26,5 +26,12 @@ public interface ImConversationTkService extends BaseTkService<ImConversation, L
      */
     List<ImConversation> queryGroupConversationMembers(Long groupId);
 
-
+    /**
+     * 查询双方聊天会话
+     * @param id        用户id
+     * @param contactId 联系人id
+     * @param isGroup   是否是群
+     * @return          {@link ImConversation} 聊天会话列表
+     */
+    List<ImConversation> queryConversations(Long id, Long contactId, Boolean isGroup);
 }

@@ -4,6 +4,8 @@ import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
 import com.hqy.cloud.db.tk.support.PrimaryLessTkServiceImpl;
 import com.hqy.cloud.message.bind.dto.ContactsDTO;
 import com.hqy.cloud.message.tk.entity.ImFriend;
+import com.hqy.cloud.message.tk.entity.ImFriendApplication;
+import com.hqy.cloud.message.tk.mapper.ImFriendApplicationMapper;
 import com.hqy.cloud.message.tk.mapper.ImFriendMapper;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ImFriendTkServiceImpl extends PrimaryLessTkServiceImpl<ImFriend> implements ImFriendTkService {
     private final ImFriendMapper mapper;
+    private final ImFriendApplicationMapper applicationMapper;
 
     @Override
     public PrimaryLessTkMapper<ImFriend> getTkDao() {
@@ -38,6 +41,8 @@ public class ImFriendTkServiceImpl extends PrimaryLessTkServiceImpl<ImFriend> im
 
     @Override
     public ContactsDTO queryContactByUserId(Long userId) {
-        return mapper.queryUserContacts(userId);
+        List<ImFriend> imFriends = mapper.select(ImFriend.of(userId, null));
+        int unread = applicationMapper.selectUnread(userId);
+        return new ContactsDTO(unread, imFriends);
     }
 }

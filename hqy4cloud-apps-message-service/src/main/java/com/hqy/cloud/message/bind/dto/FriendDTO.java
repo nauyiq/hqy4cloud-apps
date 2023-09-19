@@ -15,6 +15,11 @@ import lombok.NoArgsConstructor;
 public class FriendDTO {
 
     /**
+     * 申请表id
+     */
+    private Long applicationId;
+
+    /**
      * 添加的好友用户id
      */
     private Long userId;

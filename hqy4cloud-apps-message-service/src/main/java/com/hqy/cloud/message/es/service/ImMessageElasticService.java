@@ -16,11 +16,12 @@ public interface ImMessageElasticService extends ElasticService<Long, ImMessageD
 
     /**
      * 分页查询
-     * @param id     user id
-     * @param params {@link MessagesRequestParamDTO}
-     * @return       result
+     * @param id          user id
+     * @param removeTime 删除时间
+     * @param params     {@link MessagesRequestParamDTO}
+     * @return           result
      */
-    PageResult<ImMessageDoc> queryPage(Long id, MessagesRequestParamDTO params);
+    PageResult<ImMessageDoc> queryPage(Long id, Long removeTime, MessagesRequestParamDTO params);
 
     /**
      * query unread messages

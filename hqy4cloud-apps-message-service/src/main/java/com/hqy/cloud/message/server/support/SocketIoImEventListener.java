@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.server.support;
 
 import cn.hutool.core.map.MapUtil;
+import cn.hutool.core.util.StrUtil;
 import com.hqy.cloud.common.base.project.MicroServiceConstants;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatus;
 import com.hqy.cloud.foundation.common.route.SocketClusterStatusManager;
@@ -126,6 +127,11 @@ public class SocketIoImEventListener implements ImEventListener {
             Set<String> ids = new HashSet<>(event.getUsers());
             return SocketIoConnectionUtil.doBroadcastMessages(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, ids, event.name(), message);
         }
+    }
+
+    @Override
+    public boolean onAddFriendApplicationEvent(FriendApplicationEvent event) {
+        return SocketIoConnectionUtil.doPrivateMessage(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, event.getTo(), event.name(), event.message());
     }
 
     @Override

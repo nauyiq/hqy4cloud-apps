@@ -35,5 +35,12 @@ public class ImConversationTkServiceImpl extends BaseTkServiceImpl<ImConversatio
         return mapper.queryGroupConversationMembers(groupId);
     }
 
-
+    @Override
+    public List<ImConversation> queryConversations(Long id, Long contactId, Boolean isGroup) {
+        if (isGroup != null && isGroup) {
+            return mapper.select(ImConversation.of(null, contactId, true));
+        } else {
+            return mapper.queryPrivateConversations(id, contactId);
+        }
+    }
 }

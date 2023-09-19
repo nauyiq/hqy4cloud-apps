@@ -1,8 +1,6 @@
 package com.hqy.cloud.message.service.request;
 
-import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
-import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.message.bind.dto.FriendDTO;
 import com.hqy.cloud.message.bind.vo.*;
 
@@ -62,11 +60,9 @@ public interface ImUserRequestService {
     /**
      * 分页查询好友申请列表
      * @param userId     用户id
-     * @param pageNumber 当前页
-     * @param pageSize   每页大小
      * @return           R.
      */
-    R<PageResult<UserApplicationVO>> queryPageUserApplications(Long userId, Integer pageNumber, Integer pageSize);
+    R<List<UserApplicationVO>> queryApplications(Long userId);
 
     /**
      * 申请添加用户

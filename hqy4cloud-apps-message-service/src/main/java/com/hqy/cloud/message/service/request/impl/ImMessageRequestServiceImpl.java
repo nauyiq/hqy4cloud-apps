@@ -63,8 +63,10 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         if (imConversation == null || (!id.equals(imConversation.getUserId()))) {
             return R.ok(new PageResult<>());
         }
+        params.setToContactId(imConversation.getContactId());
+        params.setIsGroup(imConversation.getGroup());
         // query message history from es.
-        PageResult<ImMessageDoc> result = imMessageElasticService.queryPage(id, params);
+        PageResult<ImMessageDoc> result = imMessageElasticService.queryPage(id, imConversation.getRemove(), params);
         if (result == null || CollectionUtils.isEmpty(result.getResultList())) {
             return R.ok(new PageResult<>());
         }
@@ -89,10 +91,12 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
             ids = Arrays.asList(imConversation.getUserId(), imConversation.getContactId());
         }
         Map<Long, AccountProfileStruct> profileMap = AccountRpcUtil.getAccountProfileMap(ids);
-        //update unread message.
-        ParentExecutorService.getInstance().execute(() -> messageOperationsService.readMessages(imConversation));
         //convert to message vo
         List<ImMessageVO> messages = convertMessages(resultList, profileMap, ids, imConversation);
+        // setting messages read.
+        if (resultList.parallelStream().anyMatch(doc -> doc.getRead() != null && !doc.getRead())) {
+            ParentExecutorService.getInstance().execute(() -> messageOperationsService.readMessages(imConversation));
+        }
         return R.ok(new PageResult<>(result.getCurrentPage(), params.getLimit(), total, messages));
     }
 
@@ -115,7 +119,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
             return ImMessageVO.builder().id(doc.getMessageId())
                     .messageId(doc.getId().toString())
                     .isGroup(doc.getGroup())
-                    .isRead(doc.getRead())
+                    .isRead(true)
                     .fromUser(new UserInfoVO(from.toString(), struct.username, struct.nickname, struct.avatar, remark))
                     .toContactId(doc.getTo().toString())
                     .content(ConvertUtil.getMessageContent(imConversation.getUserId(), doc))
@@ -140,7 +144,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
             }
         }
         ImMessageVO messageVo = messageOperationsService.sendImMessage(id, message);
-        return R.ok(messageVo);
+        return messageVo == null ? R.failed() : R.ok(messageVo);
     }
 
     @Override

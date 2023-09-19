@@ -68,6 +68,13 @@ public interface ImEventListener {
     boolean onImAppendChatEvent(AppendChatEvent event);
 
     /**
+     * 申请添加好友事件
+     * @param event {@link FriendApplicationEvent}
+     * @return      result.
+     */
+    boolean onAddFriendApplicationEvent(FriendApplicationEvent event);
+
+    /**
      * undo message event.
      * @param event {@link UndoMessageEvent}
      * @return      result.
@@ -80,5 +87,8 @@ public interface ImEventListener {
      * @return      result.
      */
     boolean onContactNameChangeEvent(ContactNameChangeEvent event);
+
+
+
 
 }

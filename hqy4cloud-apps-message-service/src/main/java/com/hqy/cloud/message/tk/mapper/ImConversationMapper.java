@@ -30,5 +30,11 @@ public interface ImConversationMapper extends BaseTkMapper<ImConversation, Long>
      */
     List<ImConversation> queryGroupConversationMembers(@Param("groupId") Long groupId);
 
-
+    /**
+     * 查找私人聊天会话
+     * @param id        用户id
+     * @param contactId 联系人id
+     * @return          会话列表
+     */
+    List<ImConversation> queryPrivateConversations(@Param("id") Long id, @Param("contactId") Long contactId);
 }

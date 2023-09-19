@@ -7,16 +7,16 @@
     <insert id="insertDuplicate">
         INSERT INTO t_im_friend_application
         (
-         id,
-         user_id,
+         apply,
+         receive,
          remark,
          status,
          created,
          updated
         ) VALUES
         (
-         #{application.id},
-         #{application.userId},
+         #{application.apply},
+         #{application.receive},
          #{application.remark},
          #{application.status},
          #{application.created},
@@ -25,11 +25,23 @@
             remark = VALUES(remark),
             updated = VALUES(updated)
     </insert>
+    <update id="updateApplicationStatus">
+        UPDATE `t_im_friend_application` SET `status` = #{status}
+        WHERE id IN
+        <foreach collection="ids" close=")" open="(" item="id" separator=",">
+            #{id}
+        </foreach>
+    </update>
 
     <select id="queryFriendApplications" resultType="com.hqy.cloud.message.tk.entity.ImFriendApplication">
-        SELECT id, user_id, remark, status, created
+        SELECT id, apply, receive,  remark, status, created
         FROM `t_im_friend_application`
-        WHERE id = #{userId} or user_id = #{userId} ORDER BY created DESC
+        WHERE apply = #{userId} or receive = #{userId}
     </select>
+    <select id="selectUnread" resultType="java.lang.Integer">
+        SELECT count(*)
+        FROM `t_im_friend_application` WHERE `receive` = #{receive} AND `status` IS NULL
+    </select>
+
 
 </mapper>

@@ -1,16 +1,20 @@
 package com.hqy.cloud.message.service.impl;
 
 import cn.hutool.core.map.MapUtil;
+import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.message.cache.ImRelationshipCacheService;
+import com.hqy.cloud.message.common.im.enums.ImMessageType;
+import com.hqy.cloud.message.service.ImConversationOperationsService;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
 import com.hqy.cloud.message.service.ImMessageOperationsService;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.entity.ImFriend;
-import com.hqy.cloud.message.tk.entity.ImFriendApplication;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import com.hqy.cloud.util.AssertUtil;
+import com.hqy.cloud.util.spring.SpringContextHolder;
+import com.hqy.cloud.web.common.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -18,10 +22,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.ACCEPT_FRIEND_MESSAGE_CONTENT;
 
 /**
  * ImFriendOperationsService.
@@ -40,23 +44,59 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
     private final ImRelationshipCacheService relationshipCacheService;
 
     @Override
-    public boolean addFriend(ImFriendApplication application) {
-        AssertUtil.notNull(application, "ImFriendApplication should not be null.");
-        Long from = application.getId();
-        Long to = application.getUserId();
-        List<ImFriend> imFriends = ImFriend.addFriend(from, to, application.getRemark());
-        List<ImConversation> conversations = ImConversation.ofFriend(from, to, application.getRemark());
+    public boolean addFriend(Long apply, Long receive, String remark) {
+        List<Long> userIds = Arrays.asList(apply, receive);
+        Map<Long, AccountProfileStruct> profileMap = AccountRpcUtil.getAccountProfileMap(userIds);
+        if (profileMap.size() != userIds.size()) {
+            log.warn("Failed execute to add friend, because user not found, userIds = {}.", userIds);
+            return false;
+        }
+        AccountProfileStruct applyProfile = profileMap.get(apply);
+        AccountProfileStruct receiveProfile = profileMap.get(receive);
+        List<ImFriend> imFriends = ImFriend.addFriend(apply, receive, remark, applyProfile.nickname, receiveProfile.nickname);
+        // 获取聊天会话
+        Date now = new Date();
+        ImConversation applyConversation;
+        ImConversation receiverConversation;
+        List<ImConversation> imConversations = imConversationTkService.queryConversations(apply, receive, false);
+        if (CollectionUtils.isEmpty(imConversations)) {
+            applyConversation = ImConversation.ofFriend(apply, receive, receiveProfile.nickname, now);
+            receiverConversation = ImConversation.ofFriend(receive, apply, applyProfile.nickname, now);
+        } else {
+            Map<Long, ImConversation> map = imConversations.stream().collect(Collectors.toMap(ImConversation::getUserId, v -> v));
+            applyConversation = buildConversation(map, apply, receive, receiveProfile);
+            receiverConversation = buildConversation(map, receive, apply, applyProfile);
+        }
+        List<ImConversation> conversations = ImConversation.ofFriend(apply, receive, applyProfile.nickname, receiveProfile.nickname);
         Boolean execute = template.execute(status -> {
             try {
-                AssertUtil.isTrue(imConversationTkService.insertList(conversations), "Failed execute to insert conversations by addFriend.");
-                AssertUtil.isTrue(friendTkService.insertList(imFriends), "Failed execute to insert friends by addFriend.");
-                return relationshipCacheService.addFriendRelationship(from, to, null);
+                // 更新聊天会话
+                if (CollectionUtils.isEmpty(imConversations)) {
+                    AssertUtil.isTrue(imConversationTkService.insertList(conversations), "Failed execute receive insert conversations by addFriend.");
+                } else {
+                    AssertUtil.isTrue(applyConversation.getId() == null ? imConversationTkService.insert(applyConversation) : imConversationTkService.updateSelective(applyConversation),
+                            "Failed execute receive insert conversations by addFriend.");
+                    AssertUtil.isTrue(receiverConversation.getId() == null ? imConversationTkService.insert(receiverConversation) : imConversationTkService.updateSelective(receiverConversation),
+                            "Failed execute receive insert conversations by addFriend.");
+                }
+                // 新增好友关系
+                AssertUtil.isTrue(friendTkService.insertList(imFriends), "Failed execute receive insert friends by addFriend.");
+                // 新增系统消息
+                imMessageOperationsService.addSystemMessage(receive, apply, ACCEPT_FRIEND_MESSAGE_CONTENT);
+                return true;
             } catch (Throwable cause) {
                 status.setRollbackOnly();
+                log.error(cause.getMessage(), cause);
                 return false;
             }
         });
-        return Boolean.TRUE.equals(execute);
+        if (Boolean.TRUE.equals(execute)) {
+            ImConversationOperationsService operationsService = SpringContextHolder.getBean(ImConversationOperationsService.class);
+            operationsService.sendAppendPrivateChatEvent(applyConversation);
+            operationsService.sendAppendPrivateChatEvent(receiverConversation);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -128,6 +168,22 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
             }
         }
         return resultMap;
+    }
+
+    private ImConversation buildConversation(Map<Long, ImConversation> map, Long id, Long contactId, AccountProfileStruct contactProfile) {
+        Date now = new Date();
+        ImConversation conversation;
+        if (map.containsKey(id)) {
+            conversation = map.get(id);
+            conversation.setUpdated(now);
+            conversation.setRemove(null);
+            conversation.setLastMessageTime(now);
+            conversation.setLastMessageContent(contactProfile.nickname);
+            conversation.setLastMessageType(ImMessageType.SYSTEM.type);
+        } else {
+            conversation = ImConversation.ofFriend(id, contactId, contactProfile.nickname, now);
+        }
+        return conversation;
     }
 
 
