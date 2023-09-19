@@ -47,7 +47,6 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
         queryBuilder.withQuery(q -> q.bool(b -> b.should(shouldQueries)));
         //order by `created` DESC
         queryBuilder.withSort(Sort.by(Sort.Direction.DESC, "created"));
-        System.out.println(queryBuilder.build().getQuery());
         return pageQueryByBuilder(params.getPage(), params.getLimit(), queryBuilder);
     }
 

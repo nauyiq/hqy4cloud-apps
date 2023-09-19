@@ -73,9 +73,9 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         long total = result.getTotal();
         // remove self system message
         List<ImMessageDoc> resultList = result.getResultList();
-        if (result.getCurrentPage() >= result.getPages()) {
+        if (resultList.parallelStream().anyMatch(doc -> ImMessageType.SYSTEM.type.equals(doc.getType()))) {
             Iterator<ImMessageDoc> iterator = resultList.iterator();
-            if (iterator.hasNext()) {
+            while (iterator.hasNext()) {
                 ImMessageDoc doc = iterator.next();
                 if (ImMessageType.SYSTEM.type.equals(doc.getType()) && id.equals(doc.getFrom())) {
                     iterator.remove();

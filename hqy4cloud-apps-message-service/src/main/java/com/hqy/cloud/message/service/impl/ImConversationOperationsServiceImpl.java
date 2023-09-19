@@ -208,7 +208,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
     }
 
     @Override
-    public boolean sendAppendPrivateChatEvent(ImConversation imConversation) {
+    public boolean sendAppendPrivateChatEvent(ImConversation imConversation, Integer unread) {
         Long userId = imConversation.getUserId();
         Long contactId = imConversation.getContactId();
         AccountProfileStruct profile = AccountRpcUtil.getAccountProfile(contactId);
@@ -220,7 +220,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
         Map<Long, String> map = friendOperationsService.getFriendRemarks(userId, Collections.singletonList(contactId));
         String remark = MapUtil.isNotEmpty(map) ? map.get(contactId) : StrUtil.EMPTY;
         //build conversation vo
-        ConversationVO conversation = buildPrivateChatConversationVO(remark, profile, imConversation);
+        ConversationVO conversation = buildPrivateChatConversationVO(remark, profile, imConversation, unread);
         //build contact vo
         char fistChar = StringUtils.isBlank(remark) ? profile.nickname.charAt(0) : remark.charAt(0);
         String fistChatStr = Character.toString(fistChar);
@@ -248,7 +248,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 return null;
             }
         }
-        return buildPrivateChatConversationVO(null, accountProfile, conversation);
+        return buildPrivateChatConversationVO(null, accountProfile, conversation, 0);
     }
 
     private void sendTopChatEvent(ImConversation conversation) {
@@ -306,19 +306,20 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                     return null;
                 }
                 String remark = friendRemarks.get(contactId);
-                return buildPrivateChatConversationVO(remark, struct, conversation);
+                return buildPrivateChatConversationVO(remark, struct, conversation, null);
             }).filter(Objects::nonNull).collect(Collectors.toList());
         }
 
     }
 
-    private ConversationVO buildPrivateChatConversationVO(String remark, AccountProfileStruct struct, ImConversation conversation) {
+    private ConversationVO buildPrivateChatConversationVO(String remark, AccountProfileStruct struct, ImConversation conversation, Integer unread) {
         return ConversationVO.builder()
                 .id(conversation.getContactId().toString())
                 .conversationId(conversation.getId().toString())
                 .displayName(StringUtils.isBlank(remark) ? struct.nickname : remark)
                 .avatar(struct.avatar)
                 .isGroup(false)
+                .unread(unread)
                 .isNotice(conversation.getNotice())
                 .isTop(conversation.getTop())
                 .type(conversation.getLastMessageType())

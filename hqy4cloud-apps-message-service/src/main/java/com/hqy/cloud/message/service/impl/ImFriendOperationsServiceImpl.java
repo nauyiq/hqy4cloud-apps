@@ -67,22 +67,16 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
             applyConversation = buildConversation(map, apply, receive, receiveProfile);
             receiverConversation = buildConversation(map, receive, apply, applyProfile);
         }
-        List<ImConversation> conversations = ImConversation.ofFriend(apply, receive, applyProfile.nickname, receiveProfile.nickname);
         Boolean execute = template.execute(status -> {
             try {
-                // 更新聊天会话
-                if (CollectionUtils.isEmpty(imConversations)) {
-                    AssertUtil.isTrue(imConversationTkService.insertList(conversations), "Failed execute receive insert conversations by addFriend.");
-                } else {
-                    AssertUtil.isTrue(applyConversation.getId() == null ? imConversationTkService.insert(applyConversation) : imConversationTkService.updateSelective(applyConversation),
+                AssertUtil.isTrue(applyConversation.getId() == null ? imConversationTkService.insert(applyConversation) : imConversationTkService.updateSelective(applyConversation),
+                        "Failed execute receive insert conversations by addFriend.");
+                AssertUtil.isTrue(receiverConversation.getId() == null ? imConversationTkService.insert(receiverConversation) : imConversationTkService.updateSelective(receiverConversation),
                             "Failed execute receive insert conversations by addFriend.");
-                    AssertUtil.isTrue(receiverConversation.getId() == null ? imConversationTkService.insert(receiverConversation) : imConversationTkService.updateSelective(receiverConversation),
-                            "Failed execute receive insert conversations by addFriend.");
-                }
                 // 新增好友关系
                 AssertUtil.isTrue(friendTkService.insertList(imFriends), "Failed execute receive insert friends by addFriend.");
                 // 新增系统消息
-                imMessageOperationsService.addSystemMessage(receive, apply, ACCEPT_FRIEND_MESSAGE_CONTENT);
+                imMessageOperationsService.addSystemMessage(receive, apply, ACCEPT_FRIEND_MESSAGE_CONTENT, applyConversation.getId());
                 return true;
             } catch (Throwable cause) {
                 status.setRollbackOnly();
@@ -91,12 +85,17 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
             }
         });
         if (Boolean.TRUE.equals(execute)) {
-            ImConversationOperationsService operationsService = SpringContextHolder.getBean(ImConversationOperationsService.class);
-            operationsService.sendAppendPrivateChatEvent(applyConversation);
-            operationsService.sendAppendPrivateChatEvent(receiverConversation);
+            doSendAppendChatEvent(applyConversation, receiverConversation, imConversations);
+            relationshipCacheService.addFriendRelationship(receive, apply, (StringUtils.isBlank(remark) || remark.equals(StringConstants.FALSE)) ? StringConstants.TRUE : remark);
             return true;
         }
         return false;
+    }
+
+    private void doSendAppendChatEvent(ImConversation applyConversation, ImConversation receiverConversation, List<ImConversation> imConversations) {
+        ImConversationOperationsService operationsService = SpringContextHolder.getBean(ImConversationOperationsService.class);
+        operationsService.sendAppendPrivateChatEvent(applyConversation, 1);
+        operationsService.sendAppendPrivateChatEvent(receiverConversation, 0);
     }
 
     @Override

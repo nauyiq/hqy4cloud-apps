@@ -270,10 +270,10 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
             ImFriendApplication application = ImFriendApplication.of(id, add.getUserId() , add.getRemark(), null);
             result = applicationTkService.insertDuplicate(application);
             unread++;
-        }
-        if (result && StringUtils.isNotBlank(add.getRemark())) {
-            //新增系统消息
-            ParentExecutorService.getInstance().execute(() -> messageOperationsService.addSystemMessage(id, userId, add.getRemark()));
+            if (result && StringUtils.isNotBlank(add.getRemark())) {
+                //新增系统消息
+                ParentExecutorService.getInstance().execute(() -> messageOperationsService.addSystemMessage(id, userId, add.getRemark(), null));
+            }
         }
         if (result) {
             return imEventListener.onAddFriendApplicationEvent(FriendApplicationEvent.of(userId.toString(), unread)) ? R.ok() : R.failed();

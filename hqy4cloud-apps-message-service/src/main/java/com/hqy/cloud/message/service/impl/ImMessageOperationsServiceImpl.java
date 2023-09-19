@@ -98,15 +98,12 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         updateConversations(message, imConversations);
         ImMessage im = template.execute(status -> {
             try {
-                // insert or update conversations.
                 if (insert) {
                     AssertUtil.isTrue(conversationTkService.insert(toConversation), "Failed execute to toConversation");
                 }
                 AssertUtil.isTrue(conversationTkService.insertOrUpdate(imConversations), "Failed execute to insert or update conversations by send im message.");
-                // insert message
                 ImMessage imMessage = ImMessage.of(DistributedIdGen.getSnowflakeId(), id, message);
                 AssertUtil.isTrue(messageTkService.insert(imMessage), "Failed execute to insert message bt send im message.");
-                // insert or update es
                 ImMessageDoc messageDoc = new ImMessageDoc(imMessage);
                 imMessageElasticService.save(messageDoc);
                 return imMessage;
@@ -138,7 +135,7 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
                 if (insert) {
                     // 发送新增联系人事件
                     ImConversationOperationsService service = SpringContextHolder.getBean(ImConversationOperationsService.class);
-                    service.sendAppendPrivateChatEvent(toConversation);
+                    service.sendAppendPrivateChatEvent(toConversation, 1);
                 }
                 //send privateChat event.
                 PrivateChatEvent event = new PrivateChatEvent(message);
@@ -151,7 +148,7 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
     }
 
     @Override
-    public void addSystemMessage(Long send, Long receive, String message) {
+    public void addSystemMessage(Long send, Long receive, String message, Long conversationId) {
         // insert message
         ImMessage imMessage = new ImMessage(DistributedIdGen.getSnowflakeId(), new Date(), UUID.fastUUID().toString(), false, send, receive, ImMessageType.SYSTEM.type, message);
         ImMessageDoc messageDoc = new ImMessageDoc(imMessage);
@@ -161,6 +158,9 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
                 try {
                     AssertUtil.isTrue(messageTkService.insert(imMessage), "Failed execute to insert message bt send im message.");
                     imMessageElasticService.save(messageDoc);
+                    if (conversationId != null) {
+                        imUnreadCacheService.addPrivateConversationUnread(receive, conversationId, 1L);
+                    }
                 } catch (Throwable cause) {
                     status.setRollbackOnly();
                     log.error(cause.getMessage(), cause);
@@ -179,7 +179,6 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
             }
             return Collections.emptyList();
         }
-
         List<Long> unreadMessageIds = unreadMessages.parallelStream().map(ImMessageDoc::getId).toList();
         Boolean execute = template.execute(status -> {
             try {

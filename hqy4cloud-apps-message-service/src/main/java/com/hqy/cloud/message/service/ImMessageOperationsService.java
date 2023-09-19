@@ -33,20 +33,12 @@ public interface ImMessageOperationsService {
 
     /**
      * 添加系统消息
-     * @param send    发送人
-     * @param receive 接收人
-     * @param message 消息
+     * @param send           发送人
+     * @param receive        接收人
+     * @param message        消息
+     * @param conversationId 会话id
      */
-    void addSystemMessage(Long send, Long receive, String message);
-
-    /**
-     * insert message
-     * @param id       from user id
-     * @param message         {@link ImMessageDTO}
-     * @param imConversation  {@link ImConversation}
-     * @return                {@link ImMessageVO}
-     */
-//    ImMessageVO insertImMessage(Long id, ImMessageDTO message, ImConversation imConversation);
+    void addSystemMessage(Long send, Long receive, String message, Long conversationId);
 
     /**
      * read messages

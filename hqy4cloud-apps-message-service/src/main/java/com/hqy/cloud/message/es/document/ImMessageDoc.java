@@ -56,14 +56,15 @@ public class ImMessageDoc implements ElasticDocument<Long> {
         this.type = message.getType();
         this.group = message.getGroup();
         this.read = message.getRead();
-        this.content = message.getType().equals(ImMessageType.TEXT.type) ? message.getContent() : StrUtil.EMPTY;
+        this.content = isTextMessage() ? message.getContent() : StrUtil.EMPTY;
         this.path = StringUtils.isBlank(this.content) ? message.getContent() : StrUtil.EMPTY;
         this.status = message.getStatus();
         this.created = message.getCreated().getTime();
     }
 
     public boolean isTextMessage() {
-        return this.type.equals(ImMessageType.TEXT.type) || this.type.equals(ImMessageType.SYSTEM.type);
+        return this.type.equals(ImMessageType.TEXT.type) ||
+                this.type.equals(ImMessageType.SYSTEM.type) || this.type.equals(ImMessageType.EVENT.type);
     }
 
 }

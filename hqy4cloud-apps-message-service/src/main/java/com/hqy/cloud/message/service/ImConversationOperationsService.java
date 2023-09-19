@@ -58,9 +58,10 @@ public interface ImConversationOperationsService {
     /**
      * send append private chat event.
      * @param imConversation {@link ImConversation}
+     * @param unread         unread message number
      * @return               result.
      */
-    boolean sendAppendPrivateChatEvent(ImConversation imConversation);
+    boolean sendAppendPrivateChatEvent(ImConversation imConversation, Integer unread);
 
     /**
      * 新增会话
