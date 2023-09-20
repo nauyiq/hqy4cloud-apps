@@ -87,6 +87,7 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
         if (Boolean.TRUE.equals(execute)) {
             doSendAppendChatEvent(applyConversation, receiverConversation, imConversations);
             relationshipCacheService.addFriendRelationship(receive, apply, (StringUtils.isBlank(remark) || remark.equals(StringConstants.FALSE)) ? StringConstants.TRUE : remark);
+            relationshipCacheService.addFriendRelationship(apply, receive, (StringUtils.isBlank(remark) || remark.equals(StringConstants.FALSE)) ? StringConstants.TRUE : remark);
             return true;
         }
         return false;

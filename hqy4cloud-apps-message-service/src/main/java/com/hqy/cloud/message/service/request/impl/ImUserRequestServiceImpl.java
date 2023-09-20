@@ -9,6 +9,7 @@ import com.hqy.cloud.account.struct.AccountStruct;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
+import com.hqy.cloud.message.bind.ConvertUtil;
 import com.hqy.cloud.message.bind.ImMessageConverter;
 import com.hqy.cloud.message.bind.dto.ContactsDTO;
 import com.hqy.cloud.message.bind.dto.FriendApplicationDTO;
@@ -42,6 +43,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * ImUserRequestService
@@ -86,14 +88,16 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
     }
 
     @Override
-    public R<List<FriendVO>> getImFriends(Long id) {
+    public R<List<IndexFriendsVO>> getImFriends(Long id) {
         List<ImFriend> imFriends = friendTkService.queryList(ImFriend.of(id, null));
         if (CollectionUtils.isEmpty(imFriends)) {
             return R.ok(Collections.emptyList());
         }
         List<Long> ids = imFriends.parallelStream().map(ImFriend::getUserId).toList();
+        // RPC获取好友信息
         Map<Long, AccountProfileStruct> map = AccountRpcUtil.getAccountProfileMap(ids);
-        List<FriendVO> vos = imFriends.stream().map(friend -> {
+        //构建结果集
+        Map<String, List<FriendVO>> resultMap = imFriends.stream().map(friend -> {
             Long userId = friend.getUserId();
             AccountProfileStruct struct = map.get(userId);
             if (struct == null) {
@@ -105,7 +109,11 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
                     .username(struct.username)
                     .displayName(StringUtils.isBlank(friend.getRemark()) ? struct.nickname : friend.getRemark())
                     .build();
-        }).filter(Objects::nonNull).toList();
+        }).filter(Objects::nonNull).collect(Collectors.groupingBy(vo -> ConvertUtil.getIndex(vo.getDisplayName())));
+        List<IndexFriendsVO> vos = resultMap.entrySet().parallelStream().map(entry -> new IndexFriendsVO(entry.getKey(), entry.getValue()))
+                // 根据下标排序
+                .sorted(Comparator.comparing(IndexFriendsVO::getIndex))
+                .toList();
         return R.ok(vos);
     }
 

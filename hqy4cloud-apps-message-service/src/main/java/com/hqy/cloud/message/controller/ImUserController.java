@@ -76,7 +76,7 @@ public class ImUserController extends BaseController {
      * @return        R.
      */
     @GetMapping("/friends")
-    public R<List<FriendVO>> getFriends(HttpServletRequest request) {
+    public R<List<IndexFriendsVO>> getFriends(HttpServletRequest request) {
         Long id = getAccessAccountId(request);
         if (id == null) {
             return R.failed(ResultCode.NOT_LOGIN);

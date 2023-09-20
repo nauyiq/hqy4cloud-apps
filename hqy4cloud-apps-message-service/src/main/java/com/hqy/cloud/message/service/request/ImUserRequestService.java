@@ -32,7 +32,7 @@ public interface ImUserRequestService {
      * @param id 用户id
      * @return   R.
      */
-    R<List<FriendVO>> getImFriends(Long id);
+    R<List<IndexFriendsVO>> getImFriends(Long id);
 
     /**
      * return im userInfo by user id.

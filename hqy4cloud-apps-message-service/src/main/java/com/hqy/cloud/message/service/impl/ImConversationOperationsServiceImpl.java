@@ -5,6 +5,7 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
 import com.hqy.cloud.account.struct.AccountProfileStruct;
+import com.hqy.cloud.message.bind.ConvertUtil;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.event.support.AppendChatEvent;
@@ -31,10 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -222,11 +220,9 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
         //build conversation vo
         ConversationVO conversation = buildPrivateChatConversationVO(remark, profile, imConversation, unread);
         //build contact vo
-        char fistChar = StringUtils.isBlank(remark) ? profile.nickname.charAt(0) : remark.charAt(0);
-        String fistChatStr = Character.toString(fistChar);
         ContactVO contact = ContactVO.builder()
                 .id(contactId.toString())
-                .index((Validator.isWord(fistChatStr) || Validator.isNumber(fistChatStr)) ? PinyinUtil.getFirstLetter(fistChar) + "" : "#")
+                .index(ConvertUtil.getIndex(StringUtils.isBlank(remark) ? profile.nickname : remark))
                 .displayName(StringUtils.isBlank(remark) ? profile.nickname : remark)
                 .avatar(profile.avatar)
                 .isTop(conversation.getIsTop())

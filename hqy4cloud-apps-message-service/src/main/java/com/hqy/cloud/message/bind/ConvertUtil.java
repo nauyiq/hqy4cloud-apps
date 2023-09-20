@@ -1,5 +1,8 @@
 package com.hqy.cloud.message.bind;
 
+import cn.hutool.core.lang.Validator;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.pinyin.PinyinUtil;
 import com.hqy.cloud.apps.commom.constants.AppsConstants;
 import com.hqy.cloud.message.bind.event.support.AddGroupEvent;
 import com.hqy.cloud.message.common.im.enums.ImMessageType;
@@ -7,6 +10,7 @@ import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.tk.entity.ImGroup;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -18,6 +22,16 @@ import java.util.stream.Collectors;
  */
 @UtilityClass
 public class ConvertUtil {
+    public static final String DEFAULT_INDEX = "#";
+
+    public String getIndex(String displayName) {
+        if (StringUtils.isBlank(displayName)) {
+            return DEFAULT_INDEX;
+        }
+        char fistChar = displayName.charAt(0);
+        String fistChatStr = Character.toString(fistChar);
+        return Validator.isLetter(fistChatStr) ? (PinyinUtil.getFirstLetter(fistChar) + "").toUpperCase() : "#";
+    }
 
     public List<AddGroupEvent> newAddGroupEvent(List<ImGroupMember> groupMembers, ImGroup group) {
         return groupMembers.stream().map(groupMember -> {
