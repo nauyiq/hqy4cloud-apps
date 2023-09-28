@@ -45,4 +45,9 @@ public class ImFriendTkServiceImpl extends PrimaryLessTkServiceImpl<ImFriend> im
         int unread = applicationMapper.selectUnread(userId);
         return new ContactsDTO(unread, imFriends);
     }
+
+    @Override
+    public Boolean updateImFriend(ImFriend imFriend) {
+        return mapper.updateImFriend(imFriend) > 0;
+    }
 }

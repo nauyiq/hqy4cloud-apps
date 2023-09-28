@@ -48,7 +48,7 @@ public class ArticleUserStateListener {
         }
         //kafka消息序列化.
         List<ArticleStateKafkaMessage> articleStateKafkaMessages = messages.stream().map(message ->
-                JsonUtil.toBean(message.value(), ArticleStateKafkaMessage.class)).collect(Collectors.toList());
+                JsonUtil.toBean(message.value(), ArticleStateKafkaMessage.class)).toList();
 
         //遍历过滤重复的消息 需要统一处理的消息.
         Map<ArticleStateKafkaMessage, Long> doingMessageMap = MapUtil.newHashMap(articleStateKafkaMessages.size() / 2);

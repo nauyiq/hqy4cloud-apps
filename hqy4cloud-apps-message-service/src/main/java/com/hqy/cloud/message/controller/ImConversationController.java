@@ -4,6 +4,7 @@ import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.ImChatConfigDTO;
 import com.hqy.cloud.message.bind.vo.ConversationVO;
+import com.hqy.cloud.message.bind.vo.ImChatVO;
 import com.hqy.cloud.message.service.request.ImConversationRequestService;
 import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +32,7 @@ public class ImConversationController extends BaseController {
      * @param request HttpServletRequest.
      * @return        R.
      */
+    @Deprecated
     @GetMapping("/conversations")
     public R<List<ConversationVO>> getConversations(HttpServletRequest request) {
         Long id = getAccessAccountId(request);
@@ -38,6 +40,20 @@ public class ImConversationController extends BaseController {
             return R.failed(ResultCode.NOT_LOGIN);
         }
         return requestService.getConversations(id);
+    }
+
+    /**
+     * 获取当前用户聊天列表（会话列表， 好友列表等）
+     * @param request HttpServletRequest.
+     * @return        R.
+     */
+    @GetMapping("/chats")
+    public R<ImChatVO> getImChatInfo(HttpServletRequest request) {
+        Long userId = getAccessAccountId(request);
+        if (userId == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        return requestService.getImChatInfo(userId);
     }
 
     /**

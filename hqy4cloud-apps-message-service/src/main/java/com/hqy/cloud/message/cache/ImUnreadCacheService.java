@@ -28,12 +28,21 @@ public interface ImUnreadCacheService {
      */
     void addPrivateConversationUnread(Long userId, Long conversationId, Long offset);
 
+
     /**
      * remove private conversation unread.
      * @param userId         user id.
      * @param conversationId conversation id.
      */
     void readPrivateConversationUnread(Long userId, Long conversationId);
+
+    /**
+     * return private user conversation unread.
+     * @param userId         user id.
+     * @param conversationId conversation id.
+     * @return               unread message count.
+     */
+    Integer getPrivateConversationUnread(Long userId, Long conversationId);
 
 
     /**
@@ -43,6 +52,7 @@ public interface ImUnreadCacheService {
      * @return          unread map
      */
     Map<Long, Integer> groupConversationsUnread(Long userId, List<Long> groupIds);
+
 
     /**
      * add group chat conversation unread.

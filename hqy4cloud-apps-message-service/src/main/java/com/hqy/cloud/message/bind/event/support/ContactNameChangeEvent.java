@@ -18,13 +18,15 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ContactNameChangeEvent implements ImEvent {
-
     private boolean isGroup;
     private List<String> users;
     private Payload payload;
 
     public static ContactNameChangeEvent of(boolean isGroup, List<String> users, String contact, String displayName) {
         return new ContactNameChangeEvent(isGroup, users, new Payload(contact, displayName, isGroup, StrUtil.EMPTY));
+    }
+    public static ContactNameChangeEvent of(boolean isGroup, List<String> users, String contact, String displayName, String editor) {
+        return new ContactNameChangeEvent(isGroup, users, new Payload(contact, displayName, isGroup, editor));
     }
 
 

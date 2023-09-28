@@ -1,6 +1,8 @@
 package com.hqy.cloud.message.tk.service.impl;
 
+import com.hqy.cloud.db.tk.BaseTkMapper;
 import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
+import com.hqy.cloud.db.tk.support.BaseTkServiceImpl;
 import com.hqy.cloud.db.tk.support.PrimaryLessTkServiceImpl;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
@@ -18,11 +20,11 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-public class ImGroupMemberTkServiceImpl extends PrimaryLessTkServiceImpl<ImGroupMember> implements ImGroupMemberTkService {
+public class ImGroupMemberTkServiceImpl extends BaseTkServiceImpl<ImGroupMember,Long> implements ImGroupMemberTkService {
     private final ImGroupMemberMapper mapper;
 
     @Override
-    public PrimaryLessTkMapper<ImGroupMember> getTkDao() {
+    public BaseTkMapper<ImGroupMember, Long> getTkMapper() {
         return mapper;
     }
 
@@ -34,5 +36,10 @@ public class ImGroupMemberTkServiceImpl extends PrimaryLessTkServiceImpl<ImGroup
     @Override
     public List<ImGroupMember> queryGroupMembers(Long groupId, List<Long> userIds) {
         return mapper.queryGroupMembers(groupId, userIds);
+    }
+
+    @Override
+    public Boolean updateMember(ImGroupMember member) {
+        return mapper.updateMember(member) > 0;
     }
 }

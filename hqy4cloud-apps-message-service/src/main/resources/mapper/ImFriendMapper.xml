@@ -48,5 +48,22 @@
         WHERE (id = #{from} AND user_id = #{to}) OR (id = #{to} AND user_id = #{from})
     </update>
 
+    <update id="updateImFriend">
+        UPDATE t_im_friend
+        <set>
+            updated = now()
+            <if test="friend.remark != null">
+                ,remark = #{friend.remark}
+            </if>
+            <if test="friend.top != null">
+                ,is_top = #{friend.top}
+            </if>
+            <if test="friend.notice != null">
+                ,is_notice = #{friend.notice}
+            </if>
+        </set>
+        WHERE id = #{friend.id} AND user_id = #{friend.userId}
+    </update>
+
 
 </mapper>

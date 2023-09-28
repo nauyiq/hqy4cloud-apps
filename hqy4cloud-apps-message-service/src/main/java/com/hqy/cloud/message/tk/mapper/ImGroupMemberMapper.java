@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.tk.mapper;
 
+import com.hqy.cloud.db.tk.BaseTkMapper;
 import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
@@ -14,7 +15,7 @@ import java.util.List;
  * @date 2023/8/11 11:33
  */
 @Repository
-public interface ImGroupMemberMapper extends PrimaryLessTkMapper<ImGroupMember> {
+public interface ImGroupMemberMapper extends BaseTkMapper<ImGroupMember, Long> {
 
     /**
      * 查询群聊用户信息
@@ -31,4 +32,11 @@ public interface ImGroupMemberMapper extends PrimaryLessTkMapper<ImGroupMember> 
      * @return        group members
      */
     List<ImGroupMember> queryGroupMembers(@Param("groupId") Long groupId,@Param("userIds") List<Long> userIds);
+
+    /**
+     * 更新群聊成员信息
+     * @param member 群聊成员entity
+     * @return       是否更新成功
+     */
+    int updateMember(@Param("member")ImGroupMember member);
 }

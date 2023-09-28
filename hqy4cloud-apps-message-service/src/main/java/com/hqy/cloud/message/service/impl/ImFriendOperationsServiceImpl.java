@@ -4,6 +4,7 @@ import cn.hutool.core.map.MapUtil;
 import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.common.base.lang.StringConstants;
 import com.hqy.cloud.message.cache.ImRelationshipCacheService;
+import com.hqy.cloud.message.cache.ImUnreadCacheService;
 import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.service.ImConversationOperationsService;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
@@ -11,6 +12,7 @@ import com.hqy.cloud.message.service.ImMessageOperationsService;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.entity.ImFriend;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
+import com.hqy.cloud.message.tk.service.ImFriendApplicationTkService;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.util.spring.SpringContextHolder;
@@ -26,6 +28,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.ACCEPT_FRIEND_MESSAGE_CONTENT;
+import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_SYSTEM_MESSAGE_UNREAD_ID;
 
 /**
  * ImFriendOperationsService.
@@ -39,6 +42,8 @@ import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.ACCEPT_F
 public class ImFriendOperationsServiceImpl implements ImFriendOperationsService {
     private final TransactionTemplate template;
     private final ImFriendTkService friendTkService;
+    private final ImFriendApplicationTkService friendApplicationTkService;
+    private final ImUnreadCacheService imUnreadCacheService;
     private final ImMessageOperationsService imMessageOperationsService;
     private final ImConversationTkService imConversationTkService;
     private final ImRelationshipCacheService relationshipCacheService;
@@ -168,6 +173,13 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
             }
         }
         return resultMap;
+    }
+
+    @Override
+    public void updateApplicationStatus(Long userId, List<Long> applicationIds, int status) {
+        if (friendApplicationTkService.updateApplicationStatus(applicationIds, status)) {
+            imUnreadCacheService.readPrivateConversationUnread(userId, IM_SYSTEM_MESSAGE_UNREAD_ID);
+        }
     }
 
     private ImConversation buildConversation(Map<Long, ImConversation> map, Long id, Long contactId, AccountProfileStruct contactProfile) {

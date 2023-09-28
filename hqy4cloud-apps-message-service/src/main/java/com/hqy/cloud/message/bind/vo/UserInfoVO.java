@@ -19,7 +19,7 @@ public class UserInfoVO {
     private String avatar;
     private String remark;
 
-
-
-
+    public UserInfoVO(String id) {
+        this.id = id;
+    }
 }

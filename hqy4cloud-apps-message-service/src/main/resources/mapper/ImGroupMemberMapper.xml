@@ -3,7 +3,6 @@
 
 <mapper namespace="com.hqy.cloud.message.tk.mapper.ImGroupMemberMapper">
 
-
     <select id="queryMembers" resultType="com.hqy.cloud.message.bind.dto.GroupMemberDTO">
         SELECT m.user_id, g.id groupId, g.name groupName, g.avatar groupAvatar, g.is_invite groupInvite, g.creator groupCreator, m.role
         FROM t_im_group g
@@ -13,6 +12,7 @@
             #{groupId}
         </foreach>
     </select>
+
     <select id="queryGroupMembers" resultType="com.hqy.cloud.message.tk.entity.ImGroupMember">
         SELECT group_id,user_id,display_name,`role`,is_top top,is_notice notice
         FROM t_im_group_member
@@ -21,5 +21,26 @@
             #{userId}
         </foreach>
     </select>
+
+    <update id="updateMember">
+        UPDATE t_im_group_member
+        <set>
+            updated = now()
+            <if test="member.displayName != null">
+                ,display_name = #{member.displayName}
+            </if>
+            <if test="member.top != null">
+                ,is_top = #{member.top}
+            </if>
+            <if test="member.notice != null">
+                ,is_notice = #{member.notice}
+            </if>
+            <if test="member.role != null">
+                ,`role` = #{member.role}
+            </if>
+        </set>
+        WHERE group_id = #{member.groupId} AND user_id = #{member.userId}
+    </update>
+
 
 </mapper>

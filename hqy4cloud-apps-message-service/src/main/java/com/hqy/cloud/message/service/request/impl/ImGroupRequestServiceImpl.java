@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
 import com.hqy.cloud.account.struct.AccountProfileStruct;
+import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
@@ -13,8 +14,10 @@ import com.hqy.cloud.message.bind.vo.GroupMemberVO;
 import com.hqy.cloud.message.bind.vo.UserInfoVO;
 import com.hqy.cloud.message.service.ImGroupOperationsService;
 import com.hqy.cloud.message.service.request.ImGroupRequestService;
+import com.hqy.cloud.message.tk.entity.ImFriend;
 import com.hqy.cloud.message.tk.entity.ImGroup;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
+import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import com.hqy.cloud.message.tk.service.ImGroupMemberTkService;
 import com.hqy.cloud.message.tk.service.ImGroupTkService;
 import com.hqy.cloud.web.common.AccountRpcUtil;
@@ -42,31 +45,32 @@ import static com.hqy.cloud.apps.commom.result.AppsResultCode.IM_GROUP_NOT_EXIST
 @Service
 @RequiredArgsConstructor
 public class ImGroupRequestServiceImpl implements ImGroupRequestService {
+    private final ImFriendTkService imFriendTkService;
     private final ImGroupTkService groupTkService;
     private final ImGroupMemberTkService groupMemberTkService;
     private final ImGroupOperationsService groupOperationsService;
 
     @Override
-    public R<Boolean> createGroup(Long id, GroupDTO createGroup) {
-        //判断当前群聊是否存在. 同一个用户创建的群聊名称不能一致.
-        ImGroup group = ImGroup.of(createGroup.getName(), id);
-        group = groupTkService.queryOne(group);
-        if (group != null) {
-            return R.failed(IM_GROUP_EXIST);
+    public R<Boolean> createGroup(Long creator, GroupDTO createGroup) {
+        // 判断输入的用户ids是否都是好友.
+        List<Long> friendIds = createGroup.getUserIds();
+        List<ImFriend> friends = imFriendTkService.queryFriends(creator, friendIds);
+        if (CollectionUtils.isEmpty(friends) || friends.size() != friendIds.size()) {
+            return R.failed(ResultCode.ERROR_PARAM);
         }
-        return groupOperationsService.createGroup(id, createGroup) ? R.ok() : R.failed();
+        return groupOperationsService.createGroup(creator, createGroup, friends) ? R.ok() : R.failed();
     }
 
     @Override
-    public R<Boolean> editGroup(Long id, GroupDTO editGroup) {
-        GroupMemberDTO groupMemberInfo = groupTkService.getGroupMemberInfo(id, editGroup.getGroupId());
+    public R<Boolean> editGroup(AuthenticationInfo info, GroupDTO editGroup) {
+        GroupMemberDTO groupMemberInfo = groupTkService.getGroupMemberInfo(info.getId(), editGroup.getGroupId());
         if (groupMemberInfo == null) {
             return R.failed(IM_GROUP_NOT_EXIST);
         }
         if (groupMemberInfo.getRole() == null || groupMemberInfo.getRole().equals(GroupRole.COMMON.role)) {
             return R.failed(ResultCode.NOT_PERMISSION);
         }
-        return groupOperationsService.editGroup(groupMemberInfo, editGroup) ? R.ok() : R.failed();
+        return groupOperationsService.editGroup(info, groupMemberInfo, editGroup) ? R.ok() : R.failed();
     }
 
     @Override
@@ -97,7 +101,7 @@ public class ImGroupRequestServiceImpl implements ImGroupRequestService {
             GroupMemberVO vo = new GroupMemberVO(member.getUserId().toString(), member.getRole(), DateUtil.formatDateTime(member.getCreated()));
             AccountProfileStruct struct = infos.get(userId);
             UserInfoVO userInfoVO = new UserInfoVO(userId.toString(), struct.username, struct.nickname, struct.avatar,
-                    StringUtils.isEmpty(displayName) ? StrUtil.EMPTY : displayName);
+                    StringUtils.isEmpty(displayName) ? struct.nickname : displayName);
             vo.setUserInfo(userInfoVO);
             return vo;
         }).filter(Objects::nonNull).collect(Collectors.toList());

@@ -7,8 +7,8 @@
     <select id="getGroupMemberInfo" resultType="com.hqy.cloud.message.bind.dto.GroupMemberDTO">
         SELECT g.id groupId, g.name groupName, g.notice, m.role, m.user_id id
         FROM t_im_group g,
-        (SELECT user_id, `role` FROM t_im_group_member WHERE group_id = #{groupId} AND user_id = #{id} AND `status` = 1) m
-        WHERE g.id = #{groupId} AND `status` = 1
+        (SELECT user_id, `role` FROM t_im_group_member WHERE group_id = #{groupId} AND user_id = #{id} ) m
+        WHERE g.id = #{groupId}
     </select>
 
     <select id="queryGroupContact" resultType="com.hqy.cloud.message.bind.dto.GroupContactDTO">

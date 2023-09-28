@@ -234,7 +234,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
         }
         if (CollectionUtils.isNotEmpty(unreadApplications)) {
             ParentExecutorService.getInstance().execute(() ->
-                    applicationTkService.updateApplicationStatus(unreadApplications.parallelStream().map(ImFriendApplication::getId).toList(), ImFriendApplication.NOT_VERIFY));
+                    imFriendOperationsService.updateApplicationStatus(userId, unreadApplications.parallelStream().map(ImFriendApplication::getId).toList(),  ImFriendApplication.NOT_VERIFY));
         }
         return R.ok(vos);
     }

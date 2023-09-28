@@ -1,18 +1,21 @@
 package com.hqy.cloud.message.service.impl;
 
-import cn.hutool.core.lang.Validator;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.extra.pinyin.PinyinUtil;
 import com.hqy.cloud.account.struct.AccountProfileStruct;
+import com.hqy.cloud.foundation.common.account.AvatarHostUtil;
 import com.hqy.cloud.message.bind.ConvertUtil;
+import com.hqy.cloud.message.bind.dto.ChatDTO;
+import com.hqy.cloud.message.bind.dto.GroupContactDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.event.support.AppendChatEvent;
 import com.hqy.cloud.message.bind.event.support.ImNoticeChatEvent;
 import com.hqy.cloud.message.bind.event.support.ImTopChatEvent;
 import com.hqy.cloud.message.bind.vo.ContactVO;
+import com.hqy.cloud.message.bind.vo.ContactsVO;
 import com.hqy.cloud.message.bind.vo.ConversationVO;
+import com.hqy.cloud.message.bind.vo.ImChatVO;
 import com.hqy.cloud.message.server.ImEventListener;
 import com.hqy.cloud.message.service.ImConversationOperationsService;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
@@ -34,6 +37,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_GROUP_DEFAULT_INDEX;
 
 /**
  * @author qiyuan.hong
@@ -88,6 +93,118 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
     }
 
     @Override
+    public ImChatVO getImChatInfoList(Long userId) {
+        List<ChatDTO> chats = conversationTkService.queryImChatDTO(userId);
+        if (CollectionUtils.isEmpty(chats)) {
+            return new ImChatVO();
+        }
+        //获取列表涉及到的用户ids. 统一采用账号RPC查询.
+        Set<Long> allUserIds = getAllUserIdsByChats(userId, chats);
+        Map<Long, AccountProfileStruct> profileMap = AccountRpcUtil.getAccountProfileMap(new ArrayList<>(allUserIds));
+        //构建用户会话列表
+        List<ConversationVO> conversations = buildConversations(userId, profileMap, chats);
+        //构建通讯录列表
+        List<ContactVO> contacts = buildContacts(userId, profileMap, chats);
+        int unread = messageOperationsService.getSystemMessageUnread(userId);
+        ContactsVO contactsVO = ContactsVO.of(unread, contacts);
+        return new ImChatVO(conversations, contactsVO);
+    }
+
+    private List<ContactVO> buildContacts(Long userId, Map<Long, AccountProfileStruct> profileMap, List<ChatDTO> chats) {
+        if (CollectionUtils.isEmpty(chats)) {
+            return Collections.emptyList();
+        }
+        return chats.parallelStream().filter(chat -> chat.getConversation() != null).map(chat -> {
+            GroupContactDTO groupContact = chat.getGroupContact();
+            ImFriend friend = chat.getFriend();
+            if (groupContact != null) {
+                if (!groupContact.getCreator().equals(userId)) {
+                    return null;
+                }
+                // 通讯录中的群聊 只展示自己创建的群聊...
+                return ContactVO.builder()
+                        .id(groupContact.getGroupId().toString())
+                        .avatar(AvatarHostUtil.settingAvatar(groupContact.getGroupAvatar()))
+                        .displayName(groupContact.getName())
+                        .index(IM_GROUP_DEFAULT_INDEX)
+                        .isGroup(true)
+                        .isInvite(groupContact.getGroupInvite()).build();
+            } else {
+                if (friend == null) {
+                    return null;
+                }
+                AccountProfileStruct struct = profileMap.get(friend.getUserId());
+                return ContactVO.builder()
+                        .id(friend.getUserId().toString())
+                        .displayName(StringUtils.isBlank(friend.getRemark()) ? struct.nickname : friend.getRemark())
+                        .avatar(struct.avatar)
+                        .isGroup(false)
+                        .index(friend.getIndex()).build();
+            }
+        }).filter(Objects::nonNull).toList();
+    }
+
+    private List<ConversationVO> buildConversations(Long userId, Map<Long, AccountProfileStruct> profileMap, List<ChatDTO> chats) {
+        if (CollectionUtils.isEmpty(chats)) {
+            return Collections.emptyList();
+        }
+        List<ConversationVO> vos = chats.parallelStream()
+                // 过滤会话回空 或者 会话被移除（Remove == null || 最后一条消息时间 小于 移除时间）的数据
+                .filter(chat -> chat.getConversation() != null && (chat.getConversation().getRemove() == null || chat.getConversation().getRemove() < chat.getConversation().getLastMessageTime().getTime()))
+                .map(chat -> {
+                    ImConversation conversation = chat.getConversation();
+                    Long contactId = conversation.getContactId();
+                    Boolean group = conversation.getGroup();
+                    if (group) {
+                        GroupContactDTO groupContact = chat.getGroupContact();
+                        if (groupContact == null) {
+                            return null;
+                        }
+                        return buildGroupConversationVO(conversation, contactId, groupContact, profileMap);
+                    } else {
+                        AccountProfileStruct struct = profileMap.get(contactId);
+                        if (struct == null) {
+                            return null;
+                        }
+                        ImFriend friend = chat.getFriend();
+                        return buildPrivateChatConversationVO(friend == null ? null : friend.getRemark(), struct, conversation, null);
+                    }
+                }).filter(Objects::nonNull).toList();
+
+        //获取所有会话列表的未读消息
+        Map<String, Integer> unreadMap = messageOperationsService.getConversationUnread(userId, vos.parallelStream().filter(ConversationVO::getIsNotice).map(vo -> MessageUnreadDTO.builder()
+                .conversationId(Long.parseLong(vo.getConversationId()))
+                .from(Long.parseLong(vo.getId()))
+                .to(userId)
+                .isGroup(vo.getIsGroup()).build()).collect(Collectors.toList()));
+        // 设置会话列表未读消息 并且排序
+        return vos.parallelStream().peek(vo -> vo.setUnread(unreadMap.getOrDefault(vo.getConversationId(), 0)))
+                .sorted((v1, v2) -> {
+                    if (v1.getIsTop().equals(v2.getIsTop())) {
+                        return (int)(v2.getLastSendTime() - v1.getLastSendTime());
+                    }
+                    return v1.getIsTop() ? 1 : -1;
+                })
+                .collect(Collectors.toList());
+    }
+
+
+
+    private Set<Long> getAllUserIdsByChats(Long userId, List<ChatDTO> chats) {
+        Set<Long> allUserIds = new HashSet<>();
+        for (ChatDTO chat : chats) {
+            if (chat.getConversation() != null) {
+                allUserIds.add(chat.getConversation().getContactId());
+            }
+            if (chat.getFriend() != null) {
+                allUserIds.add(chat.getFriend().getUserId());
+            }
+        }
+        allUserIds.add(userId);
+        return allUserIds;
+    }
+
+    @Override
     public boolean updateGroupChatTopStatus(Long id, Long groupId, Boolean status) {
         ImConversation conversation = ImConversation.of(id, groupId, true);
         conversation = conversationTkService.queryOne(conversation);
@@ -102,7 +219,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
         Boolean execute = template.execute(transactionStatus -> {
             try {
                 AssertUtil.isTrue(conversationTkService.update(finalConversation), "Failed execute to update conversation top status.");
-                AssertUtil.isTrue(imGroupMemberTkService.updateSelective(member), "Failed execute to update group member top status.");
+                AssertUtil.isTrue(imGroupMemberTkService.updateMember(member), "Failed execute to update group member top status.");
                 return true;
             } catch (Throwable cause) {
                 transactionStatus.setRollbackOnly();
@@ -131,7 +248,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
         Boolean execute = template.execute(transactionStatus -> {
             try {
                 AssertUtil.isTrue(conversationTkService.update(finalConversation), "Failed execute to update conversation top status.");
-                AssertUtil.isTrue(imFriendTkService.updateSelective(imFriend), "Failed execute to update friend top status.");
+                AssertUtil.isTrue(imFriendTkService.updateImFriend(imFriend), "Failed execute to update friend top status.");
                 return true;
             } catch (Throwable cause) {
                 transactionStatus.setRollbackOnly();
@@ -160,7 +277,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
         Boolean execute = template.execute(transactionStatus -> {
             try {
                 AssertUtil.isTrue(conversationTkService.update(finalConversation), "Failed execute to update conversation notice status.");
-                AssertUtil.isTrue(imGroupMemberTkService.updateSelective(member), "Failed execute to update group member notice status.");
+                AssertUtil.isTrue(imGroupMemberTkService.updateMember(member), "Failed execute to update group member notice status.");
                 return true;
             } catch (Throwable cause) {
                 log.error(cause.getMessage());
@@ -190,7 +307,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
         Boolean execute = template.execute(transactionStatus -> {
             try {
                 AssertUtil.isTrue(conversationTkService.update(finalConversation), "Failed execute to update conversation notice status.");
-                AssertUtil.isTrue(imFriendTkService.updateSelective(imFriend), "Failed execute to update friend notice status.");
+                AssertUtil.isTrue(imFriendTkService.updateImFriend(imFriend), "Failed execute to update friend notice status.");
                 return true;
             } catch (Throwable cause) {
                 log.error(cause.getMessage());
@@ -227,9 +344,10 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 .avatar(profile.avatar)
                 .isTop(conversation.getIsTop())
                 .isNotice(conversation.getIsNotice()).build();
-        AppendChatEvent chatEvent = AppendChatEvent.of(false, Collections.singletonList(userId.toString()), conversation, contact);
-        return imEventListener.onImAppendChatEvent(chatEvent);
+        AppendChatEvent chatEvent = AppendChatEvent.of(userId.toString(), conversation, contact);
+        return imEventListener.onImAppendPrivateChatEvent(chatEvent);
     }
+
 
     @Override
     public ConversationVO addConversation(Long id, Long userId) {
@@ -280,7 +398,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                         .id(contactId.toString())
                         .conversationId(conversation.getId().toString())
                         .displayName(member.getGroupName())
-                        .avatar(member.getGroupAvatar())
+                        .avatar(AvatarHostUtil.settingAvatar(member.getGroupAvatar()))
                         .isGroup(true)
                         .isNotice(conversation.getNotice())
                         .isTop(conversation.getTop())
@@ -308,6 +426,26 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
 
     }
 
+    private ConversationVO buildGroupConversationVO(ImConversation conversation, Long contactId, GroupContactDTO groupContact, Map<Long, AccountProfileStruct> profileMap) {
+        return ConversationVO.builder()
+                .id(contactId.toString())
+                .conversationId(conversation.getId().toString())
+                .displayName(groupContact.getName())
+                .avatar(AvatarHostUtil.settingAvatar(groupContact.getGroupAvatar()))
+                .role(groupContact.getRole())
+                .isGroup(true)
+                .creator(groupContact.getCreator().toString())
+                .creatorName(profileMap.get(groupContact.getCreator()).nickname)
+                .notice(groupContact.getGroupNotice())
+                .isNotice(conversation.getNotice())
+                .isTop(conversation.getTop())
+                .invite(groupContact.getGroupInvite())
+                .type(conversation.getLastMessageType())
+                .lastSendTime(conversation.getLastMessageTime() == null ? conversation.getCreated().getTime() : conversation.getLastMessageTime().getTime())
+                .lastContent(conversation.getLastMessageContent()).build();
+    }
+
+
     private ConversationVO buildPrivateChatConversationVO(String remark, AccountProfileStruct struct, ImConversation conversation, Integer unread) {
         return ConversationVO.builder()
                 .id(conversation.getContactId().toString())
@@ -319,7 +457,7 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 .isNotice(conversation.getNotice())
                 .isTop(conversation.getTop())
                 .type(conversation.getLastMessageType())
-                .lastSendTime(conversation.getLastMessageTime() == null ? null : conversation.getLastMessageTime().getTime())
+                .lastSendTime(conversation.getLastMessageTime() == null ? conversation.getCreated().getTime() : conversation.getLastMessageTime().getTime())
                 .lastContent(conversation.getLastMessageContent()).build();
     }
 

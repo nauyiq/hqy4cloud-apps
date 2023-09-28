@@ -58,6 +58,8 @@ public class ImConversation extends BaseEntity<Long> {
         this.userId = id;
         this.contactId = contactId;
         this.group = group;
+        this.notice = true;
+        this.top = false;
     }
 
     public static ImConversation of(Long userId) {
@@ -105,10 +107,9 @@ public class ImConversation extends BaseEntity<Long> {
         return imConversation;
     }
 
-    public static List<ImConversation> ofGroup(Long groupId, Long id, List<Long> userIds) {
+    public static List<ImConversation> ofGroup(Long groupId, List<Long> userIds) {
         Date now = new Date();
-        List<ImConversation> contacts = new ArrayList<>(userIds.size() + 1);
-        contacts.add(new ImConversation(id, groupId, now, true));
+        List<ImConversation> contacts = new ArrayList<>(userIds.size());
         userIds.forEach(userId -> contacts.add(new ImConversation(userId, groupId, now,true)));
         return contacts;
     }

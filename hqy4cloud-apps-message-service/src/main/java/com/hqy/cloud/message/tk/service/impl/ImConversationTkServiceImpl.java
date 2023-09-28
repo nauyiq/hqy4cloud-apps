@@ -2,6 +2,7 @@ package com.hqy.cloud.message.tk.service.impl;
 
 import com.hqy.cloud.db.tk.BaseTkMapper;
 import com.hqy.cloud.db.tk.support.BaseTkServiceImpl;
+import com.hqy.cloud.message.bind.dto.ChatDTO;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.mapper.ImConversationMapper;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
@@ -42,5 +43,10 @@ public class ImConversationTkServiceImpl extends BaseTkServiceImpl<ImConversatio
         } else {
             return mapper.queryPrivateConversations(id, contactId);
         }
+    }
+
+    @Override
+    public List<ChatDTO> queryImChatDTO(Long userId) {
+        return mapper.queryImChatDTO(userId);
     }
 }

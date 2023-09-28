@@ -15,6 +15,75 @@
         (user_id = #{id} AND contact_id = #{contactId} AND is_group = 0) OR (user_id = #{contactId} AND contact_id = #{id} AND is_group = 0)
     </select>
 
+    <resultMap id="ImChatDTOResultMap" type="com.hqy.cloud.message.bind.dto.ChatDTO">
+        <association property="conversation" javaType="com.hqy.cloud.message.tk.entity.ImConversation">
+            <result property="id" column="id"/>
+            <result property="userId" column="userId"/>
+            <result property="contactId" column="contactId"/>
+            <result property="group" column="group"/>
+            <result property="notice" column="notice"/>
+            <result property="top" column="top"/>
+            <result property="created" column="created"/>
+            <result property="remove" column="remove"/>
+            <result property="lastMessageType" column="lastMessageType"/>
+            <result property="lastMessageContent" column="lastMessageContent"/>
+            <result property="lastMessageTime" column="lastMessageTime"/>
+        </association>
+        <association property="friend" javaType="com.hqy.cloud.message.tk.entity.ImFriend">
+            <result property="userId" column="friendId"/>
+            <result property="remark" column="remark"/>
+            <result property="index" column="index"/>
+        </association>
+        <association property="groupContact" javaType="com.hqy.cloud.message.bind.dto.GroupContactDTO">
+            <result property="groupId" column="groupId"/>
+            <result property="groupIndex" column="groupIndex"/>
+            <result property="groupNotice" column="groupNotice"/>
+            <result property="name" column="groupName"/>
+            <result property="role" column="groupRole"/>
+            <result property="groupAvatar" column="groupAvatar"/>
+            <result property="creator" column="creator"/>
+            <result property="groupInvite" column="groupInvite"/>
+            <result property="created" column="groupCreated"/>
+        </association>
+    </resultMap>
+
+
+    <select id="queryImChatDTO" resultMap="ImChatDTOResultMap">
+        SELECT
+            a.id,
+            a.user_id userId,
+            a.contact_id contactId,
+            a.is_group `group`,
+            a.is_notice `notice`,
+            a.is_top top,
+            a.is_remove `remove`,
+            a.created,
+            a.last_message_type `lastMessageType`,
+            a.last_message_content `lastMessageContent`,
+            a.last_message_time `lastMessageTime`,
+            f.user_id friendId,
+            f.remark remark,
+            f.index `index`,
+            g.*
+        FROM `t_im_conversation` a
+            LEFT JOIN `t_im_friend` f ON a.`user_id` = f.`id` AND a.contact_id = f.user_id AND f.deleted = 0
+            LEFT JOIN (
+                SELECT
+                    g.id groupId,
+                    g.`index` groupIndex,
+                    g.name groupName,
+                    g.avatar groupAvatar,
+                    g.creator,
+                    g.is_invite groupInvite,
+                    g.notice groupNotice,
+                    g.created groupCreated,
+                    m.role groupRole
+                FROM `t_im_group` g LEFT JOIN t_im_group_member m on g.id = m.group_id
+                WHERE m.user_id = #{userId}
+            ) g ON a.`contact_id` = g.groupId
+        WHERE a.`user_id` = #{userId}
+    </select>
+
     <insert id="insertOrUpdate" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO t_im_conversation
         (

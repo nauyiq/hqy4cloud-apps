@@ -82,6 +82,11 @@ public class ConversationVO {
     private String creator;
 
     /**
+     * 群创建者名字
+     */
+    private String creatorName;
+
+    /**
      * 最后一条消息类型
      */
     private String type;
@@ -95,5 +100,7 @@ public class ConversationVO {
      * 最近一条消息的内容
      */
     private String lastContent;
+
+
 
 }

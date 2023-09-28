@@ -61,6 +61,7 @@ public class ImUserController extends BaseController {
      * @param request HttpServletRequest.
      * @return        R.
      */
+    @Deprecated
     @GetMapping("/contacts")
     public R<ContactsVO> getUserImContacts(HttpServletRequest request) {
         Long userId = getAccessAccountId(request);

@@ -19,13 +19,6 @@ public interface ImEventListener {
     boolean onContactOnlineOffline(ContactOnlineOfflineEvent event);
 
     /**
-     * 新增群聊事件
-     * @param events {@link AddGroupEvent}
-     * @return       result.
-     */
-    boolean onAddGroup(List<AddGroupEvent> events);
-
-    /**
      * im私聊事件
      * @param event {@link PrivateChatEvent}
      * @return      result.
@@ -65,7 +58,14 @@ public interface ImEventListener {
      * @param event {@link AppendChatEvent}
      * @return       result.
      */
-    boolean onImAppendChatEvent(AppendChatEvent event);
+    boolean onImAppendPrivateChatEvent(AppendChatEvent event);
+
+    /**
+     * 新增群聊事件
+     * @param events {@link AddGroupEvent}
+     * @return       result.
+     */
+    boolean onImAppendGroupChatEvent(List<AppendChatEvent> events);
 
     /**
      * 申请添加好友事件
@@ -87,6 +87,13 @@ public interface ImEventListener {
      * @return      result.
      */
     boolean onContactNameChangeEvent(ContactNameChangeEvent event);
+
+    /**
+     * 群公告变更事件
+     * @param groupNoticeEvent {@link GroupNoticeEvent}
+     * @return                 result.
+     */
+    boolean onGroupNoticeChangeEvent(GroupNoticeEvent groupNoticeEvent);
 
 
 

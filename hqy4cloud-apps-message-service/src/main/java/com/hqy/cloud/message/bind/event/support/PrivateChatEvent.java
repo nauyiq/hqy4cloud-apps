@@ -21,4 +21,6 @@ public class PrivateChatEvent implements ImEvent {
     public String name() {
         return "privateChat";
     }
+
+
 }

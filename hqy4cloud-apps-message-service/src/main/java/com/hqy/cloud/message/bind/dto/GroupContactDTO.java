@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -19,9 +21,10 @@ public class GroupContactDTO {
     private String groupIndex;
     private String groupAvatar;
     private Long creator;
-    private Boolean groupNotice;
+    private Integer role;
+    private String groupNotice;
     private Boolean groupInvite;
-    private Boolean groupTop;
+    private Date created;
 
 
 

@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.tk.mapper;
 
 import com.hqy.cloud.db.tk.BaseTkMapper;
+import com.hqy.cloud.message.bind.dto.ChatDTO;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -37,4 +38,11 @@ public interface ImConversationMapper extends BaseTkMapper<ImConversation, Long>
      * @return          会话列表
      */
     List<ImConversation> queryPrivateConversations(@Param("id") Long id, @Param("contactId") Long contactId);
+
+    /**
+     * 根据用户id查询聊天列表信息.
+     * @param userId 用户id
+     * @return      {@link ChatDTO}
+     */
+    List<ChatDTO> queryImChatDTO(@Param("userId") Long userId);
 }

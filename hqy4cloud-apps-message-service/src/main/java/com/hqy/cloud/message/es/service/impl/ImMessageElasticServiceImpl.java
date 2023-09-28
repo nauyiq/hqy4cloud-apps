@@ -41,10 +41,23 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
         Long to = params.getToContactId();
         //构建查询条件.
         NativeQueryBuilder queryBuilder = new NativeQueryBuilder();
-        Query fromQuery = getMustBooleanQuery(from, to, params, removeTime);
-        Query toQuery = getMustBooleanQuery(to, from, params, removeTime);
-        List<Query> shouldQueries = Arrays.asList(fromQuery, toQuery);
-        queryBuilder.withQuery(q -> q.bool(b -> b.should(shouldQueries)));
+        if (params.getIsGroup() == null || !params.getIsGroup()) {
+            Query fromQuery = getPrivateChatMustBooleanQuery(from, to, params, removeTime);
+            Query toQuery = getPrivateChatMustBooleanQuery(to, from, params, removeTime);
+            List<Query> shouldQueries = Arrays.asList(fromQuery, toQuery);
+            queryBuilder.withQuery(q -> q.bool(b -> b.should(shouldQueries)));
+        } else {
+            List<Query> mustQueries = new ArrayList<>();
+            mustQueries.add(Query.of(q -> q.term(t -> t.field("to").value(to))));
+            String type = params.getType();
+            if (StringUtils.isNotBlank(type)) {
+                mustQueries.add(QueryBuilders.term(m -> m.field("type").value(type)));
+            }
+            if (ImMessageType.TEXT.type.equals(type) && StringUtils.isNotBlank(params.getKeywords())) {
+                mustQueries.add(QueryBuilders.matchPhrase(m -> m.field("content").query(params.getKeywords())));
+            }
+            queryBuilder.withQuery(q -> q.bool(b -> b.must(mustQueries)));
+        }
         //order by `created` DESC
         queryBuilder.withSort(Sort.by(Sort.Direction.DESC, "created"));
         return pageQueryByBuilder(params.getPage(), params.getLimit(), queryBuilder);
@@ -62,21 +75,13 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
         return searchByQuery(queryBuilder.build());
     }
 
-    private Query getMustBooleanQuery(Long from, Long to) {
-        Query fromQuery = Query.of(q -> q.term(t -> t.field("from").value(from)));
-        Query toQuery = Query.of(q -> q.term(t -> t.field("to").value(to)));
-        return Query.of(q -> q.bool(b -> b.must(Arrays.asList(fromQuery, toQuery))));
-    }
 
-    private Query getMustBooleanQuery(Long from, Long to, MessagesRequestParamDTO params, Long removeTime) {
+    private Query getPrivateChatMustBooleanQuery(Long from, Long to, MessagesRequestParamDTO params, Long removeTime) {
         List<Query> mustQueries = new ArrayList<>();
         mustQueries.add(Query.of(q -> q.term(t -> t.field("from").value(from))));
         mustQueries.add(Query.of(q -> q.term(t -> t.field("to").value(to))));
         if (removeTime != null) {
             mustQueries.add(QueryBuilders.range(m -> m.field("created").gt(JsonData.of(removeTime))));
-        }
-        if (params.getIsGroup() != null) {
-            mustQueries.add(QueryBuilders.term(m -> m.field("group").value(params.getIsGroup())));
         }
         String type = params.getType();
         if (StringUtils.isNotBlank(type)) {

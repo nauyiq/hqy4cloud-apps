@@ -1,8 +1,10 @@
 package com.hqy.cloud.message.controller;
 
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
+import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
+import com.hqy.cloud.foundation.common.authentication.AuthenticationRequestContext;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.bind.vo.GroupMemberVO;
@@ -41,18 +43,20 @@ public class ImGroupController extends BaseController {
      */
     @PostMapping("/group")
     public R<Boolean> createGroup(HttpServletRequest request, @RequestBody GroupDTO createGroup) {
-        Long id = getAccessAccountId(request);
-        if (id == null) {
+        Long accountId = getAccessAccountId(request);
+        if (accountId == null) {
             return R.failed(ResultCode.NOT_LOGIN);
         }
         List<Long> userIds = createGroup.getUserIds();
-        if (StringUtils.isBlank(createGroup.getName()) || CollectionUtils.isEmpty(userIds) || userIds.size() <= 1) {
+        // 创建的群聊人数不能低于2人
+        // 群聊人数已达到极限
+        if (CollectionUtils.isEmpty(userIds) || userIds.size() <= 1) {
             return R.failed(ERROR_PARAM_UNDEFINED);
         }
         if (userIds.size() >= MAX_MEMBERS - 1) {
             return R.failed(AppsResultCode.IM_GROUP_MEMBER_COUNT_LIMITED);
         }
-        return requestService.createGroup(id, createGroup);
+        return requestService.createGroup(accountId, createGroup);
     }
 
     /**
@@ -63,14 +67,14 @@ public class ImGroupController extends BaseController {
      */
     @PutMapping("/group")
     public R<Boolean> editGroup(HttpServletRequest request, @RequestBody GroupDTO editGroup) {
-        Long id = getAccessAccountId(request);
-        if (id == null) {
+        AuthenticationInfo info = AuthenticationRequestContext.getAuthentication(request);
+        if (info == null) {
             return R.failed(ResultCode.NOT_LOGIN);
         }
         if (editGroup.getGroupId() == null || StringUtils.isAllBlank(editGroup.getName(), editGroup.getNotice())) {
             return R.failed(ERROR_PARAM_UNDEFINED);
         }
-        return requestService.editGroup(id, editGroup);
+        return requestService.editGroup(info, editGroup);
     }
 
     /**

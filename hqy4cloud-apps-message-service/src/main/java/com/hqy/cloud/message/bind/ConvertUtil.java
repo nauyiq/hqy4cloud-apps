@@ -15,6 +15,8 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.*;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -50,15 +52,26 @@ public class ConvertUtil {
         }).collect(Collectors.toList());
     }
 
-    public String getMessageContent(Long id, ImMessageDoc doc) {
+    public String getMessageContent(Long id, String editor, ImMessageDoc doc) {
         String type = doc.getType();
         Long from = doc.getFrom();
-        if (ImMessageType.EVENT.type.equals(type) && !id.equals(from)) {
-            return AppsConstants.Message.UNDO_TO_MESSAGE_CONTENT;
+        if (ImMessageType.EVENT.type.equals(type)) {
+            return getEventMessageContent(id, editor, from, doc.getGroup(), doc.getContent());
         } else if (ImMessageType.FILE.type.equals(type) || ImMessageType.IMAGE.type.equals(type)) {
             return doc.getPath();
         }
         return doc.getContent();
+    }
+
+    public String getEventMessageContent(Long id, String editor, Long from, boolean isGroup, String content) {
+        if (id.equals(from)) {
+            content = content.replace(REPLACE, YOU);
+        } else if (AppsConstants.Message.UNDO_FROM_MESSAGE_CONTENT.equals(content) && !isGroup){
+            content = content.replace(REPLACE, TARGET);
+        } else {
+            content = content.replace(REPLACE, editor);
+        }
+        return content;
     }
 
 

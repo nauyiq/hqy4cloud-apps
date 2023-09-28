@@ -38,4 +38,11 @@ public interface ImFriendMapper extends PrimaryLessTkMapper<ImFriend> {
      * @return       {@link ContactsDTO}
      */
     ContactsDTO queryUserContacts(@Param("id") Long userId);
+
+    /**
+     * 根据主键更新friend
+     * @param imFriend 好友entity
+     * @return         是否更新成功
+     */
+    int updateImFriend(@Param("friend")ImFriend imFriend);
 }

@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.tk.service;
 
+import com.hqy.cloud.db.tk.BaseTkService;
 import com.hqy.cloud.db.tk.PrimaryLessTkService;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
@@ -11,7 +12,7 @@ import java.util.List;
  * @version 1.0
  * @date 2023/8/11 11:31
  */
-public interface ImGroupMemberTkService extends PrimaryLessTkService<ImGroupMember> {
+public interface ImGroupMemberTkService extends BaseTkService<ImGroupMember,Long> {
 
     /**
      * 查询群聊用户信息
@@ -28,4 +29,11 @@ public interface ImGroupMemberTkService extends PrimaryLessTkService<ImGroupMemb
      * @return        group members
      */
     List<ImGroupMember> queryGroupMembers(Long groupId, List<Long> userIds);
+
+    /**
+     * 更新群聊成员信息
+     * @param member 群聊成员entity
+     * @return       是否更新成功
+     */
+    Boolean updateMember(ImGroupMember member);
 }

@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.tk.service;
 
 import com.hqy.cloud.db.tk.BaseTkService;
+import com.hqy.cloud.message.bind.dto.ChatDTO;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 
 import java.util.List;
@@ -34,4 +35,11 @@ public interface ImConversationTkService extends BaseTkService<ImConversation, L
      * @return          {@link ImConversation} 聊天会话列表
      */
     List<ImConversation> queryConversations(Long id, Long contactId, Boolean isGroup);
+
+    /**
+     * 根据用户id查询聊天列表信息.
+     * @param userId 用户id
+     * @return      {@link ChatDTO}
+     */
+    List<ChatDTO> queryImChatDTO(Long userId);
 }

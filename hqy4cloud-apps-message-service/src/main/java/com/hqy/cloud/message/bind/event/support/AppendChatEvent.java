@@ -20,12 +20,11 @@ import java.util.List;
 @AllArgsConstructor
 public class AppendChatEvent implements ImEvent {
 
-    private boolean isGroup;
-    private List<String> users;
+    private String user;
     private Payload payload;
 
-    public static AppendChatEvent of(boolean isGroup, List<String> users, ConversationVO conversation, ContactVO contact) {
-        return new AppendChatEvent(isGroup, users, new Payload(conversation, contact));
+    public static AppendChatEvent of(String user, ConversationVO conversation, ContactVO contact) {
+        return new AppendChatEvent(user, new Payload(conversation, contact));
     }
 
     public String message() {

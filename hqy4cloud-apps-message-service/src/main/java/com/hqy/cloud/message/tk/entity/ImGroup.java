@@ -5,10 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.Column;
 import javax.persistence.Table;
 import java.util.Date;
+
+import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_DEFAULT_GROUP_AVATAR;
 
 /**
  * 群聊表 entity
@@ -24,6 +27,7 @@ import java.util.Date;
 public class ImGroup extends BaseEntity<Long> {
 
     private String name;
+    @Column(name = "`index`")
     private String index;
     private String avatar;
     private Long creator;
@@ -49,9 +53,10 @@ public class ImGroup extends BaseEntity<Long> {
         return new ImGroup(name, creator);
     }
 
-    public static ImGroup of(String name, Long creator, Date now) {
+    public static ImGroup of(String name, Long creator, String avatar, Date now) {
         ImGroup imGroup = new ImGroup(name, creator);
         imGroup.setStatus(true);
+        imGroup.setAvatar(StringUtils.isBlank(avatar) ? IM_DEFAULT_GROUP_AVATAR : avatar);
         imGroup.setCreated(now);
         imGroup.setUpdated(now);
         return imGroup;

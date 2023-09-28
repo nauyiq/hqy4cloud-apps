@@ -29,7 +29,6 @@ public interface ImFriendTkService extends PrimaryLessTkService<ImFriend> {
      */
     List<ImFriend> queryFriends(Long id, List<Long> userIds);
 
-
     /**
      * query contact list
      * @param userId user id.
@@ -37,7 +36,10 @@ public interface ImFriendTkService extends PrimaryLessTkService<ImFriend> {
      */
     ContactsDTO queryContactByUserId(Long userId);
 
-
-
-
+    /**
+     * 根据主键更新friend
+     * @param imFriend 好友entity
+     * @return         是否更新成功
+     */
+    Boolean updateImFriend(ImFriend imFriend);
 }

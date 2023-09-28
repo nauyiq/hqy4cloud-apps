@@ -67,6 +67,15 @@ public class ImUnreadCacheServiceImpl extends ImCache implements ImUnreadCacheSe
     }
 
     @Override
+    public Integer getPrivateConversationUnread(Long userId, Long conversationId) {
+        if (userId == null || conversationId == null) {
+            return null;
+        }
+        String key = genConversationKey(userId);
+        return RedisManager.getInstance().hGet(key, conversationId);
+    }
+
+    @Override
     public Map<Long, Integer> groupConversationsUnread(Long userId, List<Long> groupIds) {
         if (userId == null || CollectionUtils.isEmpty(groupIds)) {
             return MapUtil.newHashMap();
@@ -79,8 +88,8 @@ public class ImUnreadCacheServiceImpl extends ImCache implements ImUnreadCacheSe
         for (int i = 0; i < groupIds.size(); i++) {
             Object o = groupList.get(i);
             int unread = 0;
-            if (o instanceof Set) {
-                unread = ((Set<?>) o).size();
+            if (o instanceof Integer) {
+                unread = (Integer) o;
             }
             map.put(groupIds.get(i), unread);
         }

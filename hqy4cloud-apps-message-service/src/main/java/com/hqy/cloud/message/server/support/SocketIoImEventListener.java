@@ -66,27 +66,6 @@ public class SocketIoImEventListener implements ImEventListener {
     }
 
     @Override
-    public boolean onAddGroup(List<AddGroupEvent> events) {
-        Set<String> ids = events.parallelStream().map(AddGroupEvent::getId).collect(Collectors.toSet());
-        try {
-            SocketClusterStatus query = SocketClusterStatusManager.query(Environment.getInstance().getEnvironment(), MicroServiceConstants.MESSAGE_NETTY_SERVICE);
-
-            if (query.isEnableMultiWsNode()) {
-                Map<String, ThriftSocketIoPushService> map = SocketIoConnectionUtil.getMultipleSocketIoPushService(ids, ThriftSocketIoPushService.class, MicroServiceConstants.MESSAGE_NETTY_SERVICE);
-                if (MapUtil.isNotEmpty(map)) {
-                    events.forEach(event -> map.getOrDefault(event.getId(), socketIoPushService).asyncPush(event.getId(), event.name(), JsonUtil.toJson(event)));
-                    return true;
-                }
-            }
-            events.forEach(event -> socketIoPushService.asyncPush(event.getId(), event.name(), JsonUtil.toJson(event)));
-            return true;
-        } catch (Throwable cause) {
-            log.warn(cause.getMessage(), cause);
-            return false;
-        }
-    }
-
-    @Override
     public boolean onPrivateChat(PrivateChatEvent event) {
         ImMessageDTO messageDTO = event.getMessageDTO();
         String to = messageDTO.getToContactId();
@@ -117,16 +96,16 @@ public class SocketIoImEventListener implements ImEventListener {
     }
 
     @Override
-    public boolean onImAppendChatEvent(AppendChatEvent event) {
+    public boolean onImAppendPrivateChatEvent(AppendChatEvent event) {
         String message = event.message();
-        if (!event.isGroup()) {
-            // private conversation chat.
-            String to = event.getUsers().get(0);
-            return SocketIoConnectionUtil.doPrivateMessage(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, to, event.name(), message);
-        } else {
-            Set<String> ids = new HashSet<>(event.getUsers());
-            return SocketIoConnectionUtil.doBroadcastMessages(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, ids, event.name(), message);
-        }
+        // private conversation chat.
+        return SocketIoConnectionUtil.doPrivateMessage(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, event.getUser(), event.name(), message);
+    }
+
+    @Override
+    public boolean onImAppendGroupChatEvent(List<AppendChatEvent> events) {
+        Map<String, String> messagesMap = events.parallelStream().collect(Collectors.toMap(AppendChatEvent::getUser, AppendChatEvent::message));
+        return SocketIoConnectionUtil.doMultiplePushMessages(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, events.get(0).name(), messagesMap);
     }
 
     @Override
@@ -158,5 +137,11 @@ public class SocketIoImEventListener implements ImEventListener {
             String to = event.getUsers().get(0);
             return SocketIoConnectionUtil.doPrivateMessage(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, to, event.name(), message);
         }
+    }
+
+    @Override
+    public boolean onGroupNoticeChangeEvent(GroupNoticeEvent event) {
+        Set<String> ids = new HashSet<>(event.getUserIds());
+        return SocketIoConnectionUtil.doBroadcastMessages(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, ids, event.name(), event.message());
     }
 }

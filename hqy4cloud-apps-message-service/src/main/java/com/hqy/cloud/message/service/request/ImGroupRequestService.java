@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.service.request;
 
+import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
@@ -16,19 +17,19 @@ public interface ImGroupRequestService {
 
     /**
      * 新建群聊
-     * @param id          创建者id
+     * @param creator      创建者
      * @param createGroup {@link GroupDTO}
      * @return            R.
      */
-    R<Boolean> createGroup(Long id, GroupDTO createGroup);
+    R<Boolean> createGroup(Long creator, GroupDTO createGroup);
 
     /**
      * 修改群聊
-     * @param id        操作用户id
+     * @param info       操作用户
      * @param editGroup {@link GroupDTO}
      * @return          R
      */
-    R<Boolean> editGroup(Long id, GroupDTO editGroup);
+    R<Boolean> editGroup(AuthenticationInfo info, GroupDTO editGroup);
 
     /**
      * 获取群聊成员

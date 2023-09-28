@@ -122,7 +122,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
                     .isRead(true)
                     .fromUser(new UserInfoVO(from.toString(), struct.username, struct.nickname, struct.avatar, remark))
                     .toContactId(doc.getTo().toString())
-                    .content(ConvertUtil.getMessageContent(imConversation.getUserId(), doc))
+                    .content(ConvertUtil.getMessageContent(imConversation.getUserId(), struct.username ,doc))
                     .status(doc.getStatus() ? IM_MESSAGE_SUCCESS : IM_MESSAGE_FAILED)
                     .type(doc.getType())
                     .sendTime(doc.getCreated())

@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.service;
 
 import com.hqy.cloud.message.bind.vo.ConversationVO;
+import com.hqy.cloud.message.bind.vo.ImChatVO;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 
 import java.util.List;
@@ -18,6 +19,13 @@ public interface ImConversationOperationsService {
      * @return   conversations.
      */
     List<ConversationVO> getImConversations(Long id);
+
+    /**
+     * 获取用户聊天列表.
+     * @param userId 用户id
+     * @return       {@link ImChatVO}
+     */
+    ImChatVO getImChatInfoList(Long userId);
 
     /**
      * update group chat top status.
@@ -63,6 +71,7 @@ public interface ImConversationOperationsService {
      */
     boolean sendAppendPrivateChatEvent(ImConversation imConversation, Integer unread);
 
+
     /**
      * 新增会话
      * @param id     登录用户id
@@ -70,4 +79,6 @@ public interface ImConversationOperationsService {
      * @return       {@link ConversationVO}
      */
     ConversationVO addConversation(Long id, Long userId);
+
+
 }

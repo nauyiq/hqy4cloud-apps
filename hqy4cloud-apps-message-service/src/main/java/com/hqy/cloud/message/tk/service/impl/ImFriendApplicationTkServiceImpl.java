@@ -42,6 +42,11 @@ public class ImFriendApplicationTkServiceImpl extends BaseTkServiceImpl<ImFriend
     }
 
     @Override
+    public int getApplicationUnreadMessages(Long userId) {
+        return mapper.selectUnread(userId);
+    }
+
+    @Override
     public FriendApplicationDTO queryApplicationStatus(Long id, Long userId) {
         ImFriendApplication application = mapper.selectOne(ImFriendApplication.of(userId, id));
         Integer status = null;

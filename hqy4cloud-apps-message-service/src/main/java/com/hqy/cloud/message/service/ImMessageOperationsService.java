@@ -3,6 +3,7 @@ package com.hqy.cloud.message.service;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
+import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.entity.ImMessage;
 
@@ -24,6 +25,14 @@ public interface ImMessageOperationsService {
     Map<String, Integer> getConversationUnread(Long id, List<MessageUnreadDTO> messageUnreadList);
 
     /**
+     * 获取用户系统消息未读数
+     * @param id 用户id
+     * @return   未读消息数
+     */
+    int getSystemMessageUnread(Long id);
+
+
+    /**
      * 发消息
      * @param id      from user id
      * @param message {@link ImMessageDTO}
@@ -39,6 +48,20 @@ public interface ImMessageOperationsService {
      * @param conversationId 会话id
      */
     void addSystemMessage(Long send, Long receive, String message, Long conversationId);
+
+    /**
+     * 添加简单的消息
+     * @param send            发送者
+     * @param receive         接收者
+     * @param isGroup         是否是群聊
+     * @param conversationId  会话id
+     * @param groupMembers    群聊用户id集合
+     * @param messageType     消息类型
+     * @param message         消息内容
+     * @return                消息
+     */
+    ImMessage addSimpleMessage(Long send, Long receive, boolean isGroup, Long conversationId,
+                          List<Long> groupMembers, ImMessageType messageType, String message);
 
     /**
      * read messages

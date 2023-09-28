@@ -1,7 +1,9 @@
 package com.hqy.cloud.message.service;
 
+import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
+import com.hqy.cloud.message.tk.entity.ImFriend;
 
 import java.util.List;
 import java.util.Map;
@@ -15,19 +17,21 @@ public interface ImGroupOperationsService {
 
     /**
      * 新建群聊
-     * @param id          创建者id
-     * @param createGroup {@link GroupDTO}
+     * @param creator     创建者id
+     * @param groupInfo   {@link GroupDTO}
+     * @param friends     好友列表
      * @return            result.
      */
-    boolean createGroup(Long id, GroupDTO createGroup);
+    boolean createGroup(Long creator,  GroupDTO groupInfo, List<ImFriend> friends);
 
     /**
      * 修改群聊信息
+     * @param info             用户信息
      * @param groupMemberInfo {@link GroupMemberDTO}
      * @param editGroup       {@link GroupDTO}
      * @return                result.
      */
-    boolean editGroup(GroupMemberDTO groupMemberInfo, GroupDTO editGroup);
+    boolean editGroup(AuthenticationInfo info, GroupMemberDTO groupMemberInfo, GroupDTO editGroup);
 
     /**
      * 添加群聊成员

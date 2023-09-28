@@ -36,6 +36,13 @@ public interface ImFriendApplicationTkService extends BaseTkService<ImFriendAppl
     boolean updateApplicationStatus(List<Long> ids, int status);
 
     /**
+     * 获取用户好友申请列表未读消息数
+     * @param userId 用户id
+     * @return       申请列表未读消息数
+     */
+    int getApplicationUnreadMessages(Long userId);
+
+    /**
      * 查找好友申请状态
      * @param id     当前用户id
      * @param userId 被申请用户id

@@ -1,9 +1,11 @@
 package com.hqy.cloud.message.tk.entity;
 
 import com.hqy.cloud.db.tk.PrimaryLessBaseEntity;
+import com.hqy.cloud.db.tk.model.BaseEntity;
 import com.hqy.cloud.message.bind.enums.GroupRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
@@ -19,16 +21,16 @@ import java.util.List;
  * @version 1.0
  * @date 2023/8/11 11:29
  */
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 @Table(name = "t_im_group_member")
-public class ImGroupMember implements PrimaryLessBaseEntity {
+public class ImGroupMember extends BaseEntity<Long> {
     public static final int MAX_MEMBERS = 500;
 
-    @Id
     private Long groupId;
-    @Id
     private Long userId;
     private String displayName;
     private Integer role;

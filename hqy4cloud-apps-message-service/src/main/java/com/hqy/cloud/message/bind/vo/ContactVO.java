@@ -74,8 +74,6 @@ public class ContactVO {
         this.displayName = contact.getName();
         this.avatar = contact.getGroupAvatar();
         this.isGroup = true;
-        this.isNotice = contact.getGroupNotice();
-        this.isTop = contact.getGroupTop();
         this.isInvite = contact.getGroupInvite();
         this.index = contact.getGroupIndex();
     }

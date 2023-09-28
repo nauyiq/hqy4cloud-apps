@@ -34,13 +34,13 @@ import static com.hqy.cloud.common.result.ResultCode.*;
 @RestController
 @RequiredArgsConstructor
 public class UploadController extends BaseController {
-    private final UploadFileService tencentUploadFileService;
+    private final UploadFileService uploadFileService;
 
     @PostMapping("/admin/blog/upload/image")
     @UploadMode(value = UploadMode.Mode.ASYNC)
     public R<UploadFileVO> uploadImage(@RequestParam("file") MultipartFile file) {
         AssertUtil.notNull(file, "Upload file should not be null.");
-        UploadResponse response = tencentUploadFileService.uploadImgFile(AppsConstants.Blog.UPLOAD_IMAGE_FOLDER, file);
+        UploadResponse response = uploadFileService.uploadImgFile(AppsConstants.Blog.UPLOAD_IMAGE_FOLDER, file);
         UploadResult result = response.getResult(false);
         if (!result.isResult()) {
             return R.failed(result.getMessage(), INVALID_UPLOAD_FILE.code);
@@ -61,7 +61,7 @@ public class UploadController extends BaseController {
         if (id == null) {
             return R.failed(NOT_LOGIN);
         }
-        UploadResponse response = tencentUploadFileService.uploadAvatar(avatar);
+        UploadResponse response = uploadFileService.uploadAvatar(avatar);
         UploadResult result = response.getResult();
         if (!result.isResult()) {
             return R.failed(result.getMessage(), INVALID_UPLOAD_FILE.code);
@@ -80,7 +80,7 @@ public class UploadController extends BaseController {
         if (!FileValidateContext.isSupportedFile(FileValidateContext.SUPPORT_MEDIA_FILE_TYPES, extName)) {
             return R.failed(INVALID_FILE_TYPE);
         }
-        UploadResponse response = tencentUploadFileService.uploadFile(AppsConstants.Blog.UPLOAD_IMAGE_MUSIC, musicFile);
+        UploadResponse response = uploadFileService.uploadFile(AppsConstants.Blog.UPLOAD_IMAGE_MUSIC, musicFile);
         UploadResult result = response.getResult(false);
         if (!result.isResult()) {
             return R.failed(result.getMessage(), INVALID_UPLOAD_FILE.code);

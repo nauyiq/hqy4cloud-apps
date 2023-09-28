@@ -4,12 +4,11 @@ import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.message.bind.dto.ImChatConfigDTO;
 import com.hqy.cloud.message.bind.vo.ConversationVO;
+import com.hqy.cloud.message.bind.vo.ImChatVO;
 import com.hqy.cloud.message.service.ImConversationOperationsService;
 import com.hqy.cloud.message.service.ImFriendOperationsService;
 import com.hqy.cloud.message.service.request.ImConversationRequestService;
-import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.entity.ImUserSetting;
-import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import com.hqy.cloud.message.tk.service.ImUserSettingTkService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,12 +27,16 @@ import java.util.List;
 public class ImConversationRequestServiceImpl implements ImConversationRequestService {
     private final ImUserSettingTkService userSettingTkService;
     private final ImFriendOperationsService friendOperationsService;
-    private final ImConversationTkService imConversationTkService;
     private final ImConversationOperationsService imConversationOperationsService;
 
     @Override
     public R<List<ConversationVO>> getConversations(Long id) {
         return R.ok(imConversationOperationsService.getImConversations(id));
+    }
+
+    @Override
+    public R<ImChatVO> getImChatInfo(Long userId) {
+        return R.ok(imConversationOperationsService.getImChatInfoList(userId));
     }
 
     @Override
@@ -67,10 +70,10 @@ public class ImConversationRequestServiceImpl implements ImConversationRequestSe
 
     @Override
     public R<Boolean> deleteConversation(Long userId, Long conversationId) {
-        ImConversation conversation = imConversationTkService.queryById(conversationId);
+        /*ImConversation conversation = imConversationTkService.queryById(conversationId);
         if (conversation == null || !conversation.getUserId().equals(userId)) {
             return R.failed(ResultCode.ERROR_PARAM);
-        }
+        }*/
 
         return null;
     }

@@ -44,6 +44,11 @@ public interface ImFriendOperationsService {
      */
     Map<Long, String> getFriendRemarks(Long id, List<Long> friendIds);
 
-
-
+    /**
+     * 更新申请列表状态
+     * @param userId         用户id
+     * @param applicationIds 申请列表ids
+     * @param status         状态值
+     */
+    void updateApplicationStatus(Long userId, List<Long> applicationIds, int status);
 }

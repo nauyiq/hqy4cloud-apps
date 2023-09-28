@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.service.impl;
 
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
@@ -21,6 +22,7 @@ import com.hqy.cloud.message.service.ImMessageOperationsService;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.entity.ImMessage;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
+import com.hqy.cloud.message.tk.service.ImFriendApplicationTkService;
 import com.hqy.cloud.message.tk.service.ImMessageTkService;
 import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.util.spring.SpringContextHolder;
@@ -36,8 +38,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_MESSAGE_FAILED;
-import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_MESSAGE_SUCCESS;
+import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.*;
 
 /**
  * ImMessageOperationsService.
@@ -51,6 +52,7 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
     private final TransactionTemplate template;
     private final ImEventListener eventListener;
     private final ImConversationTkService conversationTkService;
+    private final ImFriendApplicationTkService friendApplicationTkService;
     private final ImMessageTkService messageTkService;
     private final ImMessageElasticService imMessageElasticService;
     private final ImUnreadCacheService imUnreadCacheService;
@@ -82,6 +84,21 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         }
         return resultMap;
     }
+
+    @Override
+    public int getSystemMessageUnread(Long id) {
+        if (id == null) {
+            return 0;
+        }
+        Integer unread = imUnreadCacheService.getPrivateConversationUnread(id, IM_SYSTEM_MESSAGE_UNREAD_ID);
+        if (unread == null) {
+            // redis为空 读取db.
+            unread = friendApplicationTkService.getApplicationUnreadMessages(id);
+            imUnreadCacheService.addPrivateConversationUnread(id, IM_SYSTEM_MESSAGE_UNREAD_ID, Convert.toLong(unread));
+        }
+        return unread;
+    }
+
 
     @Override
     public ImMessageVO sendImMessage(Long id, ImMessageDTO message) {
@@ -150,7 +167,14 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
     @Override
     public void addSystemMessage(Long send, Long receive, String message, Long conversationId) {
         // insert message
-        ImMessage imMessage = new ImMessage(DistributedIdGen.getSnowflakeId(), new Date(), UUID.fastUUID().toString(), false, send, receive, ImMessageType.SYSTEM.type, message);
+        this.addSimpleMessage(send, receive, false, conversationId, null, ImMessageType.SYSTEM, message);
+    }
+
+    @Override
+    public ImMessage addSimpleMessage(Long send, Long receive, boolean isGroup, Long conversationId, List<Long> groupMembers,
+                                 ImMessageType messageType, String message) {
+        // 构建消息体对象
+        ImMessage imMessage = new ImMessage(DistributedIdGen.getSnowflakeId(), new Date(), UUID.fastUUID().toString(), isGroup, send, receive, messageType.type, message);
         ImMessageDoc messageDoc = new ImMessageDoc(imMessage);
         template.execute(new TransactionCallbackWithoutResult() {
             @Override
@@ -158,7 +182,10 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
                 try {
                     AssertUtil.isTrue(messageTkService.insert(imMessage), "Failed execute to insert message bt send im message.");
                     imMessageElasticService.save(messageDoc);
-                    if (conversationId != null) {
+                    if (isGroup && CollectionUtils.isNotEmpty(groupMembers)) {
+                        imUnreadCacheService.addGroupConversationsUnread(new HashSet<>(groupMembers), receive, 1L);
+                    }
+                    if (!isGroup && conversationId != null) {
                         imUnreadCacheService.addPrivateConversationUnread(receive, conversationId, 1L);
                     }
                 } catch (Throwable cause) {
@@ -167,10 +194,16 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
                 }
             }
         });
+        return imMessage;
     }
 
     @Override
     public List<String> readMessages(ImConversation conversation) {
+        if (conversation.getGroup()) {
+            // 群聊消息
+            imUnreadCacheService.readGroupConversationUnread(conversation.getUserId(), conversation.getContactId());
+            return Collections.emptyList();
+        }
         List<ImMessageDoc> unreadMessages = imMessageElasticService.queryUnreadMessages(conversation.getContactId(), conversation.getUserId());
         if (CollectionUtils.isEmpty(unreadMessages)) {
             // Not found unread messages.
