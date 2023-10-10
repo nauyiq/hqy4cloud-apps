@@ -71,7 +71,6 @@ public interface ImConversationOperationsService {
      */
     boolean sendAppendPrivateChatEvent(ImConversation imConversation, Integer unread);
 
-
     /**
      * 新增会话
      * @param id     登录用户id
@@ -80,5 +79,10 @@ public interface ImConversationOperationsService {
      */
     ConversationVO addConversation(Long id, Long userId);
 
-
+    /**
+     * 删除会话
+     * @param conversation {@link ImConversation}
+     * @return             result.
+     */
+    boolean deleteConversation(ImConversation conversation);
 }

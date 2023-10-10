@@ -38,6 +38,7 @@ public class ImGroupMember extends BaseEntity<Long> {
     private Boolean top = false;
     @Column(name = "is_notice")
     private Boolean notice = true;
+    private Boolean deleted = false;
     private Date created;
     private Date updated;
 
@@ -68,16 +69,15 @@ public class ImGroupMember extends BaseEntity<Long> {
     }
 
     public static ImGroupMember of(Long groupId, Long userId, String displayName, Integer role) {
-        ImGroupMember member = new ImGroupMember(groupId, userId);
+        ImGroupMember member = new ImGroupMember(groupId, userId, role);
         member.setDisplayName(displayName);
-        member.setRole(role);
         return member;
     }
 
     public static List<ImGroupMember> of(Long groupId, Long id, List<Long> userIds) {
-        List<ImGroupMember> groupMembers = new ArrayList<>(userIds.size() + 1);
+        List<ImGroupMember> groupMembers = new ArrayList<>(userIds.size());
         groupMembers.add(new ImGroupMember(groupId, id, GroupRole.CREATOR.role));
-        userIds.forEach(userId -> groupMembers.add(new ImGroupMember(groupId, userId, GroupRole.COMMON.role)));
+        userIds.stream().filter(uid -> !uid.equals(id)).forEach(userId -> groupMembers.add(new ImGroupMember(groupId, userId, GroupRole.COMMON.role)));
         return groupMembers;
     }
 }

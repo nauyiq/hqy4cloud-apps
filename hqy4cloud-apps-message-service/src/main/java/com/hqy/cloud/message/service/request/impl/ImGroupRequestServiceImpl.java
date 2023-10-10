@@ -7,6 +7,7 @@ import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
+import com.hqy.cloud.message.bind.ConvertUtil;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.bind.enums.GroupRole;
@@ -27,14 +28,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.hqy.cloud.apps.commom.result.AppsResultCode.IM_GROUP_EXIST;
-import static com.hqy.cloud.apps.commom.result.AppsResultCode.IM_GROUP_NOT_EXIST;
+import static com.hqy.cloud.apps.commom.result.AppsResultCode.*;
 
 /**
  * @author qiyuan.hong
@@ -74,42 +71,36 @@ public class ImGroupRequestServiceImpl implements ImGroupRequestService {
     }
 
     @Override
-    public R<List<GroupMemberVO>> getGroupMembers(Long groupId) {
-        ImGroup group = groupTkService.queryById(groupId);
-        if (group == null) {
-            return R.failed(IM_GROUP_NOT_EXIST);
-        }
-        List<ImGroupMember> groupMembers = groupMemberTkService.queryList(ImGroupMember.of(groupId));
+    public R<List<GroupMemberVO>> getGroupMembers(Long userId, Long groupId) {
+        ImGroupMember of = ImGroupMember.of(groupId);
+        of.setDeleted(null);
+        List<ImGroupMember> groupMembers = groupMemberTkService.queryList(of);
         if (CollectionUtils.isEmpty(groupMembers)) {
             return R.ok(Collections.emptyList());
         }
-        List<Long> userIds = groupMembers.stream().map(ImGroupMember::getUserId).toList();
-        Map<Long, AccountProfileStruct> infos = AccountRpcUtil.getAccountProfileMap(userIds);
+        Map<Long, ImGroupMember> memberMap = groupMembers.stream().collect(Collectors.toMap(ImGroupMember::getUserId, e -> e));
+        if (!memberMap.containsKey(userId)) {
+            // 不是群成员用户不应该返回群成员列表.
+            return R.ok(Collections.emptyList());
+        }
+        Map<Long, AccountProfileStruct> infos = AccountRpcUtil.getAccountProfileMap(new ArrayList<>(memberMap.keySet()));
         if (MapUtil.isEmpty(infos)) {
             return R.ok(Collections.emptyList());
         }
-        return R.ok(convertGroupMembers(groupMembers, infos));
-    }
-
-    private List<GroupMemberVO> convertGroupMembers(List<ImGroupMember> groupMembers, Map<Long, AccountProfileStruct> infos) {
-        return groupMembers.parallelStream().map(member -> {
-            Long userId = member.getUserId();
-            String displayName = member.getDisplayName();
-            if (userId == null || !infos.containsKey(userId)) {
-                return null;
-            }
-            GroupMemberVO vo = new GroupMemberVO(member.getUserId().toString(), member.getRole(), DateUtil.formatDateTime(member.getCreated()));
-            AccountProfileStruct struct = infos.get(userId);
-            UserInfoVO userInfoVO = new UserInfoVO(userId.toString(), struct.username, struct.nickname, struct.avatar,
-                    StringUtils.isEmpty(displayName) ? struct.nickname : displayName);
-            vo.setUserInfo(userInfoVO);
-            return vo;
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+        ImGroupMember self = memberMap.get(userId);
+        if (self.getDeleted()) {
+            //如果已被移除，则只显示群主.
+            groupMembers = groupMembers.stream().filter(member -> member.getRole().equals(GroupRole.CREATOR.role)).toList();
+        }
+        groupMembers = groupMembers.stream().filter(member -> !member.getDeleted()).toList();
+        return R.ok(ConvertUtil.convertGroupMembers(groupMembers, infos));
     }
 
     @Override
-    public R<Boolean> addGroupMember(Long id, GroupMemberDTO groupMember) {
-        GroupMemberDTO groupMemberInfo = groupTkService.getGroupMemberInfo(id, groupMember.getGroupId());
+    public R<Boolean> addGroupMember(Long id, GroupDTO group) {
+        Long groupId = group.getGroupId();
+        List<Long> userIds = group.getUserIds().stream().distinct().toList();
+        GroupMemberDTO groupMemberInfo = groupTkService.getGroupMemberInfo(id, groupId);
         if (groupMemberInfo == null) {
             return R.failed(IM_GROUP_NOT_EXIST);
         }
@@ -117,7 +108,7 @@ public class ImGroupRequestServiceImpl implements ImGroupRequestService {
         if (role == null || !role.equals(GroupRole.CREATOR.role)) {
             return R.failed(ResultCode.NOT_PERMISSION);
         }
-        return groupOperationsService.addGroupMember(groupMember) ? R.ok() : R.failed();
+        return groupOperationsService.addGroupMember(groupMemberInfo, userIds) ? R.ok() : R.failed();
     }
 
     @Override
@@ -151,9 +142,31 @@ public class ImGroupRequestServiceImpl implements ImGroupRequestService {
             return R.failed(IM_GROUP_NOT_EXIST);
         }
         Integer role = groupMemberInfo.getRole();
-        if (!id.equals(groupMember.getId()) || !role.equals(GroupRole.CREATOR.role)) {
+        if (!role.equals(GroupRole.CREATOR.role) && !id.equals(groupMember.getId()) ) {
             return R.failed(ResultCode.NOT_PERMISSION);
         }
-        return groupOperationsService.removeGroupMember(groupMember.getId(), groupMember.getGroupId()) ? R.ok() : R.failed();
+        return groupOperationsService.removeGroupMember(id, groupMember.getId(), groupMember.getGroupId()) ? R.ok() : R.failed();
+    }
+
+    @Override
+    public R<Boolean> exitGroup(Long userId, Long groupId) {
+        ImGroupMember member = groupMemberTkService.queryOne(ImGroupMember.of(groupId, userId));
+        if (member == null || member.getRole().equals(GroupRole.CREATOR.role) || member.getDeleted()) {
+            return R.failed(IM_NOT_GROUP_MEMBER);
+        }
+        return groupOperationsService.exitGroup(member) ? R.ok() : R.failed();
+    }
+
+    @Override
+    public R<Boolean> deleteGroup(Long userId, Long groupId) {
+        GroupMemberDTO groupMemberInfo = groupTkService.getGroupMemberInfo(userId, groupId);
+        if (groupMemberInfo == null) {
+            return R.failed(IM_GROUP_NOT_EXIST);
+        }
+        Integer role = groupMemberInfo.getRole();
+        if (!role.equals(GroupRole.CREATOR.role)) {
+            return R.failed(ResultCode.NOT_PERMISSION);
+        }
+        return groupOperationsService.deleteGroup(userId, groupId) ? R.ok() : R.failed();
     }
 }

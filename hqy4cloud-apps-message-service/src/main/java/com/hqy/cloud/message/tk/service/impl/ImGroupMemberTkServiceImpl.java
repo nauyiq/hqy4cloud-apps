@@ -11,6 +11,7 @@ import com.hqy.cloud.message.tk.service.ImGroupMemberTkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -29,6 +30,11 @@ public class ImGroupMemberTkServiceImpl extends BaseTkServiceImpl<ImGroupMember,
     }
 
     @Override
+    public boolean insertOrUpdate(List<ImGroupMember> members) {
+        return mapper.insertOrUpdate(members) > 0;
+    }
+
+    @Override
     public List<GroupMemberDTO> queryMembers(Long id, List<Long> groupIds) {
         return mapper.queryMembers(id, groupIds);
     }
@@ -41,5 +47,21 @@ public class ImGroupMemberTkServiceImpl extends BaseTkServiceImpl<ImGroupMember,
     @Override
     public Boolean updateMember(ImGroupMember member) {
         return mapper.updateMember(member) > 0;
+    }
+
+    @Override
+    public List<ImGroupMember> simpleQueryAllGroupMembers(Long groupId) {
+        if (groupId == null) {
+            return Collections.emptyList();
+        }
+        return mapper.simpleQueryAllGroupMembers(groupId);
+    }
+
+    @Override
+    public boolean removeGroupMember(Long groupId, Long userId) {
+        if (groupId == null) {
+            return false;
+        }
+        return mapper.removeGroupMember(groupId, userId) > 0;
     }
 }

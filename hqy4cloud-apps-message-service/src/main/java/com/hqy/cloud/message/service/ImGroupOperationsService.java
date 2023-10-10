@@ -1,9 +1,11 @@
 package com.hqy.cloud.message.service;
 
 import com.hqy.cloud.common.base.AuthenticationInfo;
+import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.tk.entity.ImFriend;
+import com.hqy.cloud.message.tk.entity.ImGroupMember;
 
 import java.util.List;
 import java.util.Map;
@@ -35,18 +37,20 @@ public interface ImGroupOperationsService {
 
     /**
      * 添加群聊成员
-     * @param groupMember {@link GroupMemberDTO}
-     * @return             result.
+     * @param groupMemberInfo {@link GroupMemberDTO}
+     * @param userIds         新增用户id
+     * @return                result.
      */
-    boolean addGroupMember(GroupMemberDTO groupMember);
+    boolean addGroupMember(GroupMemberDTO groupMemberInfo, List<Long> userIds);
 
     /**
      * 移除群聊成员
-     * @param id      用户id
-     * @param groupId 群聊id
-     * @return        result.
+     * @param operator     操作用户id
+     * @param userId       用户id
+     * @param groupId      群聊id
+     * @return             result.
      */
-    boolean removeGroupMember(Long id, Long groupId);
+    boolean removeGroupMember(Long operator, Long userId, Long groupId);
 
     /**
      * 是否是群聊成员
@@ -57,10 +61,28 @@ public interface ImGroupOperationsService {
     boolean isGroupMember(Long id, Long groupId);
 
     /**
+     * 退出群聊
+     * @param member 群聊成员
+     * @return       result
+     */
+    boolean exitGroup(ImGroupMember member);
+
+    /**
+     * 删除群聊
+     * @param userId  群主id
+     * @param groupId 群id
+     * @return        result.
+     */
+    boolean deleteGroup(Long userId, Long groupId);
+
+    /**
      * return group members remark
      * @param groupId group id.
      * @param members group members id
      * @return        group members remark
      */
     Map<Long, String> getGroupMemberRemark(Long groupId, List<Long> members);
+
+
+
 }

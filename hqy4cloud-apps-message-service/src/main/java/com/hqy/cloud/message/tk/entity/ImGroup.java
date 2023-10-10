@@ -49,8 +49,20 @@ public class ImGroup extends BaseEntity<Long> {
         return new ImGroup(groupId);
     }
 
+    public static ImGroup of(Long groupId, Boolean status) {
+        ImGroup group = new ImGroup(groupId);
+        group.setStatus(status);
+        return group;
+    }
+
     public static ImGroup of(String name, Long creator) {
         return new ImGroup(name, creator);
+    }
+
+    public static ImGroup ofAvatar(Long groupId, String avatar) {
+        ImGroup group = of(groupId);
+        group.setAvatar(avatar);
+        return group;
     }
 
     public static ImGroup of(String name, Long creator, String avatar, Date now) {

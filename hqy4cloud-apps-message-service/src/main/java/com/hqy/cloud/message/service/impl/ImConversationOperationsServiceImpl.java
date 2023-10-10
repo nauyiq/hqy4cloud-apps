@@ -9,6 +9,7 @@ import com.hqy.cloud.message.bind.dto.ChatDTO;
 import com.hqy.cloud.message.bind.dto.GroupContactDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
+import com.hqy.cloud.message.bind.enums.GroupRole;
 import com.hqy.cloud.message.bind.event.support.AppendChatEvent;
 import com.hqy.cloud.message.bind.event.support.ImNoticeChatEvent;
 import com.hqy.cloud.message.bind.event.support.ImTopChatEvent;
@@ -95,8 +96,9 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
     @Override
     public ImChatVO getImChatInfoList(Long userId) {
         List<ChatDTO> chats = conversationTkService.queryImChatDTO(userId);
+        int unread = messageOperationsService.getSystemMessageUnread(userId);
         if (CollectionUtils.isEmpty(chats)) {
-            return new ImChatVO();
+            return new ImChatVO(Collections.emptyList(), ContactsVO.of(unread, Collections.emptyList()));
         }
         //获取列表涉及到的用户ids. 统一采用账号RPC查询.
         Set<Long> allUserIds = getAllUserIdsByChats(userId, chats);
@@ -105,7 +107,6 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
         List<ConversationVO> conversations = buildConversations(userId, profileMap, chats);
         //构建通讯录列表
         List<ContactVO> contacts = buildContacts(userId, profileMap, chats);
-        int unread = messageOperationsService.getSystemMessageUnread(userId);
         ContactsVO contactsVO = ContactsVO.of(unread, contacts);
         return new ImChatVO(conversations, contactsVO);
     }
@@ -149,8 +150,10 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
             return Collections.emptyList();
         }
         List<ConversationVO> vos = chats.parallelStream()
-                // 过滤会话回空 或者 会话被移除（Remove == null || 最后一条消息时间 小于 移除时间）的数据
-                .filter(chat -> chat.getConversation() != null && (chat.getConversation().getRemove() == null || chat.getConversation().getRemove() < chat.getConversation().getLastMessageTime().getTime()))
+                // 过滤 会话被移除（Remove != null || 最后一条消息时间 小于 移除时间）的数据
+                .filter(chat -> chat.getConversation() != null
+                        && (chat.getConversation().getLastRemoveTime() == null ||
+                        chat.getConversation().getLastRemoveTime() < chat.getConversation().getLastMessageTime().getTime()))
                 .map(chat -> {
                     ImConversation conversation = chat.getConversation();
                     Long contactId = conversation.getContactId();
@@ -179,13 +182,14 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 .isGroup(vo.getIsGroup()).build()).collect(Collectors.toList()));
         // 设置会话列表未读消息 并且排序
         return vos.parallelStream().peek(vo -> vo.setUnread(unreadMap.getOrDefault(vo.getConversationId(), 0)))
-                .sorted((v1, v2) -> {
+                .toList();
+                /*.sorted((v1, v2) -> {
                     if (v1.getIsTop().equals(v2.getIsTop())) {
                         return (int)(v2.getLastSendTime() - v1.getLastSendTime());
                     }
-                    return v1.getIsTop() ? 1 : -1;
+                    return v2.getIsTop() ? 1 : -1;
                 })
-                .collect(Collectors.toList());
+                .collect(Collectors.toList());*/
     }
 
 
@@ -361,8 +365,41 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
             if (!conversationTkService.insert(conversation)) {
                 return null;
             }
+        } else {
+            //说明会话之前被移除过,再次重新添加 更新最后一条消息内容
+            conversation.setLastMessageTime(new Date());
+            conversation.setLastMessageContent(StrUtil.EMPTY);
+            if (!conversationTkService.update(conversation)) {
+                return null;
+            }
         }
         return buildPrivateChatConversationVO(null, accountProfile, conversation, 0);
+    }
+
+    @Override
+    public boolean deleteConversation(ImConversation conversation) {
+        Long id = conversation.getId();
+        boolean deleted = conversation.getDeleted() != null;
+        boolean result;
+        if (deleted) {
+            result = Boolean.TRUE.equals(template.execute(status -> {
+                try {
+                    if (conversation.getGroup()) {
+                        imGroupMemberTkService.delete(ImGroupMember.of(conversation.getContactId(), conversation.getUserId()));
+                    }
+                    AssertUtil.isTrue(conversationTkService.deleteByPrimaryKey(id), "Failed execute to delete conversation.");
+                    return true;
+                } catch (Throwable cause) {
+                    log.error(cause.getMessage(), cause);
+                    status.setRollbackOnly();
+                    return false;
+                }
+            }));
+        } else {
+            conversation.setLastRemoveTime(System.currentTimeMillis());
+            result = conversationTkService.update(conversation);
+        }
+        return result;
     }
 
     private void sendTopChatEvent(ImConversation conversation) {
@@ -432,11 +469,11 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 .conversationId(conversation.getId().toString())
                 .displayName(groupContact.getName())
                 .avatar(AvatarHostUtil.settingAvatar(groupContact.getGroupAvatar()))
-                .role(groupContact.getRole())
+                .role(conversation.getDeleted() != null ? GroupRole.REMOVED.role : groupContact.getRole())
                 .isGroup(true)
                 .creator(groupContact.getCreator().toString())
                 .creatorName(profileMap.get(groupContact.getCreator()).nickname)
-                .notice(groupContact.getGroupNotice())
+                .notice(conversation.getDeleted() != null ? null : groupContact.getGroupNotice())
                 .isNotice(conversation.getNotice())
                 .isTop(conversation.getTop())
                 .invite(groupContact.getGroupInvite())

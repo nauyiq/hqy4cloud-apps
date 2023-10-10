@@ -10,9 +10,10 @@
     </select>
 
     <select id="queryPrivateConversations" resultType="com.hqy.cloud.message.tk.entity.ImConversation">
-        SELECT id,user_id,contact_id,is_notice notice,is_group `group`,is_top top
+        SELECT id,user_id,contact_id,is_notice notice,is_group `group`,is_top top,last_remove_time lastRemoveTime
         FROM t_im_conversation WHERE
-        (user_id = #{id} AND contact_id = #{contactId} AND is_group = 0) OR (user_id = #{contactId} AND contact_id = #{id} AND is_group = 0)
+        (user_id = #{id} AND contact_id = #{contactId} AND is_group = 0 ) OR
+        (user_id = #{contactId} AND contact_id = #{id} AND is_group = 0)
     </select>
 
     <resultMap id="ImChatDTOResultMap" type="com.hqy.cloud.message.bind.dto.ChatDTO">
@@ -24,10 +25,11 @@
             <result property="notice" column="notice"/>
             <result property="top" column="top"/>
             <result property="created" column="created"/>
-            <result property="remove" column="remove"/>
+            <result property="lastRemoveTime" column="lastRemoveTime"/>
             <result property="lastMessageType" column="lastMessageType"/>
             <result property="lastMessageContent" column="lastMessageContent"/>
             <result property="lastMessageTime" column="lastMessageTime"/>
+            <result property="deleted" column="deleted"/>
         </association>
         <association property="friend" javaType="com.hqy.cloud.message.tk.entity.ImFriend">
             <result property="userId" column="friendId"/>
@@ -56,11 +58,12 @@
             a.is_group `group`,
             a.is_notice `notice`,
             a.is_top top,
-            a.is_remove `remove`,
+            a.last_remove_time `lastRemoveTime`,
             a.created,
             a.last_message_type `lastMessageType`,
             a.last_message_content `lastMessageContent`,
             a.last_message_time `lastMessageTime`,
+            a.deleted `deleted`,
             f.user_id friendId,
             f.remark remark,
             f.index `index`,
@@ -92,9 +95,11 @@
             is_group,
             is_notice,
             is_top,
+            last_remove_time,
             last_message_type,
             last_message_content,
             last_message_time,
+            deleted,
             created,
             updated
         ) VALUES
@@ -105,21 +110,39 @@
              #{conversation.group},
              #{conversation.notice},
              #{conversation.top},
+             #{conversation.lastRemoveTime},
              #{conversation.lastMessageType},
              #{conversation.lastMessageContent},
              #{conversation.lastMessageTime},
+             #{conversation.deleted},
              #{conversation.created},
              #{conversation.updated}
             )
         </foreach>
         ON DUPLICATE KEY UPDATE
-        is_remove = VALUES(is_remove),
+        last_remove_time = VALUES(last_remove_time),
         last_message_type = VALUES(last_message_type),
         last_message_content = VALUES(last_message_content),
         last_message_time = VALUES(last_message_time),
+        deleted = VALUES(deleted),
         updated = VALUES(updated)
     </insert>
 
+    <update id="deleteConversation">
+        UPDATE t_im_conversation
+        SET `deleted` = #{deleted}
+        WHERE
+        <if test="userId != null">
+            user_id = #{userId} AND
+        </if>
+            contact_id = #{contactId} AND is_group = #{isGroup}
+    </update>
 
+    <delete id="removeConversations">
+        DELETE FROM t_im_conversation WHERE
+        <foreach collection="conversations" item="conversation" separator="or">
+            (user_id = #{conversation.userId} AND contact_id = #{conversation.contactId} AND is_group = #{conversation.group})
+        </foreach>
+    </delete>
 
 </mapper>

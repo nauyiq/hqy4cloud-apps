@@ -1,10 +1,14 @@
 package com.hqy.cloud.message.bind;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Validator;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
+import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.apps.commom.constants.AppsConstants;
 import com.hqy.cloud.message.bind.event.support.AddGroupEvent;
+import com.hqy.cloud.message.bind.vo.GroupMemberVO;
+import com.hqy.cloud.message.bind.vo.UserInfoVO;
 import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.tk.entity.ImGroup;
@@ -13,6 +17,8 @@ import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.*;
@@ -51,6 +57,25 @@ public class ConvertUtil {
                     .creator(group.getCreator().toString()).build();
         }).collect(Collectors.toList());
     }
+
+    public List<GroupMemberVO> convertGroupMembers(List<ImGroupMember> groupMembers, Map<Long, AccountProfileStruct> infos) {
+        return groupMembers.parallelStream().map(member -> {
+            Long userId = member.getUserId();
+            String displayName = member.getDisplayName();
+            if (userId == null || !infos.containsKey(userId)) {
+                return null;
+            }
+            GroupMemberVO vo = new GroupMemberVO(member.getUserId().toString(), member.getRole(), DateUtil.formatDateTime(member.getCreated()));
+            AccountProfileStruct struct = infos.get(userId);
+            UserInfoVO userInfoVO = new UserInfoVO(userId.toString(), struct.username, struct.nickname, struct.avatar,
+                    StringUtils.isEmpty(displayName) ? struct.nickname : displayName);
+            vo.setUserInfo(userInfoVO);
+            return vo;
+        }).filter(Objects::nonNull).collect(Collectors.toList());
+    }
+
+
+
 
     public String getMessageContent(Long id, String editor, ImMessageDoc doc) {
         String type = doc.getType();

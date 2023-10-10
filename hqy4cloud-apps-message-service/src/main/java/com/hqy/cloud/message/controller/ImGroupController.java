@@ -20,6 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 import static com.hqy.cloud.common.result.ResultCode.ERROR_PARAM_UNDEFINED;
+import static com.hqy.cloud.common.result.ResultCode.NOT_LOGIN;
 import static com.hqy.cloud.message.tk.entity.ImGroupMember.MAX_MEMBERS;
 
 /**
@@ -79,33 +80,38 @@ public class ImGroupController extends BaseController {
 
     /**
      * 获取群聊成员
+     * @param request HttpServletRequest.
      * @param groupId 群聊id
      * @return R.
      */
     @GetMapping("/group/members/{groupId}")
-    public R<List<GroupMemberVO>> getGroupMembers(@PathVariable Long groupId) {
+    public R<List<GroupMemberVO>> getGroupMembers(HttpServletRequest request, @PathVariable Long groupId) {
+        Long id = getAccessAccountId(request);
+        if (id == null) {
+            return R.failed(NOT_LOGIN);
+        }
         if (groupId == null) {
             return R.failed(ERROR_PARAM_UNDEFINED);
         }
-        return requestService.getGroupMembers(groupId);
+        return requestService.getGroupMembers(id, groupId);
     }
 
     /**
      * 添加群聊用户
      * @param request     HttpServletRequest
-     * @param groupMember {@link GroupMemberDTO}
+     * @param group      {@link GroupDTO}
      * @return R.
      */
     @PostMapping("/group/member")
-    public R<Boolean> addGroupMember(HttpServletRequest request, @RequestBody GroupMemberDTO groupMember) {
+    public R<Boolean> addGroupMember(HttpServletRequest request, @RequestBody GroupDTO group) {
         Long id = getAccessAccountId(request);
         if (id == null) {
             return R.failed(ResultCode.NOT_LOGIN);
         }
-        if (groupMember == null || !groupMember.isEnable()) {
+        if (group == null || group.getGroupId() == null || CollectionUtils.isEmpty(group.getUserIds())) {
             return R.failed(ERROR_PARAM_UNDEFINED);
         }
-        return requestService.addGroupMember(id, groupMember);
+        return requestService.addGroupMember(id, group);
     }
 
     /**
@@ -145,6 +151,36 @@ public class ImGroupController extends BaseController {
             return R.failed(ERROR_PARAM_UNDEFINED);
         }
         return requestService.removeGroupMember(id, groupMember);
+    }
+
+    /**
+     * 退出群聊
+     * @param request HttpServletRequest
+     * @param groupId 所在群id
+     * @return        R.
+     */
+    @DeleteMapping("/group/exit/{groupId}")
+    public R<Boolean> exitGroup(HttpServletRequest request, @PathVariable("groupId") Long groupId) {
+        Long id = getAccessAccountId(request);
+        if (id == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        return requestService.exitGroup(id, groupId);
+    }
+
+    /**
+     * 删除/解散 群聊
+     * @param request HttpServletRequest
+     * @param groupId 所在群id
+     * @return        R.
+     */
+    @DeleteMapping("/group/{groupId}")
+    public R<Boolean> deleteGroup(HttpServletRequest request, @PathVariable("groupId") Long groupId) {
+        Long id = getAccessAccountId(request);
+        if (id == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        return requestService.deleteGroup(id, groupId);
     }
 
 

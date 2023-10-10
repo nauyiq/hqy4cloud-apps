@@ -40,6 +40,8 @@ public interface ImMessageOperationsService {
      */
     ImMessageVO sendImMessage(Long id, ImMessageDTO message);
 
+
+
     /**
      * 添加系统消息
      * @param send           发送人
@@ -58,10 +60,11 @@ public interface ImMessageOperationsService {
      * @param groupMembers    群聊用户id集合
      * @param messageType     消息类型
      * @param message         消息内容
+     * @param messageTime     消息时间
      * @return                消息
      */
     ImMessage addSimpleMessage(Long send, Long receive, boolean isGroup, Long conversationId,
-                          List<Long> groupMembers, ImMessageType messageType, String message);
+                          List<Long> groupMembers, ImMessageType messageType, String message, Long messageTime);
 
     /**
      * read messages

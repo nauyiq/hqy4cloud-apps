@@ -39,7 +39,7 @@ public class ImConversationTkServiceImpl extends BaseTkServiceImpl<ImConversatio
     @Override
     public List<ImConversation> queryConversations(Long id, Long contactId, Boolean isGroup) {
         if (isGroup != null && isGroup) {
-            return mapper.select(ImConversation.of(null, contactId, true));
+            return mapper.select(ImConversation.of(null, contactId, true)).stream().filter(conversation -> conversation.getDeleted() == null).toList();
         } else {
             return mapper.queryPrivateConversations(id, contactId);
         }
@@ -48,5 +48,15 @@ public class ImConversationTkServiceImpl extends BaseTkServiceImpl<ImConversatio
     @Override
     public List<ChatDTO> queryImChatDTO(Long userId) {
         return mapper.queryImChatDTO(userId);
+    }
+
+    @Override
+    public void removeConversations(List<ImConversation> imConversations) {
+        mapper.removeConversations(imConversations);
+    }
+
+    @Override
+    public boolean deleteConversation(Long userId, Long contactId, boolean isGroup, Long removeTime) {
+        return mapper.deleteConversation(userId, contactId, isGroup ? 1 : 0, removeTime) > 0;
     }
 }

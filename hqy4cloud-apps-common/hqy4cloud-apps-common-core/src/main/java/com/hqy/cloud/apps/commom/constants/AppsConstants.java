@@ -28,7 +28,10 @@ public interface AppsConstants {
         String CREATOR_GROUP_EVENT_CONTENT = "{}创建了群聊。";
         String IM_GROUP_NAME_CHANGE_CONTENT = "{}修改了群名为";
         String IM_GROUP_NOTICE_CHANGE_CONTENT = "{}发布了新的公告。";
+        String IM_GROUP_REMOVE_MEMBER_CONTENT = "{}被移除了群聊。";
+        String IM_GROUP_DELETE_CONTENT = "群主解散了该群聊";
         String UNDO_FROM_MESSAGE_CONTENT = "{}撤回了一条消息";
+
         Long IM_SYSTEM_MESSAGE_UNREAD_ID = -1L;
         String IM_GROUP_DEFAULT_INDEX = "[1]群聊";
     }

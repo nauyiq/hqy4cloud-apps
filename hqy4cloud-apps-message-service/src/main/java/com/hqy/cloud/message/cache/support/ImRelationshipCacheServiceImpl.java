@@ -80,7 +80,22 @@ public class ImRelationshipCacheServiceImpl extends ImCache implements ImRelatio
     @Override
     public Boolean isGroupMember(Long groupId, Long memberId) {
         String key = genGroupKey(groupId);
-        return SmartRedisManager.getInstance().hExists(key, memberId);
+        String s = SmartRedisManager.getInstance().hGet(key, memberId.toString());
+        if (s == null) return null;
+        return StringUtils.isNotBlank(s);
+    }
+
+    @Override
+    public Boolean removeGroupMember(Long groupId, Long memberId) {
+        String key = genGroupKey(groupId);
+        SmartRedisManager.getInstance().hDel(key, memberId.toString());
+        return true;
+    }
+
+    @Override
+    public Boolean removeGroup(Long groupId) {
+        String key = genGroupKey(groupId);
+        return SmartRedisManager.getInstance().del(key);
     }
 
     @Override

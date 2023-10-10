@@ -33,18 +33,19 @@ public interface ImGroupRequestService {
 
     /**
      * 获取群聊成员
+     * @param userId  登录用户iD
      * @param groupId 群聊id
      * @return        R.
      */
-    R<List<GroupMemberVO>> getGroupMembers(Long groupId);
+    R<List<GroupMemberVO>> getGroupMembers(Long userId, Long groupId);
 
     /**
      * 添加群聊成员
      * @param id          登录用户id
-     * @param groupMember {@link GroupMemberDTO}
+     * @param group       {@link GroupDTO}
      * @return            R.
      */
-    R<Boolean> addGroupMember(Long id, GroupMemberDTO groupMember);
+    R<Boolean> addGroupMember(Long id, GroupDTO group);
 
     /**
      * 修改群聊成员信息
@@ -61,4 +62,20 @@ public interface ImGroupRequestService {
      * @return            R.
      */
     R<Boolean> removeGroupMember(Long id, GroupMemberDTO groupMember);
+
+    /**
+     * 退出群聊
+     * @param userId  用户id
+     * @param groupId 群聊id
+     * @return        R.
+     */
+    R<Boolean> exitGroup(Long userId, Long groupId);
+
+    /**
+     * 删除群聊
+     * @param userId  用户id
+     * @param groupId 群聊id
+     * @return        R.
+     */
+    R<Boolean> deleteGroup(Long userId, Long groupId);
 }

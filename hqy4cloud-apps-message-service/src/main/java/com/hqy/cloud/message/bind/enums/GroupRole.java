@@ -24,6 +24,11 @@ public enum GroupRole {
      */
     COMMON("common", 3),
 
+    /**
+     * 被移除了的用户
+     */
+    REMOVED("removed", 4),
+
     ;
 
     public final String name;

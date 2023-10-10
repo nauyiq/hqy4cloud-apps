@@ -7,7 +7,7 @@
         SELECT m.user_id, g.id groupId, g.name groupName, g.avatar groupAvatar, g.is_invite groupInvite, g.creator groupCreator, m.role
         FROM t_im_group g
         LEFT JOIN t_im_group_member m on g.id = m.group_id
-        WHERE m.user_id = #{id} AND g.id IN
+        WHERE m.user_id = #{id} AND AND g.deleted = 0  g.id IN
         <foreach collection="groupIds" item="groupId" separator="," open="(" close=")">
             #{groupId}
         </foreach>
@@ -16,11 +16,32 @@
     <select id="queryGroupMembers" resultType="com.hqy.cloud.message.tk.entity.ImGroupMember">
         SELECT group_id,user_id,display_name,`role`,is_top top,is_notice notice
         FROM t_im_group_member
-        WHERE group_id = #{groupId} AND user_id IN
+        WHERE group_id = #{groupId} AND deleted = 0 AND user_id IN
         <foreach collection="userIds" separator="," item="userId" open="(" close=")">
             #{userId}
         </foreach>
     </select>
+
+    <select id="simpleQueryAllGroupMembers" resultType="com.hqy.cloud.message.tk.entity.ImGroupMember">
+        SELECT id,group_id,user_id,display_name,`role`,created
+        FROM t_im_group_member
+        WHERE group_id = #{groupId} AND deleted = 0
+    </select>
+
+    <insert id="insertOrUpdate">
+        INSERT INTO t_im_group_member
+        (
+         group_id,user_id,display_name,role,is_top,is_notice,deleted,created,updated
+        ) VALUES
+        <foreach collection="members" item="member" separator=",">
+            (
+             #{member.groupId},#{member.userId},#{member.displayName},#{member.role},#{member.top},#{member.notice},#{member.deleted},now(),now()
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        `deleted` = VALUES(`deleted`),
+        `updated` = VALUES(`updated`)
+    </insert>
 
     <update id="updateMember">
         UPDATE t_im_group_member
@@ -39,7 +60,15 @@
                 ,`role` = #{member.role}
             </if>
         </set>
-        WHERE group_id = #{member.groupId} AND user_id = #{member.userId}
+        WHERE group_id = #{member.groupId} AND user_id = #{member.userId} AND deleted = 0
+    </update>
+
+    <update id="removeGroupMember">
+        UPDATE t_im_group_member SET updated = now(), deleted = 1
+        WHERE group_id = #{groupId}
+        <if test="userId != null">
+            AND user_id = #{userId}
+        </if>
     </update>
 
 

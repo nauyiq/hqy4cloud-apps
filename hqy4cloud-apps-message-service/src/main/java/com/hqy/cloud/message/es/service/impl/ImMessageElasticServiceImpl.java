@@ -37,13 +37,13 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
     }
 
     @Override
-    public PageResult<ImMessageDoc> queryPage(Long from, Long removeTime, MessagesRequestParamDTO params) {
+    public PageResult<ImMessageDoc> queryPage(Long from, Long removeTime, Long deleteTime, MessagesRequestParamDTO params) {
         Long to = params.getToContactId();
         //构建查询条件.
         NativeQueryBuilder queryBuilder = new NativeQueryBuilder();
         if (params.getIsGroup() == null || !params.getIsGroup()) {
-            Query fromQuery = getPrivateChatMustBooleanQuery(from, to, params, removeTime);
-            Query toQuery = getPrivateChatMustBooleanQuery(to, from, params, removeTime);
+            Query fromQuery = getPrivateChatMustBooleanQuery(from, to, params, removeTime, deleteTime);
+            Query toQuery = getPrivateChatMustBooleanQuery(to, from, params, removeTime, deleteTime);
             List<Query> shouldQueries = Arrays.asList(fromQuery, toQuery);
             queryBuilder.withQuery(q -> q.bool(b -> b.should(shouldQueries)));
         } else {
@@ -55,6 +55,12 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
             }
             if (ImMessageType.TEXT.type.equals(type) && StringUtils.isNotBlank(params.getKeywords())) {
                 mustQueries.add(QueryBuilders.matchPhrase(m -> m.field("content").query(params.getKeywords())));
+            }
+            if (deleteTime != null) {
+                mustQueries.add(QueryBuilders.range(m -> m.field("created").lte(JsonData.of(deleteTime))));
+            }
+            if (removeTime != null) {
+                mustQueries.add(QueryBuilders.range(m -> m.field("created").gte(JsonData.of(removeTime))));
             }
             queryBuilder.withQuery(q -> q.bool(b -> b.must(mustQueries)));
         }
@@ -76,12 +82,17 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
     }
 
 
-    private Query getPrivateChatMustBooleanQuery(Long from, Long to, MessagesRequestParamDTO params, Long removeTime) {
+    private Query getPrivateChatMustBooleanQuery(Long from, Long to, MessagesRequestParamDTO params, Long removeTime, Long deleteTime) {
         List<Query> mustQueries = new ArrayList<>();
         mustQueries.add(Query.of(q -> q.term(t -> t.field("from").value(from))));
         mustQueries.add(Query.of(q -> q.term(t -> t.field("to").value(to))));
+        if (deleteTime != null) {
+            // 可以看到删除会话之前的聊天记录
+            mustQueries.add(QueryBuilders.range(m -> m.field("created").lte(JsonData.of(deleteTime))));
+        }
         if (removeTime != null) {
-            mustQueries.add(QueryBuilders.range(m -> m.field("created").gt(JsonData.of(removeTime))));
+            // 可以看到移除会话之后的聊天记录
+            mustQueries.add(QueryBuilders.range(m -> m.field("created").gte(JsonData.of(removeTime))));
         }
         String type = params.getType();
         if (StringUtils.isNotBlank(type)) {

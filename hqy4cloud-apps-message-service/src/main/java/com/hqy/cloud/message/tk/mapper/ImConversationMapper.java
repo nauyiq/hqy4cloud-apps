@@ -45,4 +45,20 @@ public interface ImConversationMapper extends BaseTkMapper<ImConversation, Long>
      * @return      {@link ChatDTO}
      */
     List<ChatDTO> queryImChatDTO(@Param("userId") Long userId);
+
+    /**
+     * 不根据主键删除， 根据唯一索引删除.
+     * @param conversations 会话列表
+     */
+    void removeConversations(@Param("conversations") List<ImConversation> conversations);
+
+    /**
+     * 设置会话状态未无效的状态
+     * @param userId     用户id
+     * @param contactId  联系人id
+     * @param isGroup    是否群聊
+     * @param deleted    删除时间
+     * @return           result
+     */
+    int deleteConversation(@Param("userId") Long userId, @Param("contactId") Long contactId, @Param("isGroup") int isGroup, @Param("deleted") Long deleted);
 }

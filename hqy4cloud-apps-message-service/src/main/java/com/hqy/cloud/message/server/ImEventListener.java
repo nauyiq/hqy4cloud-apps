@@ -95,7 +95,31 @@ public interface ImEventListener {
      */
     boolean onGroupNoticeChangeEvent(GroupNoticeEvent groupNoticeEvent);
 
+    /**
+     * 移除群成员事件
+     * @param event {@link RemoveGroupMemberEvent}
+     * @return      result.
+     */
+    boolean onRemoveGroupMemberEvent(RemoveGroupMemberEvent event);
 
+    /**
+     * 退出群聊事件
+     * @param event {@link ExitGroupEvent}
+     * @return      result.
+     */
+    boolean onExitGroupMemberEvent(ExitGroupEvent event);
 
+    /**
+     * 添加群成员事件
+     * @param event {@link AddGroupMemberEvent}
+     * @return      result.
+     */
+    boolean onAddGroupMemberEvent(AddGroupMemberEvent event);
 
+    /**
+     * 删除群聊事件
+     * @param event {@link DeleteGroupEvent}
+     * @return      result.
+     */
+    boolean onDeleteGroupEvent(DeleteGroupEvent event);
 }

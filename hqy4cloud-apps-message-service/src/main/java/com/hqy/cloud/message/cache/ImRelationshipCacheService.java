@@ -86,6 +86,21 @@ public interface ImRelationshipCacheService {
     Boolean isGroupMember(Long groupId, Long memberId);
 
     /**
+     * 移除群聊关系
+     * @param groupId  群聊id
+     * @param memberId 用户id
+     * @return         result.
+     */
+    Boolean removeGroupMember(Long groupId, Long memberId);
+
+    /**
+     * 移除群聊关系
+     * @param groupId 群id
+     * @return        result
+     */
+    Boolean removeGroup(Long groupId);
+
+    /**
      * delete friend relationship
      * @param from user id.
      * @param to   user id.

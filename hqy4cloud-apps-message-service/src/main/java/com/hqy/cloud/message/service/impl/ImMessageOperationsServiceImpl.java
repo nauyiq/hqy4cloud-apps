@@ -167,14 +167,14 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
     @Override
     public void addSystemMessage(Long send, Long receive, String message, Long conversationId) {
         // insert message
-        this.addSimpleMessage(send, receive, false, conversationId, null, ImMessageType.SYSTEM, message);
+        this.addSimpleMessage(send, receive, false, conversationId, null, ImMessageType.SYSTEM, message, System.currentTimeMillis());
     }
 
     @Override
     public ImMessage addSimpleMessage(Long send, Long receive, boolean isGroup, Long conversationId, List<Long> groupMembers,
-                                 ImMessageType messageType, String message) {
+                                 ImMessageType messageType, String message, Long messageTime) {
         // 构建消息体对象
-        ImMessage imMessage = new ImMessage(DistributedIdGen.getSnowflakeId(), new Date(), UUID.fastUUID().toString(), isGroup, send, receive, messageType.type, message);
+        ImMessage imMessage = new ImMessage(DistributedIdGen.getSnowflakeId(), new Date(messageTime), UUID.fastUUID().toString(), isGroup, send, receive, messageType.type, message);
         ImMessageDoc messageDoc = new ImMessageDoc(imMessage);
         template.execute(new TransactionCallbackWithoutResult() {
             @Override

@@ -47,7 +47,6 @@ import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_MESSA
 @Service
 @RequiredArgsConstructor
 public class ImMessageRequestServiceImpl implements ImMessageRequestService {
-
     private final ImUserSettingTkService imUserSettingTkService;
     private final ImConversationTkService conversationTkService;
     private final ImMessageElasticService imMessageElasticService;
@@ -66,7 +65,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         params.setToContactId(imConversation.getContactId());
         params.setIsGroup(imConversation.getGroup());
         // query message history from es.
-        PageResult<ImMessageDoc> result = imMessageElasticService.queryPage(id, imConversation.getRemove(), params);
+        PageResult<ImMessageDoc> result = imMessageElasticService.queryPage(id, imConversation.getLastRemoveTime(), imConversation.getDeleted(), params);
         if (result == null || CollectionUtils.isEmpty(result.getResultList())) {
             return R.ok(new PageResult<>());
         }
@@ -94,7 +93,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         //convert to message vo
         List<ImMessageVO> messages = convertMessages(resultList, profileMap, ids, imConversation);
         // setting messages read.
-        if (resultList.parallelStream().anyMatch(doc -> doc.getRead() != null && !doc.getRead())) {
+        if (resultList.parallelStream().filter(doc -> doc.getTo().equals(id)).anyMatch(doc -> doc.getRead() != null && !doc.getRead())) {
             ParentExecutorService.getInstance().execute(() -> messageOperationsService.readMessages(imConversation));
         }
         return R.ok(new PageResult<>(result.getCurrentPage(), params.getLimit(), total, messages));
@@ -119,7 +118,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
             return ImMessageVO.builder().id(doc.getMessageId())
                     .messageId(doc.getId().toString())
                     .isGroup(doc.getGroup())
-                    .isRead(true)
+                    .isRead(doc.getRead())
                     .fromUser(new UserInfoVO(from.toString(), struct.username, struct.nickname, struct.avatar, remark))
                     .toContactId(doc.getTo().toString())
                     .content(ConvertUtil.getMessageContent(imConversation.getUserId(), struct.username ,doc))
@@ -135,7 +134,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         Long to = Long.parseLong(message.getToContactId());
         //check user enable chat.
         if (message.getIsGroup()) {
-            if (groupOperationsService.isGroupMember(id, to)) {
+            if (!groupOperationsService.isGroupMember(id, to)) {
                 return R.failed(AppsResultCode.IM_NOT_GROUP_MEMBER);
             }
         } else {
@@ -154,7 +153,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         if (dto.getConversationId() != null) {
             conversation = conversationTkService.queryById(dto.getConversationId());
         } else {
-            conversation = conversationTkService.queryOne(ImConversation.of(id, dto.getFrom(), false));
+            conversation = conversationTkService.queryOne(ImConversation.of(id, dto.getFrom(), dto.getIsGroup()));
         }
         //check conversation
         if (conversation == null || !id.equals(conversation.getUserId())) {

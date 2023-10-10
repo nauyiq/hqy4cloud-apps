@@ -20,6 +20,7 @@ public interface ImConversationTkService extends BaseTkService<ImConversation, L
      */
     boolean insertOrUpdate(List<ImConversation> imConversations);
 
+
     /**
      * query group conversation.
      * @param groupId group id.
@@ -42,4 +43,20 @@ public interface ImConversationTkService extends BaseTkService<ImConversation, L
      * @return      {@link ChatDTO}
      */
     List<ChatDTO> queryImChatDTO(Long userId);
+
+    /**
+     * 批量删除
+     * @param imConversations entities
+     */
+    void removeConversations(List<ImConversation> imConversations);
+
+    /**
+     * 设置会话状态未无效的状态
+     * @param userId     用户id
+     * @param contactId  联系人id
+     * @param isGroup    是否群聊
+     * @param removeTime 移除时间
+     * @return           result
+     */
+    boolean deleteConversation(Long userId, Long contactId, boolean isGroup, Long removeTime);
 }

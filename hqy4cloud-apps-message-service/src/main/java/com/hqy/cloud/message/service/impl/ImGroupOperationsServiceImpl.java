@@ -5,13 +5,12 @@ import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.apps.commom.constants.AppsConstants;
 import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.base.lang.StringConstants;
+import com.hqy.cloud.message.bind.ConvertUtil;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
-import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.enums.GroupRole;
 import com.hqy.cloud.message.bind.event.support.*;
-import com.hqy.cloud.message.bind.vo.ContactVO;
-import com.hqy.cloud.message.bind.vo.ConversationVO;
+import com.hqy.cloud.message.bind.vo.*;
 import com.hqy.cloud.message.cache.ImRelationshipCacheService;
 import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.server.ImEventListener;
@@ -37,6 +36,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_DEFAULT_GROUP_AVATAR;
+import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_MESSAGE_SUCCESS;
 import static com.hqy.cloud.util.ImageUtil.MAX_FILE_SIZE;
 
 /**
@@ -48,13 +48,12 @@ import static com.hqy.cloud.util.ImageUtil.MAX_FILE_SIZE;
 @Service
 @RequiredArgsConstructor
 public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
-
     private final TransactionTemplate template;
     private final ImEventListener eventListener;
     private final ImGroupTkService groupTkService;
     private final ImMessageOperationsService messageOperationsService;
     private final ImGroupMemberTkService groupMemberTkService;
-    private final ImConversationTkService contactTkService;
+    private final ImConversationTkService conversationTkService;
     private final ImRelationshipCacheService relationshipCacheService;
     private final UploadFileService uploadFileService;
 
@@ -81,19 +80,18 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
                 AssertUtil.isTrue(groupMemberTkService.insertList(groupMembers), "Failed execute to insert group members.");
                 // insert conversation.
                 List<ImConversation> insertConversations = ImConversation.ofGroup(groupId, userIds);
-                AssertUtil.isTrue(contactTkService.insertList(insertConversations), "Failed execute to insert conversations by create group.");
+                AssertUtil.isTrue(conversationTkService.insertList(insertConversations), "Failed execute to insert conversations by create group.");
                 // 新增事件消息
-                messageOperationsService.addSimpleMessage(id, groupId, true, null, friends.parallelStream().map(ImFriend::getUserId).toList(),
-                        ImMessageType.EVENT ,profileMap.get(id).username + AppsConstants.Message.CREATOR_GROUP_EVENT_CONTENT);
+                messageOperationsService.addSimpleMessage(id, groupId, true, null, insertConversations.parallelStream().map(ImConversation::getUserId).toList(),
+                        ImMessageType.EVENT, AppsConstants.Message.CREATOR_GROUP_EVENT_CONTENT, System.currentTimeMillis());
                 return insertConversations;
             } catch (Throwable cause) {
                 status.setRollbackOnly();
                 return null;
             }
         });
-
         if (CollectionUtils.isNotEmpty(conversations)) {
-            sendAppendGroupChatEvent(id, true, group, conversations);
+            sendAppendGroupChatEvent(id, true, group.getId(),  group.getInvite(), group.getCreator(), profileMap.get(group.getCreator()).nickname, groupName, group.getAvatar(), conversations);
             return true;
         }
         return false;
@@ -113,78 +111,83 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
         }
     }
 
-    private String getGroupAvatar(Long id, List<Long> userIds, Map<Long, AccountProfileStruct> profileMap) {
+    private String getGroupAvatar(Long creator, List<Long> userIds, Map<Long, AccountProfileStruct> profileMap) {
         List<String> generatorAvatarList = new ArrayList<>();
-        generatorAvatarList.add(profileMap.get(id).avatar);
+        generatorAvatarList.add(profileMap.get(creator).avatar);
         for (Long userId : userIds) {
             if (generatorAvatarList.size() >= MAX_FILE_SIZE) {
                 break;
             }
-            if (userId.equals(id)) {
+            if (userId.equals(creator)) {
                 continue;
             }
             generatorAvatarList.add(profileMap.get(userId).avatar);
         }
-        UploadResponse response = uploadFileService.generateFile(generatorAvatarList, AppsConstants.Message.IM_DEFAULT_GROUP_AVATAR_FOLDER);
-        UploadResult result = response.getResult();
-        return result.isResult() ? result.getRelativePath() : IM_DEFAULT_GROUP_AVATAR;
+        try {
+            UploadResponse response = uploadFileService.generateFile(generatorAvatarList, AppsConstants.Message.IM_DEFAULT_GROUP_AVATAR_FOLDER);
+            UploadResult result = response.getResult();
+            return result.isResult() ? result.getRelativePath() : IM_DEFAULT_GROUP_AVATAR;
+        } catch (Throwable cause) {
+            log.error("Failed execute to generate group avatar.");
+            log.error(cause.getMessage(), cause);
+            return IM_DEFAULT_GROUP_AVATAR;
+        }
     }
 
-    /**
-     * 发送新增群聊聊天事件
-     * @param operator        操作者
-     * @param group          群聊信息
-     * @param conversations  群聊成员会话
-     */
-    private void sendAppendGroupChatEvent(Long operator, boolean isAdd, ImGroup group, List<ImConversation> conversations) {
+
+    private void sendAppendGroupChatEvent(Long operator, boolean isAdd, Long groupId, Boolean invite, Long creator, String creatorName, String groupName, String groupAvatar,
+                                          List<ImConversation> conversations) {
         List<AppendChatEvent> appendChatEvents;
         if (isAdd) {
             appendChatEvents = conversations.parallelStream().map(conversation -> {
                 Long userId = conversation.getUserId();
                 if (userId.equals(operator)) {
-                    ConversationVO conversationVO = buildConversationVO(group, conversation);
-                    ContactVO contactVO = buildContactVO(group, conversation);
+                    ConversationVO conversationVO = buildGroupConversationVO(invite, creator, creatorName, groupName, groupAvatar , conversation);
+                    ContactVO contactVO = buildGroupContactVO(groupId, groupAvatar, groupName, invite, conversation);
                     return AppendChatEvent.of(operator.toString(), conversationVO, contactVO);
                 } else {
-                    return AppendChatEvent.of(conversation.getUserId().toString(), buildConversationVO(group, conversation), null);
+                    return AppendChatEvent.of(conversation.getUserId().toString(),
+                            buildGroupConversationVO(invite, creator, creatorName, groupName, groupAvatar, conversation), null);
                 }
             }).toList();
         } else {
-            appendChatEvents = conversations.parallelStream().filter(conversation -> !conversation.getUserId().equals(operator))
-                    .map(conversation ->  AppendChatEvent.of(conversation.getUserId().toString(), buildConversationVO(group, conversation), null)).toList();
+            appendChatEvents = conversations.parallelStream().map(conversation -> AppendChatEvent.of(conversation.getUserId().toString(),
+                    buildGroupConversationVO(invite, creator, creatorName, groupName, groupAvatar, conversation), null)).toList();
         }
         boolean result = eventListener.onImAppendGroupChatEvent(appendChatEvents);
         if (log.isDebugEnabled()) {
-            log.debug("Do send append group event, group id: {}, result:{}.", group.getId(), result);
+            log.debug("Do send append group event, group id: {}, result:{}.", groupId, result);
         }
     }
 
-    private ContactVO buildContactVO(ImGroup group, ImConversation conversation) {
+    private ContactVO buildGroupContactVO(Long groupId, String groupAvatar, String groupName, Boolean invite, ImConversation conversation) {
         return ContactVO.builder()
-                .id(group.getId().toString())
+                .id(groupId.toString())
                 .isGroup(true)
                 .isNotice(conversation.getNotice())
                 .isTop(conversation.getTop())
-                .avatar(group.getAvatar())
-                .displayName(group.getName())
-                .index(group.getIndex())
-                .isInvite(group.getInvite())
+                .avatar(groupAvatar)
+                .displayName(groupName)
+                .index(AppsConstants.Message.IM_GROUP_DEFAULT_INDEX)
+                .isInvite(invite)
                 .build();
     }
 
-    private ConversationVO buildConversationVO(ImGroup group, ImConversation conversation) {
+    private ConversationVO buildGroupConversationVO(Boolean invite, Long creator, String creatorName, String groupName, String groupAvatar, ImConversation conversation) {
         return ConversationVO.builder()
                 .conversationId(conversation.getId().toString())
-                .id(conversation.getUserId().toString())
-                .invite(group.getInvite())
+                .id(conversation.getContactId().toString())
+                .invite(invite)
+                .lastSendTime(conversation.getLastMessageTime() == null ? conversation.getCreated().getTime() : conversation.getLastMessageTime().getTime())
                 .unread(1)
-                .creator(group.getCreator().toString())
+                .creator(creator.toString())
+                .creatorName(creatorName)
                 .isGroup(true)
                 .isNotice(conversation.getNotice())
                 .isTop(conversation.getTop())
-                .role(group.getCreator().equals(conversation.getUserId()) ? GroupRole.CREATOR.role : GroupRole.COMMON.role)
-                .displayName(group.getName())
-                .avatar(group.getAvatar())
+                .role(creator.equals(conversation.getUserId()) ? GroupRole.CREATOR.role : GroupRole.COMMON.role)
+                .displayName(groupName)
+                .avatar(groupAvatar)
                 .build();
     }
 
@@ -219,12 +222,12 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
             if (editGroupName) {
                 eventListener.onContactNameChangeEvent(ContactNameChangeEvent.of(true, userIds, groupId.toString(), name, editor));
                 messageOperationsService.addSimpleMessage(id, groupId, true, null,
-                        null, ImMessageType.EVENT,  AppsConstants.Message.IM_GROUP_NAME_CHANGE_CONTENT + name);
+                        null, ImMessageType.EVENT,  AppsConstants.Message.IM_GROUP_NAME_CHANGE_CONTENT + name, System.currentTimeMillis());
             }
             if (editNotice) {
                 eventListener.onGroupNoticeChangeEvent(GroupNoticeEvent.of(userIds, groupId.toString(), notice, editor));
                 messageOperationsService.addSimpleMessage(id, groupId, true, null,
-                        null, ImMessageType.EVENT, AppsConstants.Message.IM_GROUP_NOTICE_CHANGE_CONTENT);
+                        null, ImMessageType.EVENT, AppsConstants.Message.IM_GROUP_NOTICE_CHANGE_CONTENT, System.currentTimeMillis());
             }
             return true;
         }
@@ -232,47 +235,112 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
     }
 
     @Override
-    public boolean addGroupMember(GroupMemberDTO groupMember) {
-        ImGroupMember imGroupMember = ImGroupMember.of(groupMember.getGroupId(), groupMember.getId(), groupMember.getGroupName(), GroupRole.COMMON.role);
-        ImConversation contact = ImConversation.ofGroup(groupMember.getId(), groupMember.getGroupId());
-        Boolean execute = template.execute(status -> {
-            try {
-                AssertUtil.isTrue(groupMemberTkService.insert(imGroupMember), "Failed execute to insert group members.");
-                AssertUtil.isTrue(contactTkService.insert(contact), "Failed execute to insert group contact.");
-                return true;
-            } catch (Throwable cause) {
-                log.error(cause.getMessage());
-                status.setRollbackOnly();
-                return false;
+    public boolean addGroupMember(GroupMemberDTO groupMemberInfo, List<Long> addUserIds) {
+        Long groupId = groupMemberInfo.getGroupId();
+        // 获取当前群成员.
+        List<ImGroupMember> concurrentMembers = groupMemberTkService.simpleQueryAllGroupMembers(groupId);
+        Map<Long, ImGroupMember> concurrentMemberMap = concurrentMembers.stream().collect(Collectors.toMap(ImGroupMember::getUserId, e -> e));
+        // 重新获取新增的群成员
+        addUserIds = addUserIds.stream().filter(id -> !concurrentMemberMap.containsKey(id)).toList();
+        if (CollectionUtils.isNotEmpty(addUserIds)) {
+            // 是否更新群头像
+            boolean updateAvatar = concurrentMembers.size() < MAX_FILE_SIZE;
+            // 账号RPC获取群聊用户信息
+            List<Long> queryProfileIds = new ArrayList<>(addUserIds);
+            if (updateAvatar) {
+                queryProfileIds.addAll(concurrentMemberMap.keySet());
             }
-        });
-
-        if (Boolean.TRUE.equals(execute)) {
-            //TODO send socket messages
-            return true;
+            Map<Long, AccountProfileStruct> profileMap = AccountRpcUtil.getAccountProfileMap(queryProfileIds);
+            String avatar = updateAvatar ? getGroupAvatar(groupMemberInfo.getGroupCreator(), queryProfileIds, profileMap) : groupMemberInfo.getGroupAvatar();
+            List<ImGroupMember> groupMembers = addUserIds.stream().map(id -> ImGroupMember.of(groupId, id, null, GroupRole.COMMON.role)).toList();
+            List<ImConversation> groupConversations = addUserIds.stream().map(id -> ImConversation.ofGroup(id, groupId)).toList();
+            Boolean execute = template.execute(status -> {
+                try {
+                    if (updateAvatar) {
+                        AssertUtil.isTrue(groupTkService.updateSelective(ImGroup.ofAvatar(groupId, avatar)), "Failed execute to update group avatar.");
+                    }
+                    AssertUtil.isTrue(groupMemberTkService.insertOrUpdate(groupMembers), "Failed execute to insert group members.");
+                    conversationTkService.removeConversations(groupConversations);
+                    AssertUtil.isTrue(conversationTkService.insertList(groupConversations), "Failed execute to insert group contact.");
+                    return true;
+                } catch (Throwable cause) {
+                    log.error(cause.getMessage(), cause);
+                    status.setRollbackOnly();
+                    return false;
+                }
+            });
+            if (Boolean.TRUE.equals(execute)) {
+                // 发送新增联系人事件给新增的用户
+                sendAppendGroupChatEvent(null, false, groupId, groupMemberInfo.getGroupInvite(), groupMemberInfo.getGroupCreator(), profileMap.get(groupMemberInfo.getGroupCreator()).nickname,
+                        groupMemberInfo.getGroupName(), avatar, groupConversations);
+                // 发送新增群聊用户事件给群聊成员
+                List<GroupMemberVO> vos = ConvertUtil.convertGroupMembers(groupMembers, profileMap);
+                AddGroupMemberEvent event = AddGroupMemberEvent.of(concurrentMembers.stream().map(member -> member.getUserId().toString()).toList(), groupId.toString(), vos);
+                eventListener.onAddGroupMemberEvent(event);
+                return true;
+            }
+            return false;
         }
-        return false;
+        return true;
     }
 
+
     @Override
-    public boolean removeGroupMember(Long id, Long groupId) {
-        Boolean execute = template.execute(status -> {
+    public boolean removeGroupMember(Long operator, Long userId, Long groupId) {
+        // 获取当前群成员.
+        List<ImGroupMember> concurrentMembers = groupMemberTkService.simpleQueryAllGroupMembers(groupId);
+        boolean updateAvatar = concurrentMembers.size() - 1 < MAX_FILE_SIZE;
+        String groupAvatar = null;
+        Map<Long, AccountProfileStruct> profileMap;
+        if (updateAvatar) {
+            List<Long> avatarMember = concurrentMembers.stream().map(ImGroupMember::getUserId).toList();
+            profileMap = AccountRpcUtil.getAccountProfileMap(avatarMember);
+            // 当前删除用户头像不再参与群聊头像生成
+            avatarMember = avatarMember.stream().filter(id -> !id.equals(userId)).toList();
+            groupAvatar = getGroupAvatar(operator, avatarMember, profileMap);
+        } else {
+            profileMap = AccountRpcUtil.getAccountProfileMap(List.of(userId));
+        }
+        if (MapUtil.isEmpty(profileMap)) {
+            return false;
+        }
+        String finalGroupAvatar = groupAvatar;
+        ImMessage message = template.execute(status -> {
             try {
-                AssertUtil.isTrue(groupMemberTkService.delete(new ImGroupMember(groupId, id)), "Failed execute to delete group member.");
-                AssertUtil.isTrue(contactTkService.delete(ImConversation.of(id, groupId, true)), "Failed execute to delete group contact.");
-                return true;
+                if (updateAvatar) {
+                    AssertUtil.isTrue(groupTkService.updateSelective(ImGroup.ofAvatar(groupId, finalGroupAvatar)), "Failed execute to update group avatar.");
+                }
+                AssertUtil.isTrue(groupMemberTkService.removeGroupMember(groupId, userId), "Failed execute to delete group member.");
+                long removeTime = System.currentTimeMillis();
+                AssertUtil.isTrue(conversationTkService.deleteConversation(userId, groupId, true, removeTime), "Failed execute to invalid conversation.");
+                // 移除redis数据
+                relationshipCacheService.removeGroupMember(groupId, userId);
+                // 添加系统消息
+                return messageOperationsService.addSimpleMessage(userId, groupId, true, null, null,
+                        ImMessageType.EVENT, AppsConstants.Message.IM_GROUP_REMOVE_MEMBER_CONTENT, removeTime);
             } catch (Throwable cause) {
                 log.error(cause.getMessage());
                 status.setRollbackOnly();
-                return false;
+                return null;
             }
         });
-
-        if (Boolean.TRUE.equals(execute)) {
-            //TODO send socket messages
-            return true;
+        if (message != null) {
+            List<String> users = concurrentMembers.parallelStream().map(user -> user.getUserId().toString()).toList();
+            String username = profileMap.get(userId).username;
+            ImMessageVO vo = ImMessageVO.builder()
+                    .id(message.getId().toString())
+                    .isRead(true)
+                    .isGroup(true)
+                    .sendTime(message.getCreated().getTime())
+                    .fromUser(new UserInfoVO(userId.toString()))
+                    .toContactId(message.getTo().toString())
+                    .type(ImMessageType.EVENT.type)
+                    .messageId(message.getMessageId())
+                    .content(ConvertUtil.getEventMessageContent(operator, username, message.getFrom(), true, message.getContent()))
+                    .status(IM_MESSAGE_SUCCESS)
+                    .build();
+            return eventListener.onRemoveGroupMemberEvent(RemoveGroupMemberEvent.of(users, groupId.toString(), userId.toString(), vo));
         }
-
         return false;
     }
 
@@ -287,6 +355,77 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
             }
             relationshipCacheService.addGroupMemberRelationship(groupId, id, StringUtils.isBlank(member.getDisplayName()) ? StringConstants.TRUE: member.getDisplayName());
             return true;
+        }
+        return result;
+    }
+
+    @Override
+    public boolean exitGroup(ImGroupMember member) {
+        Long groupId = member.getGroupId();
+        Long userId = member.getUserId();
+        Boolean execute = template.execute(status -> {
+            try {
+                AssertUtil.isTrue(conversationTkService.delete(ImConversation.of(userId, groupId, true)), "Failed execute to delete conversation.");
+                AssertUtil.isTrue(groupMemberTkService.delete(member), "Failed execute to delete group member.");
+                relationshipCacheService.removeGroupMember(groupId, userId);
+                return true;
+            } catch (Throwable cause) {
+                status.setRollbackOnly();
+                log.error(cause.getMessage(), cause);
+                return false;
+            }
+        });
+        if (Boolean.TRUE.equals(execute)) {
+            // 获取当前群成员.
+            List<ImGroupMember> concurrentMembers = groupMemberTkService.simpleQueryAllGroupMembers(groupId);
+            List<String> members = concurrentMembers.parallelStream().map(ImGroupMember::getUserId).filter(id -> !id.equals(userId))
+                    .map(Object::toString).toList();
+            eventListener.onExitGroupMemberEvent(ExitGroupEvent.of(members, groupId.toString(), userId.toString()));
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public boolean deleteGroup(Long userId, Long groupId) {
+        // 获取当前群成员.
+        List<ImGroupMember> concurrentMembers = groupMemberTkService.simpleQueryAllGroupMembers(groupId);
+        if (CollectionUtils.isEmpty(concurrentMembers)) {
+            return true;
+        }
+        ImMessage message = template.execute(status -> {
+            try {
+                AssertUtil.isTrue(groupTkService.updateSelective(ImGroup.of(groupId, false)), "Failed execute to update group.");
+                AssertUtil.isTrue(groupMemberTkService.removeGroupMember(groupId, null), "Failed execute to remove group members.");
+                long removeTime = System.currentTimeMillis();
+                AssertUtil.isTrue(conversationTkService.deleteConversation(null, groupId, true, removeTime), "Failed execute to invalid conversations.");
+                AssertUtil.isTrue(conversationTkService.delete(ImConversation.of(userId, groupId, true)), "Failed execute to invalid conversations.");
+                // 添加系统消息
+                return messageOperationsService.addSimpleMessage(userId, groupId, true, null,null, ImMessageType.EVENT, AppsConstants.Message.IM_GROUP_DELETE_CONTENT, removeTime);
+            } catch (Throwable cause) {
+                status.setRollbackOnly();
+                log.error(cause.getMessage(), cause);
+                return null;
+            }
+        });
+        if (message != null) {
+            // 删除redis数据
+            relationshipCacheService.removeGroup(groupId);
+            // 发送事件
+            List<String> users = concurrentMembers.stream().map(member -> member.getUserId().toString()).toList();
+            ImMessageVO vo = ImMessageVO.builder()
+                    .id(message.getId().toString())
+                    .isRead(true)
+                    .isGroup(true)
+                    .sendTime(message.getCreated().getTime())
+                    .fromUser(new UserInfoVO(userId.toString()))
+                    .toContactId(message.getTo().toString())
+                    .type(ImMessageType.EVENT.type)
+                    .messageId(message.getMessageId())
+                    .content(message.getContent())
+                    .status(IM_MESSAGE_SUCCESS)
+                    .build();
+            return eventListener.onDeleteGroupEvent(DeleteGroupEvent.of(users, groupId.toString(), userId.toString(), vo));
         }
         return false;
     }

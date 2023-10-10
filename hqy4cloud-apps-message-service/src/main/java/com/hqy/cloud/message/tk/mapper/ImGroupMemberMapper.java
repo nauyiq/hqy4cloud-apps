@@ -18,6 +18,13 @@ import java.util.List;
 public interface ImGroupMemberMapper extends BaseTkMapper<ImGroupMember, Long> {
 
     /**
+     * 批量新增或更新
+     * @param members 群成员表entity {@link ImGroupMember}
+     * @return        result.
+     */
+    int insertOrUpdate(@Param("members") List<ImGroupMember> members);
+
+    /**
      * 查询群聊用户信息
      * @param id       用户id
      * @param groupIds 群聊id集合
@@ -39,4 +46,22 @@ public interface ImGroupMemberMapper extends BaseTkMapper<ImGroupMember, Long> {
      * @return       是否更新成功
      */
     int updateMember(@Param("member")ImGroupMember member);
+
+    /**
+     * 简单的查询 - 根据群聊id查询所有群聊用户信息
+     * 只返回id,群聊id,用户id,角色,和展示名称
+     * @param groupId 群聊id
+     * @return        群聊成员
+     */
+    List<ImGroupMember> simpleQueryAllGroupMembers(@Param("groupId") Long groupId);
+
+    /**
+     * 移除群聊成员, 伪删除
+     * @param groupId 群id
+     * @param userId  用户id
+     * @return        result
+     */
+    int removeGroupMember(@Param("groupId")Long groupId, @Param("userId")Long userId);
+
+
 }

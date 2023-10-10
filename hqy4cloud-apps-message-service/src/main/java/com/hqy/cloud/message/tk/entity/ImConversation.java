@@ -35,12 +35,11 @@ public class ImConversation extends BaseEntity<Long> {
     private Boolean notice;
     @Column(name = "is_top")
     private Boolean top;
-    @Column(name = "is_remove")
-    private Long remove;
+    private Long lastRemoveTime;
     private String lastMessageType;
     private String lastMessageContent;
     private Date lastMessageTime;
-
+    private Long deleted;
 
     public ImConversation(Long id, Long contactId) {
         this.userId = id;
@@ -57,6 +56,7 @@ public class ImConversation extends BaseEntity<Long> {
         super(date);
         this.userId = id;
         this.contactId = contactId;
+        this.lastMessageTime = date;
         this.group = group;
         this.notice = true;
         this.top = false;
@@ -90,7 +90,6 @@ public class ImConversation extends BaseEntity<Long> {
         Date now = new Date();
         conversation.setTop(false);
         conversation.setNotice(true);
-        conversation.setRemove(null);
         conversation.setCreated(now);
         conversation.setUpdated(now);
         return conversation;
@@ -100,7 +99,6 @@ public class ImConversation extends BaseEntity<Long> {
         ImConversation imConversation = new ImConversation(from, to, now, false);
         imConversation.setNotice(true);
         imConversation.setTop(false);
-        imConversation.setRemove(null);
         imConversation.setLastMessageType(ImMessageType.SYSTEM.type);
         imConversation.setLastMessageTime(now);
         imConversation.setLastMessageContent(nickname);

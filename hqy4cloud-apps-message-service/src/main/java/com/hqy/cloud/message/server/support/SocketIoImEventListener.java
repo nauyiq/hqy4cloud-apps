@@ -144,4 +144,28 @@ public class SocketIoImEventListener implements ImEventListener {
         Set<String> ids = new HashSet<>(event.getUserIds());
         return SocketIoConnectionUtil.doBroadcastMessages(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, ids, event.name(), event.message());
     }
+
+    @Override
+    public boolean onRemoveGroupMemberEvent(RemoveGroupMemberEvent event) {
+        Set<String> ids = new HashSet<>(event.getUsers());
+        return SocketIoConnectionUtil.doBroadcastMessages(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, ids, event.name(), event.message());
+    }
+
+    @Override
+    public boolean onExitGroupMemberEvent(ExitGroupEvent event) {
+        Set<String> ids = new HashSet<>(event.getUsers());
+        return SocketIoConnectionUtil.doBroadcastMessages(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, ids, event.name(), event.message());
+    }
+
+    @Override
+    public boolean onAddGroupMemberEvent(AddGroupMemberEvent event) {
+        Set<String> ids = new HashSet<>(event.getUsers());
+        return SocketIoConnectionUtil.doBroadcastMessages(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, ids, event.name(), event.message());
+    }
+
+    @Override
+    public boolean onDeleteGroupEvent(DeleteGroupEvent event) {
+        Set<String> ids = new HashSet<>(event.getUsers());
+        return SocketIoConnectionUtil.doBroadcastMessages(true, MicroServiceConstants.MESSAGE_NETTY_SERVICE, ids, event.name(), event.message());
+    }
 }

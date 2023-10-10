@@ -188,7 +188,7 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
         if (map.containsKey(id)) {
             conversation = map.get(id);
             conversation.setUpdated(now);
-            conversation.setRemove(null);
+            conversation.setLastRemoveTime(null);
             conversation.setLastMessageTime(now);
             conversation.setLastMessageContent(contactProfile.nickname);
             conversation.setLastMessageType(ImMessageType.SYSTEM.type);
