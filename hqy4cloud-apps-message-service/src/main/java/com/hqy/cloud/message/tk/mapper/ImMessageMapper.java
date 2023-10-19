@@ -25,9 +25,18 @@ public interface ImMessageMapper extends BaseTkMapper<ImMessage, Long> {
     List<MessageUnreadDTO> getMessageUnread(@Param("to") Long to, @Param("ids") List<Long> ids);
 
     /**
+     * 批量入库
+     * @param entities 消息entities
+     * @return         result.
+     */
+    int insertMessages(@Param("messages") List<ImMessage> entities);
+
+    /**
      * update unread messages is read.
      * @param unreadMessageIds message ids
      * @return                 result.
      */
     int updateMessagesRead(@Param("ids") List<Long> unreadMessageIds);
+
+
 }

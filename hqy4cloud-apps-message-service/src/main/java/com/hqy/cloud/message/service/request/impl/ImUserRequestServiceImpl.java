@@ -280,7 +280,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
             unread++;
             if (result && StringUtils.isNotBlank(add.getRemark())) {
                 //新增系统消息
-                ParentExecutorService.getInstance().execute(() -> messageOperationsService.addSystemMessage(id, userId, add.getRemark(), null));
+                ParentExecutorService.getInstance().execute(() -> messageOperationsService.addSystemMessage(id, userId, add.getRemark(), false));
             }
         }
         if (result) {

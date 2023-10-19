@@ -16,13 +16,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MessageUnreadDTO {
     private Long conversationId;
-    private Long from;
-    private Long to;
+    private Long userId;
+    private Long toContactId;
     private Boolean isGroup;
     private Integer unread = 0;
 
     public boolean isEnabled() {
-        return conversationId != null || (from != null && to != null);
+        return conversationId != null || (userId != null && toContactId != null);
     }
 
 }

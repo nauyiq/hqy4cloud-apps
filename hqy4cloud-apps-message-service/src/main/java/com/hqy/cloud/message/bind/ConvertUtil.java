@@ -2,7 +2,6 @@ package com.hqy.cloud.message.bind;
 
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Validator;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.pinyin.PinyinUtil;
 import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.apps.commom.constants.AppsConstants;
@@ -82,7 +81,7 @@ public class ConvertUtil {
         Long from = doc.getFrom();
         if (ImMessageType.EVENT.type.equals(type)) {
             return getEventMessageContent(id, editor, from, doc.getGroup(), doc.getContent());
-        } else if (ImMessageType.FILE.type.equals(type) || ImMessageType.IMAGE.type.equals(type)) {
+        } else if (ImMessageType.isFileType(type)) {
             return doc.getPath();
         }
         return doc.getContent();
@@ -91,7 +90,7 @@ public class ConvertUtil {
     public String getEventMessageContent(Long id, String editor, Long from, boolean isGroup, String content) {
         if (id.equals(from)) {
             content = content.replace(REPLACE, YOU);
-        } else if (AppsConstants.Message.UNDO_FROM_MESSAGE_CONTENT.equals(content) && !isGroup){
+        } else if (AppsConstants.Message.IM_UNDO_MESSAGE_CONTENT.equals(content) && !isGroup){
             content = content.replace(REPLACE, TARGET);
         } else {
             content = content.replace(REPLACE, editor);

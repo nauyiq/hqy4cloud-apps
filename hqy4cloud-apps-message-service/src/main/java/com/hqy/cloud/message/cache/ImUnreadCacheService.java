@@ -15,34 +15,55 @@ public interface ImUnreadCacheService {
     /**
      * return private chat conversation unread.
      * @param userId        user id.
-     * @param conversations conversation ids.
+     * @param toContactId   to ids.
      * @return              unread map.
      */
-    Map<Long, Integer> privateConversationsUnread(Long userId, List<Long> conversations);
+    Map<Long, Integer> privateConversationsUnread(Long userId, List<Long> toContactId);
 
     /**
      * add private chat conversation unread.
      * @param userId         user id.
-     * @param conversationId conversation id.
+     * @param toContactId    contact id.
      * @param offset         increase number
      */
-    void addPrivateConversationUnread(Long userId, Long conversationId, Long offset);
+    void addPrivateConversationUnread(Long userId, Long toContactId, Long offset);
+
+    /**
+     * add private chat conversation unread.
+     * @param userId         user id.
+     * @param unreadContacts contacts unread
+     */
+    void addPrivateConversationsUnread(Long userId, Map<Long, Long> unreadContacts);
+
+    /**
+     * add private chat conversation unread.
+     * @param userId         user id.
+     * @param contacts       contacts
+     */
+    void addPrivateConversationsUnread(Long userId, List<Long> contacts);
+
+    /**
+     * add private chat conversation unread by ids.
+     * @param userIds user ids
+     * @param contact contact id
+     */
+    void addPrivateConversationsUnreadByUserIds(List<Long> userIds, Long contact);
 
 
     /**
      * remove private conversation unread.
      * @param userId         user id.
-     * @param conversationId conversation id.
+     * @param toContactId    contact id.
      */
-    void readPrivateConversationUnread(Long userId, Long conversationId);
+    void readPrivateConversationUnread(Long userId, Long toContactId);
 
     /**
      * return private user conversation unread.
      * @param userId         user id.
-     * @param conversationId conversation id.
+     * @param toContactId    contact id.
      * @return               unread message count.
      */
-    Integer getPrivateConversationUnread(Long userId, Long conversationId);
+    Integer getPrivateConversationUnread(Long userId, Long toContactId);
 
 
     /**

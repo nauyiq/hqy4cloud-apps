@@ -3,6 +3,8 @@ package com.hqy.cloud.message.bind;
 import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.common.base.converter.CommonConverter;
 import com.hqy.cloud.message.bind.vo.UserInfoVO;
+import com.hqy.cloud.message.tk.entity.ImMessage;
+import com.hqy.cloud.message.tk.entity.ImMessageHistory;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValuePropertyMappingStrategy;
@@ -22,6 +24,7 @@ public interface ImMessageConverter {
     @Mapping(target = "id", source = "id", qualifiedByName = "longToString")
     UserInfoVO convert(AccountProfileStruct struct);
 
-
+    @Mapping(target = "imMessageId", source = "id")
+    ImMessageHistory convert(ImMessage message);
 
 }

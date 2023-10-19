@@ -38,4 +38,16 @@ public class ImUserSettingTkServiceImpl extends BaseTkServiceImpl<ImUserSetting,
         }
         return imUserSettings.get(0).getPrivateChat();
     }
+
+    @Override
+    public boolean allEnablePrivateChat(List<Long> ids) {
+        Example example = new Example(ImUserSetting.class);
+        example.createCriteria().andIn("id", ids);
+        example.excludeProperties("inviteGroup", "oline", "clearMsg", "clearMsgDate");
+        List<ImUserSetting> imUserSettings = mapper.selectByExample(example);
+        if (CollectionUtils.isEmpty(imUserSettings) || imUserSettings.size() != ids.size()) {
+            return false;
+        }
+        return imUserSettings.parallelStream().allMatch(ImUserSetting::getPrivateChat);
+    }
 }

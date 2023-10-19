@@ -43,6 +43,10 @@ public class ImMessageDoc implements ElasticDocument<Long> {
     private String content;
     @Field(type = FieldType.Keyword)
     private String path;
+    @Field(type = FieldType.Keyword)
+    private String fileName;
+    @Field(type = FieldType.Long)
+    private Long fileSize;
     @Field(type = FieldType.Boolean)
     private Boolean status;
     @Field(type = FieldType.Long)
@@ -58,6 +62,8 @@ public class ImMessageDoc implements ElasticDocument<Long> {
         this.read = message.getRead();
         this.content = isTextMessage() ? message.getContent() : StrUtil.EMPTY;
         this.path = StringUtils.isBlank(this.content) ? message.getContent() : StrUtil.EMPTY;
+        this.fileName = message.getFileName();
+        this.fileSize = message.getFileSize();
         this.status = message.getStatus();
         this.created = message.getCreated().getTime();
     }

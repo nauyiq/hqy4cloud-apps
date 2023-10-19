@@ -2,6 +2,7 @@ package com.hqy.cloud.message.tk.mapper;
 
 import com.hqy.cloud.db.tk.BaseTkMapper;
 import com.hqy.cloud.message.bind.dto.ChatDTO;
+import com.hqy.cloud.message.bind.dto.ForwardMessageDTO;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
@@ -61,4 +62,19 @@ public interface ImConversationMapper extends BaseTkMapper<ImConversation, Long>
      * @return           result
      */
     int deleteConversation(@Param("userId") Long userId, @Param("contactId") Long contactId, @Param("isGroup") int isGroup, @Param("deleted") Long deleted);
+
+    /**
+     * 撤回消息
+     * 即修改最后一条消息时间小于等于撤回时间的会话
+     * @param conversations 会话列表
+     */
+    void undoConversations(@Param("conversations") List<ImConversation> conversations);
+
+    /**
+     * 根据转发列表查询最近联系人
+     * @param id                    用户id
+     * @param conversationForwards  转发列表
+     * @return                      最近联系人
+     */
+    List<ImConversation> queryConversationsByForwards(@Param("id") Long id, @Param("forwards") List<ForwardMessageDTO.Forward> conversationForwards);
 }

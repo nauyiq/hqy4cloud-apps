@@ -68,7 +68,7 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
             return false;
         }
         String avatar = getGroupAvatar(id, userIds, profileMap);
-        String groupName = getGroupName(id, createGroup, profileMap);
+        String groupName = getGroupName(createGroup, profileMap);
         ImGroup group = ImGroup.of(groupName, id, avatar, new Date());
         List<ImConversation> conversations = template.execute(status -> {
             try {
@@ -82,7 +82,7 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
                 List<ImConversation> insertConversations = ImConversation.ofGroup(groupId, userIds);
                 AssertUtil.isTrue(conversationTkService.insertList(insertConversations), "Failed execute to insert conversations by create group.");
                 // 新增事件消息
-                messageOperationsService.addSimpleMessage(id, groupId, true, null, insertConversations.parallelStream().map(ImConversation::getUserId).toList(),
+                messageOperationsService.addSimpleMessage(id, groupId, true, true, insertConversations.parallelStream().map(ImConversation::getUserId).toList(),
                         ImMessageType.EVENT, AppsConstants.Message.CREATOR_GROUP_EVENT_CONTENT, System.currentTimeMillis());
                 return insertConversations;
             } catch (Throwable cause) {
@@ -97,7 +97,7 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
         return false;
     }
 
-    private String getGroupName(Long id, GroupDTO createGroup, Map<Long, AccountProfileStruct> profileMap) {
+    private String getGroupName(GroupDTO createGroup, Map<Long, AccountProfileStruct> profileMap) {
         if (StringUtils.isBlank(createGroup.getName())) {
             //生成默认群聊名字
             List<Long> userIds = createGroup.getUserIds();
@@ -221,12 +221,12 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
             List<String> userIds = groupMembers.parallelStream().map(ImGroupMember::getUserId).filter(userId -> !userId.equals(id)).map(Objects::toString).toList();
             if (editGroupName) {
                 eventListener.onContactNameChangeEvent(ContactNameChangeEvent.of(true, userIds, groupId.toString(), name, editor));
-                messageOperationsService.addSimpleMessage(id, groupId, true, null,
+                messageOperationsService.addSimpleMessage(id, groupId, true, false,
                         null, ImMessageType.EVENT,  AppsConstants.Message.IM_GROUP_NAME_CHANGE_CONTENT + name, System.currentTimeMillis());
             }
             if (editNotice) {
                 eventListener.onGroupNoticeChangeEvent(GroupNoticeEvent.of(userIds, groupId.toString(), notice, editor));
-                messageOperationsService.addSimpleMessage(id, groupId, true, null,
+                messageOperationsService.addSimpleMessage(id, groupId, true, false,
                         null, ImMessageType.EVENT, AppsConstants.Message.IM_GROUP_NOTICE_CHANGE_CONTENT, System.currentTimeMillis());
             }
             return true;
@@ -316,7 +316,7 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
                 // 移除redis数据
                 relationshipCacheService.removeGroupMember(groupId, userId);
                 // 添加系统消息
-                return messageOperationsService.addSimpleMessage(userId, groupId, true, null, null,
+                return messageOperationsService.addSimpleMessage(userId, groupId, true, false, null,
                         ImMessageType.EVENT, AppsConstants.Message.IM_GROUP_REMOVE_MEMBER_CONTENT, removeTime);
             } catch (Throwable cause) {
                 log.error(cause.getMessage());
@@ -401,7 +401,7 @@ public class ImGroupOperationsServiceImpl implements ImGroupOperationsService {
                 AssertUtil.isTrue(conversationTkService.deleteConversation(null, groupId, true, removeTime), "Failed execute to invalid conversations.");
                 AssertUtil.isTrue(conversationTkService.delete(ImConversation.of(userId, groupId, true)), "Failed execute to invalid conversations.");
                 // 添加系统消息
-                return messageOperationsService.addSimpleMessage(userId, groupId, true, null,null, ImMessageType.EVENT, AppsConstants.Message.IM_GROUP_DELETE_CONTENT, removeTime);
+                return messageOperationsService.addSimpleMessage(userId, groupId, true, false,null, ImMessageType.EVENT, AppsConstants.Message.IM_GROUP_DELETE_CONTENT, removeTime);
             } catch (Throwable cause) {
                 status.setRollbackOnly();
                 log.error(cause.getMessage(), cause);

@@ -65,7 +65,12 @@ public enum AppsResultCode implements Result {
     /**
      * 用户不是群聊成员
      */
-    IM_NOT_GROUP_MEMBER(10005, "The user is not group member.")
+    IM_NOT_GROUP_MEMBER(10005, "The user is not group member."),
+
+    /**
+     * 转发的聊天不能超过五个
+     */
+    IM_FORWARD_SIZE_MAX(10006, "No more than five chats can be forwarded.")
 
 
 

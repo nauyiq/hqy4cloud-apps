@@ -3,6 +3,8 @@ package com.hqy.cloud.message.es.service.impl;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import co.elastic.clients.json.JsonData;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.elasticsearch.mapper.ElasticMapper;
 import com.hqy.cloud.elasticsearch.service.impl.ElasticServiceImpl;
@@ -10,15 +12,22 @@ import com.hqy.cloud.message.bind.dto.MessagesRequestParamDTO;
 import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.es.service.ImMessageElasticService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author qiyuan.hong
@@ -27,8 +36,10 @@ import java.util.List;
  */
 @Service
 public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMessageDoc> implements ImMessageElasticService {
+    private final ElasticsearchTemplate elasticsearchTemplate;
     public ImMessageElasticServiceImpl(ElasticMapper<Long, ImMessageDoc> elasticMapper, ElasticsearchTemplate elasticsearchTemplate) {
         super(elasticMapper, elasticsearchTemplate);
+        this.elasticsearchTemplate = elasticsearchTemplate;
     }
 
     @Override
@@ -38,6 +49,12 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
 
     @Override
     public PageResult<ImMessageDoc> queryPage(Long from, Long removeTime, Long deleteTime, MessagesRequestParamDTO params) {
+        NativeQueryBuilder queryBuilder = getImMessageNativeQueryBuilder(from, removeTime, deleteTime, params);
+        return pageQueryByBuilder(params.getPage(), params.getLimit(), queryBuilder);
+    }
+
+    @NotNull
+    private NativeQueryBuilder getImMessageNativeQueryBuilder(Long from, Long removeTime, Long deleteTime, MessagesRequestParamDTO params) {
         Long to = params.getToContactId();
         //构建查询条件.
         NativeQueryBuilder queryBuilder = new NativeQueryBuilder();
@@ -64,9 +81,42 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
             }
             queryBuilder.withQuery(q -> q.bool(b -> b.must(mustQueries)));
         }
-        //order by `created` DESC
-        queryBuilder.withSort(Sort.by(Sort.Direction.DESC, "created"));
-        return pageQueryByBuilder(params.getPage(), params.getLimit(), queryBuilder);
+        //order by `id` DESC
+        queryBuilder.withSort(Sort.by(Sort.Direction.DESC, "id"));
+        return queryBuilder;
+    }
+
+    /**
+     * 针对单机应用， 如果分布式部署一定要改为分布式缓存.. 这里是由于个人原因只会是单机部署
+     */
+    private static final Cache<String, List<Object>> CACHE_HITS = CacheBuilder.newBuilder().expireAfterAccess(5L, TimeUnit.MINUTES).build();
+
+    @Override
+    public PageResult<ImMessageDoc> queryPageSearchAfter(Long send, Long removeTime, Long deleteTime, MessagesRequestParamDTO params) {
+        NativeQueryBuilder queryBuilder = getImMessageNativeQueryBuilder(send, removeTime, deleteTime, params);
+        Integer limit = params.getLimit();
+        Integer page = params.getPage();
+        String key = params.gerSearchAfterKey(removeTime, deleteTime);
+        List<Object> searchAfter = CACHE_HITS.getIfPresent(key);
+        SearchHits<ImMessageDoc> searchHits;
+        if (CollectionUtils.isEmpty(searchAfter)) {
+            //设置分页参数
+            queryBuilder.withPageable(PageRequest.of(page - 1, limit));
+            searchHits = elasticsearchTemplate.search(queryBuilder.build(), getDocumentClass());
+        } else {
+            //设置分页参数
+            queryBuilder.withPageable(PageRequest.of(0, limit));
+            NativeQuery query = queryBuilder.build();
+            query.setSearchAfter(searchAfter);
+            searchHits = elasticsearchTemplate.search(query, getDocumentClass());
+        }
+        if (searchHits.getSearchHits().size() != 0) {
+            searchAfter = searchHits.getSearchHit(searchHits.getSearchHits().size() - 1).getSortValues();
+        }
+        if (CollectionUtils.isNotEmpty(searchAfter)) {
+            CACHE_HITS.put(key, searchAfter);
+        }
+        return buildPageResult(page, limit, searchHits);
     }
 
     @Override
@@ -76,7 +126,7 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
         Query toQuery = Query.of(q -> q.term(t -> t.field("to").value(to)));
         Query readQuery = Query.of(q -> q.term(t -> t.field("read").value(false)));
         queryBuilder.withQuery(q -> q.bool(b -> b.must(Arrays.asList(fromQuery, toQuery, readQuery))));
-        queryBuilder.withMaxResults(10000);
+//        queryBuilder.withMaxResults(1000);
         queryBuilder.withFields("id");
         return searchByQuery(queryBuilder.build());
     }

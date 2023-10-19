@@ -23,6 +23,7 @@ public class GroupMemberDTO {
     private String notice;
     private Integer role;
     private String displayName;
+    private Boolean deleted;
 
     public boolean isEnable() {
         return id != null && groupId != null;

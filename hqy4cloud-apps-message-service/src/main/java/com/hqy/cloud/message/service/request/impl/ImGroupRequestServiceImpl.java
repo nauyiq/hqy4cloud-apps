@@ -1,8 +1,6 @@
 package com.hqy.cloud.message.service.request.impl;
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.map.MapUtil;
-import cn.hutool.core.util.StrUtil;
 import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
@@ -12,11 +10,9 @@ import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.bind.enums.GroupRole;
 import com.hqy.cloud.message.bind.vo.GroupMemberVO;
-import com.hqy.cloud.message.bind.vo.UserInfoVO;
 import com.hqy.cloud.message.service.ImGroupOperationsService;
 import com.hqy.cloud.message.service.request.ImGroupRequestService;
 import com.hqy.cloud.message.tk.entity.ImFriend;
-import com.hqy.cloud.message.tk.entity.ImGroup;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import com.hqy.cloud.message.tk.service.ImGroupMemberTkService;
@@ -28,10 +24,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.hqy.cloud.apps.commom.result.AppsResultCode.*;
+import static com.hqy.cloud.apps.commom.result.AppsResultCode.IM_GROUP_NOT_EXIST;
+import static com.hqy.cloud.apps.commom.result.AppsResultCode.IM_NOT_GROUP_MEMBER;
 
 /**
  * @author qiyuan.hong
@@ -64,7 +64,7 @@ public class ImGroupRequestServiceImpl implements ImGroupRequestService {
         if (groupMemberInfo == null) {
             return R.failed(IM_GROUP_NOT_EXIST);
         }
-        if (groupMemberInfo.getRole() == null || groupMemberInfo.getRole().equals(GroupRole.COMMON.role)) {
+        if (groupMemberInfo.getRole() == null || groupMemberInfo.getDeleted()) {
             return R.failed(ResultCode.NOT_PERMISSION);
         }
         return groupOperationsService.editGroup(info, groupMemberInfo, editGroup) ? R.ok() : R.failed();

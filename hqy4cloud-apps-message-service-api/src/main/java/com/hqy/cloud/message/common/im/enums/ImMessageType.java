@@ -1,6 +1,9 @@
 package com.hqy.cloud.message.common.im.enums;
 
+import cn.hutool.core.util.PageUtil;
+
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author qiyuan.hong
@@ -43,6 +46,8 @@ public enum ImMessageType {
 
     public final String type;
 
+    public static final List<String> FILES_TYPES = List.of(IMAGE.type, FILE.type, ViDEO.type);
+
     ImMessageType(String type) {
         this.type = type;
     }
@@ -50,6 +55,10 @@ public enum ImMessageType {
     public static boolean isEnabled(String type) {
         ImMessageType[] values = values();
         return Arrays.stream(values).anyMatch(e -> e.type.equals(type));
+    }
+
+    public static boolean isFileType(String type) {
+        return FILES_TYPES.contains(type);
     }
 
 }

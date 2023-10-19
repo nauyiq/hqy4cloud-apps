@@ -2,10 +2,7 @@ package com.hqy.cloud.message.tk.entity;
 
 import com.hqy.cloud.db.tk.model.BaseEntity;
 import com.hqy.cloud.message.common.im.enums.ImMessageType;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.persistence.Column;
 import javax.persistence.Table;
@@ -21,6 +18,7 @@ import java.util.List;
  * @date 2023/8/11 13:19
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "t_im_conversation")
@@ -57,6 +55,19 @@ public class ImConversation extends BaseEntity<Long> {
         this.userId = id;
         this.contactId = contactId;
         this.lastMessageTime = date;
+        this.group = group;
+        this.notice = true;
+        this.top = false;
+    }
+
+    public ImConversation(Long id, Long contactId, Date date, boolean group, String lastMessageContent, String lastMessageType) {
+        super(date);
+        this.userId = id;
+        this.contactId = contactId;
+        this.lastMessageTime = date;
+        this.lastMessageContent = lastMessageContent;
+        this.lastMessageType = lastMessageType;
+        this.lastRemoveTime = null;
         this.group = group;
         this.notice = true;
         this.top = false;

@@ -58,40 +58,6 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
     private final ImEventListener imEventListener;
     private final ImMessageOperationsService messageOperationsService;
 
-    @Override
-    public List<ConversationVO> getImConversations(Long id) {
-        ImConversation of = ImConversation.of(id);
-        List<ImConversation> conversations = conversationTkService.queryList(of);
-        if (CollectionUtils.isEmpty(conversations)) {
-            return Collections.emptyList();
-        }
-        Map<Boolean, List<ImConversation>> map = conversations.parallelStream().collect(Collectors.groupingBy(ImConversation::getGroup));
-        //好友会话列表
-        List<ImConversation> friendConversations = map.get(Boolean.FALSE);
-        List<ConversationVO> friendConversationVos = convert(id, friendConversations, false);
-        //群聊会话列表
-        List<ImConversation> groupConversations = map.get(Boolean.TRUE);
-        List<ConversationVO> groupConversationVos = convert(id, groupConversations, true);
-        friendConversationVos.addAll(groupConversationVos);
-        //所有会话列表
-        List<ConversationVO> all = friendConversationVos;
-        //获取所有会话列表的未读消息
-        Map<String, Integer> unreadMap = messageOperationsService.getConversationUnread(id, all.parallelStream().filter(ConversationVO::getIsNotice).map(vo -> MessageUnreadDTO.builder()
-                .conversationId(Long.parseLong(vo.getConversationId()))
-                .from(Long.parseLong(vo.getId()))
-                .to(id)
-                .isGroup(vo.getIsGroup()).build()).collect(Collectors.toList()));
-        // sort by message and setting unread.
-        all = all.parallelStream().peek(vo -> vo.setUnread(unreadMap.getOrDefault(vo.getConversationId(), 0)))
-                .sorted((v1, v2) -> {
-                    if (v1.getIsTop().equals(v2.getIsTop())) {
-                        return (int)(v2.getLastSendTime() - v1.getLastSendTime());
-                    }
-                    return v1.getIsTop() ? 1 : -1;
-                })
-                .collect(Collectors.toList());
-        return all;
-    }
 
     @Override
     public ImChatVO getImChatInfoList(Long userId) {
@@ -177,19 +143,12 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
         //获取所有会话列表的未读消息
         Map<String, Integer> unreadMap = messageOperationsService.getConversationUnread(userId, vos.parallelStream().filter(ConversationVO::getIsNotice).map(vo -> MessageUnreadDTO.builder()
                 .conversationId(Long.parseLong(vo.getConversationId()))
-                .from(Long.parseLong(vo.getId()))
-                .to(userId)
+                .userId(userId)
+                .toContactId(Long.parseLong(vo.getId()))
                 .isGroup(vo.getIsGroup()).build()).collect(Collectors.toList()));
         // 设置会话列表未读消息 并且排序
         return vos.parallelStream().peek(vo -> vo.setUnread(unreadMap.getOrDefault(vo.getConversationId(), 0)))
                 .toList();
-                /*.sorted((v1, v2) -> {
-                    if (v1.getIsTop().equals(v2.getIsTop())) {
-                        return (int)(v2.getLastSendTime() - v1.getLastSendTime());
-                    }
-                    return v2.getIsTop() ? 1 : -1;
-                })
-                .collect(Collectors.toList());*/
     }
 
 
@@ -366,11 +325,17 @@ public class ImConversationOperationsServiceImpl implements ImConversationOperat
                 return null;
             }
         } else {
-            //说明会话之前被移除过,再次重新添加 更新最后一条消息内容
-            conversation.setLastMessageTime(new Date());
-            conversation.setLastMessageContent(StrUtil.EMPTY);
-            if (!conversationTkService.update(conversation)) {
-                return null;
+            Date lastMessageTime = conversation.getLastMessageTime();
+            Long lastRemoveTime = conversation.getLastRemoveTime();
+            if (lastMessageTime != null && lastRemoveTime != null && (lastMessageTime.getTime() > lastRemoveTime)) {
+              // 不需要更新会话.
+            } else {
+                //说明会话之前被移除过,再次重新添加 更新最后一条消息内容
+                conversation.setLastMessageTime(new Date());
+                conversation.setLastMessageContent(StrUtil.EMPTY);
+                if (!conversationTkService.update(conversation)) {
+                    return null;
+                }
             }
         }
         return buildPrivateChatConversationVO(null, accountProfile, conversation, 0);

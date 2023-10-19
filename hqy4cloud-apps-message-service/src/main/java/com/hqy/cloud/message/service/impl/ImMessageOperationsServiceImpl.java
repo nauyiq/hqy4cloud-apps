@@ -4,14 +4,19 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
+import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.apps.commom.constants.AppsConstants;
 import com.hqy.cloud.foundation.id.DistributedIdGen;
+import com.hqy.cloud.message.bind.dto.ForwardMessageDTO;
+import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.event.support.GroupChatEvent;
 import com.hqy.cloud.message.bind.event.support.PrivateChatEvent;
 import com.hqy.cloud.message.bind.event.support.ReadMessagesEvent;
+import com.hqy.cloud.message.bind.event.support.UndoMessageEvent;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
+import com.hqy.cloud.message.bind.vo.UserInfoVO;
 import com.hqy.cloud.message.cache.ImUnreadCacheService;
 import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
@@ -20,12 +25,15 @@ import com.hqy.cloud.message.server.ImEventListener;
 import com.hqy.cloud.message.service.ImConversationOperationsService;
 import com.hqy.cloud.message.service.ImMessageOperationsService;
 import com.hqy.cloud.message.tk.entity.ImConversation;
+import com.hqy.cloud.message.tk.entity.ImGroupMember;
 import com.hqy.cloud.message.tk.entity.ImMessage;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import com.hqy.cloud.message.tk.service.ImFriendApplicationTkService;
+import com.hqy.cloud.message.tk.service.ImGroupMemberTkService;
 import com.hqy.cloud.message.tk.service.ImMessageTkService;
 import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.util.spring.SpringContextHolder;
+import com.hqy.cloud.web.common.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -37,11 +45,13 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.*;
 
 /**
  * ImMessageOperationsService.
+ *
  * @author qiyuan.hong
  * @date 2023-08-20 21:41
  */
@@ -55,6 +65,7 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
     private final ImFriendApplicationTkService friendApplicationTkService;
     private final ImMessageTkService messageTkService;
     private final ImMessageElasticService imMessageElasticService;
+    private final ImGroupMemberTkService groupMemberTkService;
     private final ImUnreadCacheService imUnreadCacheService;
 
     @Override
@@ -69,18 +80,21 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         Map<String, Integer> resultMap = MapUtil.newHashMap(messageUnreadList.size());
         // search group unread result.
         if (CollectionUtils.isNotEmpty(groupUnreadList)) {
-            List<Long> groupIds = groupUnreadList.stream().map(MessageUnreadDTO::getFrom).toList();
+            List<Long> groupIds = groupUnreadList.stream().map(MessageUnreadDTO::getToContactId).toList();
             Map<Long, Integer> unread = imUnreadCacheService.groupConversationsUnread(id, groupIds);
             groupUnreadList.forEach(groupDTO -> {
-                Integer groupUnread = unread.getOrDefault(groupDTO.getFrom(), 0);
+                Integer groupUnread = unread.getOrDefault(groupDTO.getToContactId(), 0);
                 resultMap.put(groupDTO.getConversationId().toString(), groupUnread);
             });
         }
         // search private unread result.
         if (CollectionUtils.isNotEmpty(privateUnreadList)) {
-            List<Long> privateIds = privateUnreadList.stream().map(MessageUnreadDTO::getConversationId).toList();
+            List<Long> privateIds = privateUnreadList.stream().map(MessageUnreadDTO::getToContactId).toList();
             Map<Long, Integer> unread = imUnreadCacheService.privateConversationsUnread(id, privateIds);
-            unread.keySet().forEach(k -> resultMap.put(k.toString(), unread.getOrDefault(k, 0)));
+            privateUnreadList.forEach(privateUnread -> {
+                Integer unreadValue = unread.getOrDefault(privateUnread.getToContactId(), 0);
+                resultMap.put(privateUnread.getConversationId().toString(), unreadValue);
+            });
         }
         return resultMap;
     }
@@ -146,9 +160,7 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
                 result = eventListener.onGroupChat(event);
             } else {
                 // 未读数 + 1
-                Long toConversationId = insert ? toConversation.getId() :
-                        imConversations.stream().filter(conversation -> conversation.getUserId().equals(to)).toList().get(0).getId();
-                imUnreadCacheService.addPrivateConversationUnread(to, toConversationId, 1L);
+                imUnreadCacheService.addPrivateConversationUnread(to, id, 1L);
                 if (insert) {
                     // 发送新增联系人事件
                     ImConversationOperationsService service = SpringContextHolder.getBean(ImConversationOperationsService.class);
@@ -164,15 +176,17 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         return message;
     }
 
+
+
     @Override
-    public void addSystemMessage(Long send, Long receive, String message, Long conversationId) {
+    public void addSystemMessage(Long send, Long receive, String message, boolean addUnread) {
         // insert message
-        this.addSimpleMessage(send, receive, false, conversationId, null, ImMessageType.SYSTEM, message, System.currentTimeMillis());
+        this.addSimpleMessage(send, receive, false, addUnread, null, ImMessageType.SYSTEM, message, System.currentTimeMillis());
     }
 
     @Override
-    public ImMessage addSimpleMessage(Long send, Long receive, boolean isGroup, Long conversationId, List<Long> groupMembers,
-                                 ImMessageType messageType, String message, Long messageTime) {
+    public ImMessage addSimpleMessage(Long send, Long receive, boolean isGroup, boolean addUnread, List<Long> groupMembers,
+                                      ImMessageType messageType, String message, Long messageTime) {
         // 构建消息体对象
         ImMessage imMessage = new ImMessage(DistributedIdGen.getSnowflakeId(), new Date(messageTime), UUID.fastUUID().toString(), isGroup, send, receive, messageType.type, message);
         ImMessageDoc messageDoc = new ImMessageDoc(imMessage);
@@ -182,18 +196,22 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
                 try {
                     AssertUtil.isTrue(messageTkService.insert(imMessage), "Failed execute to insert message bt send im message.");
                     imMessageElasticService.save(messageDoc);
-                    if (isGroup && CollectionUtils.isNotEmpty(groupMembers)) {
-                        imUnreadCacheService.addGroupConversationsUnread(new HashSet<>(groupMembers), receive, 1L);
-                    }
-                    if (!isGroup && conversationId != null) {
-                        imUnreadCacheService.addPrivateConversationUnread(receive, conversationId, 1L);
-                    }
                 } catch (Throwable cause) {
                     status.setRollbackOnly();
                     log.error(cause.getMessage(), cause);
                 }
             }
         });
+
+        if (addUnread) {
+            if (!isGroup) {
+                imUnreadCacheService.addPrivateConversationUnread(receive, send, 1L);
+            }
+            if (CollectionUtils.isNotEmpty(groupMembers)) {
+                imUnreadCacheService.addGroupConversationsUnread(new HashSet<>(groupMembers), receive, 1L);
+            }
+        }
+
         return imMessage;
     }
 
@@ -219,7 +237,7 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
                 List<ImMessageDoc> docs = unreadMessages.parallelStream().peek(u -> u.setRead(true)).toList();
                 imMessageElasticService.saveAll(docs);
                 return true;
-            } catch (Throwable cause){
+            } catch (Throwable cause) {
                 status.setRollbackOnly();
                 return false;
             }
@@ -227,11 +245,7 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         if (Boolean.TRUE.equals(execute)) {
             List<String> ids = unreadMessageIds.parallelStream().map(Object::toString).toList();
             // remove redis conversation unread.
-            if (conversation.getGroup()) {
-                imUnreadCacheService.readGroupConversationUnread(conversation.getUserId(), conversation.getContactId());
-            } else {
-                imUnreadCacheService.readPrivateConversationUnread(conversation.getUserId(), conversation.getId());
-            }
+            imUnreadCacheService.readPrivateConversationUnread(conversation.getUserId(), conversation.getContactId());
             // send read messages event.
             ReadMessagesEvent event = new ReadMessagesEvent(conversation.getContactId().toString(), ids);
             eventListener.onReadMessages(event);
@@ -241,18 +255,15 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
     }
 
     @Override
-    public boolean undoMessage(ImMessage imMessage) {
-        ImConversation conversation = ImConversation.of(imMessage.getFrom(), imMessage.getTo(), imMessage.getGroup());
-        // update undo entity.
-        conversation.setLastMessageType(ImMessageType.EVENT.type);
-        conversation.setLastMessageContent(AppsConstants.Message.UNDO_FROM_MESSAGE_CONTENT);
-        conversation.setLastMessageTime(imMessage.getCreated());
-        imMessage.setContent(AppsConstants.Message.UNDO_FROM_MESSAGE_CONTENT);
-        imMessage.setType(ImMessageType.TEXT.type);
+    public boolean undoMessage(String undoAccount, ImMessage imMessage) {
+        imMessage.setContent(AppsConstants.Message.IM_UNDO_MESSAGE_CONTENT);
+        imMessage.setType(ImMessageType.EVENT.type);
+        List<ImConversation> conversations = getUndoConversations(undoAccount, imMessage);
         Boolean execute = template.execute(status -> {
             try {
-                AssertUtil.isTrue(conversationTkService.updateSelective(conversation), "Failed execute to update conversation.");
+                // 撤回消息
                 AssertUtil.isTrue(messageTkService.updateSelective(imMessage), "Failed execute to update im message.");
+                conversationTkService.undoConversations(conversations);
                 imMessageElasticService.save(new ImMessageDoc(imMessage));
                 return true;
             } catch (Throwable cause) {
@@ -262,9 +273,168 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
             }
         });
         if (Boolean.TRUE.equals(execute)) {
-            return true;
+            List<String> users = imMessage.getGroup() ? conversations.parallelStream().map(ImConversation::getUserId)
+                    .filter(id -> !id.equals(imMessage.getFrom()))
+                    .map(Objects::toString).toList() : List.of(imMessage.getTo().toString());
+            //撤回消息事件.
+            UndoMessageEvent event = UndoMessageEvent.of(users, undoAccount, imMessage);
+            return eventListener.onImUndoMessageEvent(event);
         }
         return false;
+    }
+
+    @Override
+    public List<ImMessageVO> forwardMessage(Long id, ImMessage message, List<ForwardMessageDTO.Forward> forwards) {
+        Map<ImMessage, List<ImConversation>> messages = MapUtil.newHashMap(forwards.size());
+        // 查询群聊成员会话列表
+        List<ForwardMessageDTO.Forward> groupForwards = forwards.parallelStream().filter(ForwardMessageDTO.Forward::getGroup).toList();
+        Map<ImMessage, List<ImConversation>> groupMessages = null;
+        if (CollectionUtils.isNotEmpty(groupForwards)) {
+            List<GroupDTO> groups = groupMemberTkService.queryGroupMembersByGroupIds(groupForwards.stream().map(ForwardMessageDTO.Forward::getContactId).toList());
+            //判断是否存在群聊和当前登录转发用户是否是群聊成员
+            if (CollectionUtils.isEmpty(groups) || groups.size() != groupForwards.size() ||
+                    groups.stream().anyMatch(group -> !group.getUserIds().contains(id))) {
+                return Collections.emptyList();
+            }
+            // 群聊消息和会话列表组成的map
+            groupMessages = buildGroupForwardMessageMap(id, message, groups, groupForwards);
+            messages.putAll(groupMessages);
+        }
+        // 私聊消息和会话列表组成的map
+        Map<ImMessage, List<ImConversation>> privateMessages = buildPrivateForwardMessageMap(id, message, forwards);
+        messages.putAll(privateMessages);
+        List<ImMessage> allMessages = new ArrayList<>(messages.keySet());
+        List<ImConversation> allConversations = new ArrayList<>();
+        messages.values().forEach(allConversations::addAll);
+        Boolean execute = template.execute(status -> {
+            try {
+                AssertUtil.isTrue(messageTkService.insertList(allMessages), "Failed execute to forward insert messages.");
+                AssertUtil.isTrue(conversationTkService.insertOrUpdate(allConversations), "Failed execute to insert or update conversations");
+                List<ImMessageDoc> docs = allMessages.parallelStream().map(ImMessageDoc::new).toList();
+                imMessageElasticService.saveAll(docs);
+                return true;
+            } catch (Throwable cause) {
+                log.error(cause.getMessage(), cause);
+                status.setRollbackOnly();
+                return false;
+            }
+        });
+
+        if (Boolean.TRUE.equals(execute)) {
+            Map<String, ImMessageDTO> forwardMessageMap = forwards.parallelStream()
+                    .map(ForwardMessageDTO.Forward::getMessage)
+                    .peek(vo -> {
+                        vo.setContent(message.getContent());
+                        vo.setType(message.getType());
+                        vo.setStatus(IM_MESSAGE_SUCCESS);
+                        vo.setFileName(message.getFileName());
+                        vo.setFileSize(message.getFileSize());
+                        vo.setIsRead(false);
+                    }).collect(Collectors.toMap(ImMessageDTO::getId, e -> e));
+            if (MapUtil.isNotEmpty(privateMessages)) {
+                // 未读数 + 1
+                List<Long> userIds = privateMessages.keySet().stream().map(ImMessage::getTo).toList();
+                imUnreadCacheService.addPrivateConversationsUnreadByUserIds(userIds, id);
+                privateMessages.forEach((imMessage, imConversations) -> {
+                    String messageId = imMessage.getMessageId();
+                    ImMessageDTO messageDTO = forwardMessageMap.get(messageId);
+                    messageDTO.setMessageId(imMessage.getId().toString());
+                    PrivateChatEvent privateChatEvent = new PrivateChatEvent(messageDTO);
+                    eventListener.onPrivateChat(privateChatEvent);
+                });
+            }
+            if (MapUtil.isNotEmpty(groupMessages)) {
+                groupMessages.forEach((imMessage, imConversations) -> {
+                    String messageId = imMessage.getMessageId();
+                    ImMessageDTO messageDTO = forwardMessageMap.get(messageId);
+                    messageDTO.setMessageId(imMessage.getId().toString());
+                    Set<String> userIds = imConversations.stream().filter(conversation -> !conversation.getUserId().equals(id))
+                            .map(conversation -> conversation.getUserId().toString()).collect(Collectors.toSet());
+                    imUnreadCacheService.addGroupConversationsUnread(userIds.parallelStream().map(Long::parseLong).collect(Collectors.toSet()),
+                            imMessage.getTo(), 1L);
+                    GroupChatEvent groupChatEvent = new GroupChatEvent(userIds, messageDTO);
+                    eventListener.onGroupChat(groupChatEvent);
+                });
+            }
+            return new ArrayList<>(forwardMessageMap.values());
+        }
+        return Collections.emptyList();
+    }
+
+    private Map<ImMessage, List<ImConversation>> buildGroupForwardMessageMap(Long id, ImMessage message, List<GroupDTO> groups, List<ForwardMessageDTO.Forward> groupForwards) {
+        Map<ImMessage, List<ImConversation>> resultMap = MapUtil.newHashMap(groups.size());
+        Date date = new Date();
+        for (int i = 0; i < groups.size(); i++) {
+            GroupDTO group = groups.get(i);
+            Long groupId = group.getGroupId();
+            List<Long> userIds = group.getUserIds();
+            ForwardMessageDTO.Forward forward = groupForwards.get(i);
+            ImMessageDTO forwardMessage = forward.getMessage();
+            forwardMessage.setType(message.getType());
+            forwardMessage.setContent(message.getContent());
+            forwardMessage.setFileSize(message.getFileSize());
+            forwardMessage.setFileName(message.getFileName());
+            ImMessage imMessage = ImMessage.of(DistributedIdGen.getSnowflakeId(), id, forwardMessage);
+            List<ImConversation> conversations = userIds.parallelStream().map(memberId ->
+                    new ImConversation(memberId, groupId, date, true, message.getContent(), message.getType())).toList();
+            resultMap.put(imMessage, conversations);
+        }
+        return resultMap;
+    }
+
+    private Map<ImMessage, List<ImConversation>> buildPrivateForwardMessageMap(Long id, ImMessage message, List<ForwardMessageDTO.Forward> forwards) {
+        List<ForwardMessageDTO.Forward> privateForwards = forwards.parallelStream().filter(forward -> !forward.getGroup()).toList();
+        if (CollectionUtils.isEmpty(privateForwards)) {
+            return MapUtil.newHashMap();
+        }
+        Map<ImMessage, List<ImConversation>> resultMap = MapUtil.newHashMap(privateForwards.size());
+        Date date = new Date();
+        privateForwards.forEach(forward -> {
+            Long contactId = forward.getContactId();
+            ImMessageDTO imMessageDTO = forward.getMessage();
+            ImMessage forwardMessage = ImMessage.of(DistributedIdGen.getSnowflakeId(), id, imMessageDTO);
+            forwardMessage.setType(message.getType());
+            forwardMessage.setContent(message.getContent());
+            forwardMessage.setFileSize(message.getFileSize());
+            forwardMessage.setFileName(message.getFileName());
+            List<ImConversation> conversations = List.of(
+                    new ImConversation(id, contactId, date, false, message.getContent(), message.getType()),
+                    new ImConversation(contactId, id, date, false, message.getContent(), message.getType())
+            );
+            resultMap.put(forwardMessage, conversations);
+        });
+        return resultMap;
+    }
+
+    private List<ImConversation> getUndoConversations(String undoAccount, ImMessage imMessage) {
+        Long sendMessageUserId = imMessage.getFrom();
+        Long receiveMessageUserId = imMessage.getTo();
+        if (imMessage.getGroup()) {
+            // 群聊会话则发给所有的群成员.
+            List<ImGroupMember> groupMembers = groupMemberTkService.simpleQueryAllGroupMembers(receiveMessageUserId);
+            if (CollectionUtils.isEmpty(groupMembers)) {
+                log.warn("Group members should not be empty, groupId = {}.", imMessage.getId());
+                return Collections.emptyList();
+            }
+            return groupMembers.parallelStream().map(member -> ImConversation.builder()
+                    .group(true)
+                    .userId(member.getUserId())
+                    .contactId(member.getGroupId())
+                    .lastMessageContent(sendMessageUserId.equals(member.getUserId()) ? IM_FROM_UNDO_MESSAGE_CONTENT : undoAccount + IM_TO_UNDO_MESSAGE_CONTENT)
+                    .lastMessageType(ImMessageType.TEXT.type)
+                    .lastMessageTime(imMessage.getCreated())
+                    .build()).toList();
+
+        } else {
+            return Stream.of(sendMessageUserId, receiveMessageUserId).map(id -> ImConversation.builder()
+                    .group(false)
+                    .userId(id)
+                    .contactId(id.equals(sendMessageUserId) ? receiveMessageUserId : sendMessageUserId)
+                    .lastMessageContent(id.equals(sendMessageUserId) ? IM_FROM_UNDO_MESSAGE_CONTENT : IM_PRIVATE_TO_UNDO_MESSAGE_CONTENT)
+                    .lastMessageType(ImMessageType.TEXT.type)
+                    .lastMessageTime(imMessage.getCreated())
+                    .build()).toList();
+        }
     }
 
     private void updateConversations(ImMessageDTO message, List<ImConversation> imConversations) {

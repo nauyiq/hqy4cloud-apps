@@ -2,6 +2,7 @@ package com.hqy.cloud.message.tk.mapper;
 
 import com.hqy.cloud.db.tk.BaseTkMapper;
 import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
+import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
 import org.apache.ibatis.annotations.Param;
@@ -63,5 +64,10 @@ public interface ImGroupMemberMapper extends BaseTkMapper<ImGroupMember, Long> {
      */
     int removeGroupMember(@Param("groupId")Long groupId, @Param("userId")Long userId);
 
-
+    /**
+     * 根据群聊id列表获取群成员列表
+     * @param groupIds 群id列表
+     * @return         群成员列表
+     */
+    List<GroupDTO> queryGroupMembersByGroupIds(@Param("groupIds") List<Long> groupIds);
 }

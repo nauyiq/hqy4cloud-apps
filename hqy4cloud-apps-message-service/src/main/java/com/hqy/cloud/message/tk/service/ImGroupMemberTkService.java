@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.tk.service;
 
 import com.hqy.cloud.db.tk.BaseTkService;
+import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
 
@@ -59,6 +60,13 @@ public interface ImGroupMemberTkService extends BaseTkService<ImGroupMember,Long
      * @return        result
      */
     boolean removeGroupMember(Long groupId, Long userId);
+
+    /**
+     * 获取群成员列表
+     * @param groupIds 群id集合
+     * @return         群成员列表
+     */
+    List<GroupDTO> queryGroupMembersByGroupIds(List<Long> groupIds);
 
 
 }

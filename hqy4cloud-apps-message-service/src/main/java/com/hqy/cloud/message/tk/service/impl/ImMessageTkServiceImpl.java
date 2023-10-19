@@ -3,17 +3,16 @@ package com.hqy.cloud.message.tk.service.impl;
 import com.hqy.cloud.db.tk.BaseTkMapper;
 import com.hqy.cloud.db.tk.support.BaseTkServiceImpl;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
+import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.tk.entity.ImMessage;
 import com.hqy.cloud.message.tk.mapper.ImMessageMapper;
 import com.hqy.cloud.message.tk.service.ImMessageTkService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import tk.mybatis.mapper.entity.Example;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -39,11 +38,10 @@ public class ImMessageTkServiceImpl extends BaseTkServiceImpl<ImMessage, Long> i
         Map<Boolean, List<MessageUnreadDTO>> map = messageUnreadList.parallelStream().collect(Collectors.groupingBy(MessageUnreadDTO::getIsGroup));
         List<MessageUnreadDTO> privateConversations = map.getOrDefault(Boolean.FALSE, new ArrayList<>());
         if (CollectionUtils.isNotEmpty(privateConversations)) {
-            List<Long> fromIds = privateConversations.parallelStream().map(MessageUnreadDTO::getFrom).toList();
-            Map<Long, Integer> result = mapper.getMessageUnread(id, fromIds).parallelStream().collect(Collectors.toMap(MessageUnreadDTO::getFrom, MessageUnreadDTO::getUnread));
+            List<Long> fromIds = privateConversations.parallelStream().map(MessageUnreadDTO::getUserId).toList();
+            Map<Long, Integer> result = mapper.getMessageUnread(id, fromIds).parallelStream().collect(Collectors.toMap(MessageUnreadDTO::getUserId, MessageUnreadDTO::getUnread));
             privateConversations = privateConversations.stream()
-                    .peek(conversation -> conversation.setUnread(result.getOrDefault(conversation.getFrom(), 0))).collect(Collectors.toList());
-
+                    .peek(conversation -> conversation.setUnread(result.getOrDefault(conversation.getUserId(), 0))).collect(Collectors.toList());
         }
         List<MessageUnreadDTO> groupConversations = map.getOrDefault(Boolean.TRUE, new ArrayList<>());
         groupConversations.addAll(privateConversations);
@@ -51,7 +49,20 @@ public class ImMessageTkServiceImpl extends BaseTkServiceImpl<ImMessage, Long> i
     }
 
     @Override
+    public boolean insertList(List<ImMessage> entities) {
+        return mapper.insertMessages(entities) > 0;
+    }
+
+    @Override
     public boolean updateMessagesRead(List<Long> unreadMessageIds) {
         return mapper.updateMessagesRead(unreadMessageIds) > 0;
+    }
+
+    @Override
+    public List<ImMessage> queryMessagesByBeforeTimes(Date dateTime) {
+        Example example = new Example(ImMessage.class);
+        example.createCriteria().andLessThanOrEqualTo("created", dateTime);
+        example.createCriteria().andNotEqualTo("type", ImMessageType.SYSTEM.type);
+        return mapper.selectByExample(example);
     }
 }

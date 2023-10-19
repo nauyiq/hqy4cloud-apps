@@ -87,6 +87,13 @@
         WHERE a.`user_id` = #{userId}
     </select>
 
+    <select id="queryConversationsByForwards" resultType="com.hqy.cloud.message.tk.entity.ImConversation">
+        SELECT id,user_id,contact_id,is_group `group` FROM `t_im_conversation`
+        WHERE
+        <foreach collection="forwards" item="forward" separator="or" open="(" close=")">
+        </foreach>
+    </select>
+
     <insert id="insertOrUpdate" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO t_im_conversation
         (
@@ -120,7 +127,6 @@
             )
         </foreach>
         ON DUPLICATE KEY UPDATE
-        last_remove_time = VALUES(last_remove_time),
         last_message_type = VALUES(last_message_type),
         last_message_content = VALUES(last_message_content),
         last_message_time = VALUES(last_message_time),
@@ -136,6 +142,17 @@
             user_id = #{userId} AND
         </if>
             contact_id = #{contactId} AND is_group = #{isGroup}
+    </update>
+
+    <update id="undoConversations">
+        <foreach collection="conversations" item="conversation" separator=";">
+            UPDATE t_im_conversation SET
+                last_message_type = #{conversation.lastMessageType},
+                last_message_content = #{conversation.lastMessageContent},
+                last_message_time = #{conversation.lastMessageTime}
+            WHERE user_id = #{conversation.userId} AND contact_id = #{conversation.contactId}
+            AND is_group = #{conversation.group} AND last_message_time &lt;= #{conversation.lastMessageTime}
+        </foreach>
     </update>
 
     <delete id="removeConversations">

@@ -16,8 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -33,8 +31,17 @@ public class ImConversationRequestServiceImpl implements ImConversationRequestSe
     private final ImConversationOperationsService imConversationOperationsService;
 
     @Override
-    public R<List<ConversationVO>> getConversations(Long id) {
-        return R.ok(imConversationOperationsService.getImConversations(id));
+    public R<ConversationVO> getConversationById(Long userId, Long conversationId) {
+        ImConversation conversation = imConversationTkService.queryById(conversationId);
+        if (conversation == null || !conversation.getUserId().equals(userId)) {
+            return R.failed(ResultCode.DATA_EMPTY);
+        }
+        ConversationVO vo = ConversationVO.builder()
+                .id(userId.toString())
+                .conversationId(conversationId.toString())
+                .lastSendTime(conversation.getLastMessageTime().getTime())
+                .build();
+        return R.ok(vo);
     }
 
     @Override

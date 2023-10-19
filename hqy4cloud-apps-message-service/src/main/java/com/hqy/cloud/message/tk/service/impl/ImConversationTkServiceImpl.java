@@ -3,6 +3,7 @@ package com.hqy.cloud.message.tk.service.impl;
 import com.hqy.cloud.db.tk.BaseTkMapper;
 import com.hqy.cloud.db.tk.support.BaseTkServiceImpl;
 import com.hqy.cloud.message.bind.dto.ChatDTO;
+import com.hqy.cloud.message.bind.dto.ForwardMessageDTO;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 import com.hqy.cloud.message.tk.mapper.ImConversationMapper;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
@@ -58,5 +59,15 @@ public class ImConversationTkServiceImpl extends BaseTkServiceImpl<ImConversatio
     @Override
     public boolean deleteConversation(Long userId, Long contactId, boolean isGroup, Long removeTime) {
         return mapper.deleteConversation(userId, contactId, isGroup ? 1 : 0, removeTime) > 0;
+    }
+
+    @Override
+    public void undoConversations(List<ImConversation> conversations) {
+        mapper.undoConversations(conversations);
+    }
+
+    @Override
+    public List<ImConversation> queryConversationsByForwards(Long id, List<ForwardMessageDTO.Forward> conversationForwards) {
+        return mapper.queryConversationsByForwards(id, conversationForwards);
     }
 }

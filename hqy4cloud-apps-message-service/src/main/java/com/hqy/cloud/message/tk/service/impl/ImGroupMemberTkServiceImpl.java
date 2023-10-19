@@ -1,9 +1,8 @@
 package com.hqy.cloud.message.tk.service.impl;
 
 import com.hqy.cloud.db.tk.BaseTkMapper;
-import com.hqy.cloud.db.tk.PrimaryLessTkMapper;
 import com.hqy.cloud.db.tk.support.BaseTkServiceImpl;
-import com.hqy.cloud.db.tk.support.PrimaryLessTkServiceImpl;
+import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.tk.entity.ImGroupMember;
 import com.hqy.cloud.message.tk.mapper.ImGroupMemberMapper;
@@ -63,5 +62,10 @@ public class ImGroupMemberTkServiceImpl extends BaseTkServiceImpl<ImGroupMember,
             return false;
         }
         return mapper.removeGroupMember(groupId, userId) > 0;
+    }
+
+    @Override
+    public List<GroupDTO> queryGroupMembersByGroupIds(List<Long> groupIds) {
+        return mapper.queryGroupMembersByGroupIds(groupIds);
     }
 }

@@ -25,6 +25,18 @@ public interface ImMessageElasticService extends ElasticService<Long, ImMessageD
     PageResult<ImMessageDoc> queryPage(Long id, Long removeTime, Long deleteTime, MessagesRequestParamDTO params);
 
     /**
+     * 不支持向前和随机分页.
+     * 根绝search_after进行分页查询用户消息, 返回分页对象
+     * @param send        发送人id
+     * @param removeTime  移除时间
+     * @param deleteTime  删除时间
+     * @param params      参数 {@link MessagesRequestParamDTO}
+     * @return            result
+     */
+    PageResult<ImMessageDoc> queryPageSearchAfter(Long send, Long removeTime, Long deleteTime, MessagesRequestParamDTO params);
+
+
+    /**
      * query unread messages
      * @param from send message user id
      * @param to   receive message user id

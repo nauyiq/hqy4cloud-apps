@@ -7,6 +7,8 @@ import com.hqy.cloud.message.cache.ImCache;
 import com.hqy.cloud.message.cache.ImUnreadCacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.stereotype.Service;
 
@@ -29,23 +31,23 @@ public class ImUnreadCacheServiceImpl extends ImCache implements ImUnreadCacheSe
     }
 
     @Override
-    public Map<Long, Integer> privateConversationsUnread(Long userId, List<Long> conversations) {
-        if (userId == null || CollectionUtils.isEmpty(conversations)) {
+    public Map<Long, Integer> privateConversationsUnread(Long userId, List<Long> toContactId) {
+        if (userId == null || CollectionUtils.isEmpty(toContactId)) {
             return MapUtil.newHashMap();
         }
         String key = genConversationKey(userId);
-        List<Integer> unreadMap = RedisManager.getInstance().hmGet(key, conversations.stream().map(e -> (Object) e).collect(Collectors.toList()));
-        Map<Long, Integer> map = MapUtil.newHashMap(conversations.size());
-        for (int i = 0; i < conversations.size(); i++) {
+        List<Integer> unreadMap = RedisManager.getInstance().hmGet(key, toContactId.stream().map(e -> (Object) e).collect(Collectors.toList()));
+        Map<Long, Integer> map = MapUtil.newHashMap(toContactId.size());
+        for (int i = 0; i < toContactId.size(); i++) {
             Integer unread = unreadMap.get(i);
-            map.put(conversations.get(i), unread == null ? 0 : unread);
+            map.put(toContactId.get(i), unread == null ? 0 : unread);
         }
         return map;
     }
 
     @Override
-    public void addPrivateConversationUnread(Long userId, Long conversationId, Long offset) {
-        if (userId == null || conversationId == null) {
+    public void addPrivateConversationUnread(Long userId, Long toContactId, Long offset) {
+        if (userId == null || toContactId == null) {
             log.warn("Ignore add private conversation unread, request params is null.");
             return;
         }
@@ -53,26 +55,70 @@ public class ImUnreadCacheServiceImpl extends ImCache implements ImUnreadCacheSe
             offset = 1L;
         }
         String key = genConversationKey(userId);
-        RedisManager.getInstance().hIncrBy(key, conversationId, offset);
+        RedisManager.getInstance().hIncrBy(key, toContactId, offset);
     }
 
     @Override
-    public void readPrivateConversationUnread(Long userId, Long conversationId) {
-        if (userId == null || conversationId == null) {
+    public void addPrivateConversationsUnread(Long userId, Map<Long, Long> unreadContacts) {
+        if (userId == null || MapUtil.isEmpty(unreadContacts)) {
+            log.warn("Ignore add private conversations unread, request params is null.");
+            return;
+        }
+        String key = genConversationKey(userId);
+        RedisManager.getInstance().getRedisTemplate().executePipelined((RedisCallback<Object>) connection -> {
+            unreadContacts.forEach((contactId, value) -> {
+                long unread = value == null ? 1L : value;
+                connection.hashCommands().hIncrBy(key.getBytes(), contactId.toString().getBytes(), unread);
+            });
+            return null;
+        });
+    }
+
+    @Override
+    public void addPrivateConversationsUnread(Long userId, List<Long> contacts) {
+        if (userId == null || CollectionUtils.isEmpty(contacts)) {
+            log.warn("Ignore add private conversations unread, request params is null.");
+            return;
+        }
+        String key = genConversationKey(userId);
+        RedisManager.getInstance().getRedisTemplate().executePipelined((RedisCallback<Object>) connection -> {
+            contacts.forEach(contactId -> connection.hashCommands().hIncrBy(key.getBytes(), contactId.toString().getBytes(), 1L));
+            return null;
+        });
+    }
+
+    @Override
+    public void addPrivateConversationsUnreadByUserIds(List<Long> userIds, Long contact) {
+        if (contact == null || CollectionUtils.isEmpty(userIds)) {
+            log.warn("Ignore add private conversations unread, request params is null.");
+            return;
+        }
+        RedisManager.getInstance().getRedisTemplate().executePipelined((RedisCallback<Object>) connection -> {
+            userIds.forEach(userId -> {
+                String key = genConversationKey(userId);
+                connection.hashCommands().hIncrBy(key.getBytes(), contact.toString().getBytes(), 1L);
+            });
+            return null;
+        });
+    }
+
+    @Override
+    public void readPrivateConversationUnread(Long userId, Long toContactId) {
+        if (userId == null || toContactId == null) {
             log.warn("Ignore remove private conversation unread, request params is null.");
             return;
         }
         String key = genConversationKey(userId);
-        RedisManager.getInstance().hDel(key, conversationId);
+        RedisManager.getInstance().hDel(key, toContactId);
     }
 
     @Override
-    public Integer getPrivateConversationUnread(Long userId, Long conversationId) {
-        if (userId == null || conversationId == null) {
+    public Integer getPrivateConversationUnread(Long userId, Long toContactId) {
+        if (userId == null || toContactId == null) {
             return null;
         }
         String key = genConversationKey(userId);
-        return RedisManager.getInstance().hGet(key, conversationId);
+        return RedisManager.getInstance().hGet(key, toContactId);
     }
 
     @Override

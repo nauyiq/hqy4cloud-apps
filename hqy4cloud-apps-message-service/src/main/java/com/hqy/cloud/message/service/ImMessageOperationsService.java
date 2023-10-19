@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.service;
 
+import com.hqy.cloud.message.bind.dto.ForwardMessageDTO;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
@@ -41,29 +42,28 @@ public interface ImMessageOperationsService {
     ImMessageVO sendImMessage(Long id, ImMessageDTO message);
 
 
-
     /**
      * 添加系统消息
      * @param send           发送人
      * @param receive        接收人
      * @param message        消息
-     * @param conversationId 会话id
+     * @param addUnread      是否添加未读消息
      */
-    void addSystemMessage(Long send, Long receive, String message, Long conversationId);
+    void addSystemMessage(Long send, Long receive, String message, boolean addUnread);
 
     /**
      * 添加简单的消息
      * @param send            发送者
      * @param receive         接收者
      * @param isGroup         是否是群聊
-     * @param conversationId  会话id
+     * @param addUnread       是否添加未读消息
      * @param groupMembers    群聊用户id集合
      * @param messageType     消息类型
      * @param message         消息内容
      * @param messageTime     消息时间
      * @return                消息
      */
-    ImMessage addSimpleMessage(Long send, Long receive, boolean isGroup, Long conversationId,
+    ImMessage addSimpleMessage(Long send, Long receive, boolean isGroup, boolean addUnread,
                           List<Long> groupMembers, ImMessageType messageType, String message, Long messageTime);
 
     /**
@@ -75,10 +75,20 @@ public interface ImMessageOperationsService {
 
     /**
      * undo im message
-     * @param imMessage message entity.
-     * @return          result.
+     * @param undoAccount 撤回消息账号名
+     * @param imMessage   message entity.
+     * @return            result.
      */
-    boolean undoMessage(ImMessage imMessage);
+    boolean undoMessage(String undoAccount, ImMessage imMessage);
+
+    /**
+     * 转发消息
+     * @param id       转发人
+     * @param message  转发消息
+     * @param forwards 转发给谁
+     * @return         转发的消息
+     */
+    List<ImMessageVO> forwardMessage(Long id, ImMessage message, List<ForwardMessageDTO.Forward> forwards);
 
 
 }

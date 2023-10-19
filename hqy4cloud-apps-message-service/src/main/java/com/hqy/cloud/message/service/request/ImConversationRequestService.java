@@ -14,12 +14,14 @@ import java.util.List;
  */
 public interface ImConversationRequestService {
 
+
     /**
-     * 获取聊天会话
-     * @param id 用户id
-     * @return   R.
+     * 获取会话详情
+     * @param userId         用户id
+     * @param conversationId 会话id
+     * @return               R.
      */
-    R<List<ConversationVO>> getConversations(Long id);
+    R<ConversationVO> getConversationById(Long userId, Long conversationId);
 
     /**
      * 获取当前用户聊天列表（会话列表， 好友列表等）
@@ -59,6 +61,7 @@ public interface ImConversationRequestService {
      * @return               R.
      */
     R<Boolean> deleteConversation(Long userId, Long conversationId);
+
 
 
 }

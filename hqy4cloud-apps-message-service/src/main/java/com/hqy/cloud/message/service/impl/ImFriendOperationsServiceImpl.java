@@ -81,7 +81,7 @@ public class ImFriendOperationsServiceImpl implements ImFriendOperationsService 
                 // 新增好友关系
                 AssertUtil.isTrue(friendTkService.insertList(imFriends), "Failed execute receive insert friends by addFriend.");
                 // 新增系统消息
-                imMessageOperationsService.addSystemMessage(receive, apply, ACCEPT_FRIEND_MESSAGE_CONTENT, applyConversation.getId());
+                imMessageOperationsService.addSystemMessage(receive, apply, ACCEPT_FRIEND_MESSAGE_CONTENT, true);
                 return true;
             } catch (Throwable cause) {
                 status.setRollbackOnly();

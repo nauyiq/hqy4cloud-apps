@@ -5,6 +5,7 @@ import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.bind.vo.UserInfoVO;
 import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.tk.entity.ImMessage;
+import jodd.util.StringUtil;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -23,7 +24,13 @@ public class ImMessageDTO extends ImMessageVO {
     private Long conversationId;
 
     public boolean checkParams() {
-        return StringUtils.isNotBlank(getToContactId()) && !StringUtils.isBlank(getContent()) && ImMessageType.isEnabled(getType());
+        if (StringUtil.isBlank(getToContactId()) || !ImMessageType.isEnabled(getType())) {
+            return false;
+        }
+        if (!ImMessageType.isFileType(getType()) && StringUtil.isBlank(getContent())) {
+            return false;
+        }
+        return true;
     }
 
     public Long getConversationId() {
@@ -36,8 +43,8 @@ public class ImMessageDTO extends ImMessageVO {
 
 
     public ImMessageDTO(ImMessage message) {
-        setId(message.getId().toString());
-        setMessageId(message.getMessageId());
+        setId(message.getMessageId());
+        setMessageId(message.getId().toString());
         setIsGroup(message.getGroup());
         setIsRead(message.getRead());
         setFromUser(new UserInfoVO(message.getFrom().toString()));

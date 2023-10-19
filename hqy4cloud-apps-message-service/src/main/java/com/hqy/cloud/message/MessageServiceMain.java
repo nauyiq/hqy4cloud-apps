@@ -1,9 +1,7 @@
 package com.hqy.cloud.message;
 
 import com.corundumstudio.socketio.SocketIOServer;
-import com.hqy.cloud.message.server.ImEventListener;
 import com.hqy.cloud.message.service.SocketIoMessagePushService;
-import com.hqy.cloud.message.bind.event.support.ContactOnlineOfflineEvent;
 import com.hqy.cloud.rpc.service.RPCService;
 import com.hqy.cloud.rpc.thrift.service.ThriftServerLauncher;
 import com.hqy.cloud.util.spring.ProjectContextInfo;
@@ -17,9 +15,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 import tk.mybatis.spring.annotation.MapperScan;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * 基于netty的socket.io服务 <br>
@@ -46,26 +42,12 @@ public class MessageServiceMain {
         private final SocketIoMessagePushService socketIoMessagePushService;
         @Override
         public List<RPCService> getRpcServices() {
-            return Arrays.asList(socketIoMessagePushService);
+            return List.of(socketIoMessagePushService);
         }
     }
 
 
     private static void initializeOnlineOfflineListener(SocketIOServer server) {
-        ImEventListener eventListener = SpringContextHolder.getBean(ImEventListener.class);
-        server.addConnectListener(client -> {
-            UUID sessionId = client.getSessionId();
-            long id = Long.parseLong(client.getHandshakeData().getBizId());
-            boolean result = eventListener.onContactOnlineOffline(new ContactOnlineOfflineEvent(id, true));
-            log.info("SessionId online: {}, do online result: {}.", sessionId, result);
-        });
-
-        server.addDisconnectListener(client -> {
-            UUID sessionId = client.getSessionId();
-            long id = Long.parseLong(client.getHandshakeData().getBizId());
-            boolean result = eventListener.onContactOnlineOffline(new ContactOnlineOfflineEvent(id, false));
-            log.info("SessionId offline: {}, do offline result: {}.", sessionId, result);
-        });
     }
 
 

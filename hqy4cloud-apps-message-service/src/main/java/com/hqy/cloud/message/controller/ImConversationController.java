@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
 
 /**
  * 聊天联系人相关API
@@ -28,21 +27,6 @@ public class ImConversationController extends BaseController {
     private final ImConversationRequestService requestService;
 
     /**
-     * 获取当前用户的聊天会话
-     * @param request HttpServletRequest.
-     * @return        R.
-     */
-    @Deprecated
-    @GetMapping("/conversations")
-    public R<List<ConversationVO>> getConversations(HttpServletRequest request) {
-        Long id = getAccessAccountId(request);
-        if (id == null) {
-            return R.failed(ResultCode.NOT_LOGIN);
-        }
-        return requestService.getConversations(id);
-    }
-
-    /**
      * 获取当前用户聊天列表（会话列表， 好友列表等）
      * @param request HttpServletRequest.
      * @return        R.
@@ -54,6 +38,21 @@ public class ImConversationController extends BaseController {
             return R.failed(ResultCode.NOT_LOGIN);
         }
         return requestService.getImChatInfo(userId);
+    }
+
+    /**
+     * 获取会话
+     * @param request        HttpServletRequest.
+     * @param conversationId 会话id
+     * @return               R.
+     */
+    @GetMapping("/conversation/{conversationId}")
+    public R<ConversationVO> getConversationById(HttpServletRequest request, @PathVariable("conversationId") Long conversationId) {
+        Long userId = getAccessAccountId(request);
+        if (userId == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
+        return requestService.getConversationById(userId, conversationId);
     }
 
     /**

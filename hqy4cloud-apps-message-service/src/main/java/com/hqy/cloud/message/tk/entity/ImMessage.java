@@ -32,6 +32,8 @@ public class ImMessage extends BaseEntity<Long> {
     private Long to;
     private String type;
     private String content;
+    private String fileName;
+    private Long fileSize;
     @Column(name = "is_read")
     private Boolean read;
     private Boolean status;
@@ -48,9 +50,13 @@ public class ImMessage extends BaseEntity<Long> {
         this.status = true;
     }
 
+
     public static ImMessage of(long id, Long from, ImMessageDTO message) {
         Long sendTime = message.getSendTime();
         Date now = sendTime == null ? new Date() : new Date(sendTime);
-        return new ImMessage(id, now, message.getId(), message.getIsGroup(), from, Long.valueOf(message.getToContactId()), message.getType(), message.getContent());
+        ImMessage imMessage = new ImMessage(id, now, message.getId(), message.getIsGroup(), from, Long.valueOf(message.getToContactId()), message.getType(), message.getContent());
+        imMessage.setFileName(message.getFileName());
+        imMessage.setFileSize(message.getFileSize());
+        return imMessage;
     }
 }

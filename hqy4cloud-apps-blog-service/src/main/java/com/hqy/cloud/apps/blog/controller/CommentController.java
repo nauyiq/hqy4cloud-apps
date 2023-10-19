@@ -37,6 +37,9 @@ public class CommentController extends BaseController {
     @PostMapping("/article/comment")
     public R<Boolean> publishComment(@RequestBody @Valid PublishCommentDTO publishComment, HttpServletRequest request) {
         Long accessAccountId = getAccessAccountId(request);
+        if (accessAccountId == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
         // 二级评论.
         if (publishComment.getLevel() == 2) {
             if (StringUtils.isBlank(publishComment.getParentId())) {

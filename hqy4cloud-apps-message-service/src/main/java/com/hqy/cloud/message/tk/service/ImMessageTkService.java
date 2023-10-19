@@ -4,6 +4,7 @@ import com.hqy.cloud.db.tk.BaseTkService;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
 import com.hqy.cloud.message.tk.entity.ImMessage;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -27,4 +28,11 @@ public interface ImMessageTkService extends BaseTkService<ImMessage, Long> {
      * @return                 result.
      */
     boolean updateMessagesRead(List<Long> unreadMessageIds);
+
+    /**
+     * 查询指定时间之前的聊天记录
+     * @param dateTime 时间
+     * @return         聊天记录
+     */
+    List<ImMessage> queryMessagesByBeforeTimes(Date dateTime);
 }

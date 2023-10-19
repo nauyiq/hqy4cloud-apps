@@ -7,7 +7,7 @@
         SELECT m.user_id, g.id groupId, g.name groupName, g.avatar groupAvatar, g.is_invite groupInvite, g.creator groupCreator, m.role
         FROM t_im_group g
         LEFT JOIN t_im_group_member m on g.id = m.group_id
-        WHERE m.user_id = #{id} AND AND g.deleted = 0  g.id IN
+        WHERE m.user_id = #{id} AND  m.deleted = 0  AND g.id IN
         <foreach collection="groupIds" item="groupId" separator="," open="(" close=")">
             #{groupId}
         </foreach>
@@ -26,6 +26,24 @@
         SELECT id,group_id,user_id,display_name,`role`,created
         FROM t_im_group_member
         WHERE group_id = #{groupId} AND deleted = 0
+    </select>
+
+    <resultMap id="GroupDTOResultMap" type="com.hqy.cloud.message.bind.dto.GroupDTO">
+        <result property="groupId" column="groupId"/>
+        <result property="name" column="name"/>
+        <result property="notice" column="notice"/>
+        <collection property="userIds" ofType="java.lang.Long">
+            <result column="memberId"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryGroupMembersByGroupIds" resultMap="GroupDTOResultMap">
+        SELECT group_id groupId, user_id memberId FROM t_im_group_member
+        WHERE group_id IN
+        <foreach collection="groupIds" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+        AND deleted = 0
     </select>
 
     <insert id="insertOrUpdate">

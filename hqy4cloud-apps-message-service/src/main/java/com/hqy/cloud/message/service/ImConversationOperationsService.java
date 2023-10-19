@@ -4,21 +4,12 @@ import com.hqy.cloud.message.bind.vo.ConversationVO;
 import com.hqy.cloud.message.bind.vo.ImChatVO;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 
-import java.util.List;
-
 /**
  * @author qiyuan.hong
  * @version 1.0
  * @date 2023/8/31 16:59
  */
 public interface ImConversationOperationsService {
-
-    /**
-     * query user conversation list.
-     * @param id user id
-     * @return   conversations.
-     */
-    List<ConversationVO> getImConversations(Long id);
 
     /**
      * 获取用户聊天列表.

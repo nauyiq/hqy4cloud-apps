@@ -2,6 +2,7 @@ package com.hqy.cloud.message.tk.service;
 
 import com.hqy.cloud.db.tk.BaseTkService;
 import com.hqy.cloud.message.bind.dto.ChatDTO;
+import com.hqy.cloud.message.bind.dto.ForwardMessageDTO;
 import com.hqy.cloud.message.tk.entity.ImConversation;
 
 import java.util.List;
@@ -59,4 +60,18 @@ public interface ImConversationTkService extends BaseTkService<ImConversation, L
      * @return           result
      */
     boolean deleteConversation(Long userId, Long contactId, boolean isGroup, Long removeTime);
+
+    /**
+     * 撤回会话
+     * @param conversations 会话列表
+     */
+    void undoConversations(List<ImConversation> conversations);
+
+    /**
+     * 根据转发列表查询最近联系人
+     * @param id                    用户id
+     * @param conversationForwards  转发列表
+     * @return                      最近联系人
+     */
+    List<ImConversation> queryConversationsByForwards(Long id, List<ForwardMessageDTO.Forward> conversationForwards);
 }
