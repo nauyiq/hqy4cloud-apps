@@ -35,7 +35,7 @@ public class ArticleDoc implements ElasticDocument<Long> {
     @Field(type = FieldType.Text, searchAnalyzer = "ik_smart", analyzer = "ik_max_word")
     private String cover;
 
-    @Field(type = FieldType.Keyword)
+    @Field(type = FieldType.Text, searchAnalyzer = "ik_smart", analyzer = "ik_max_word")
     private String content;
 
     @Field(type = FieldType.Integer)

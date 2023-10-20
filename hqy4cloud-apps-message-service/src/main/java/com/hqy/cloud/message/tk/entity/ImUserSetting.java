@@ -24,9 +24,8 @@ public class ImUserSetting extends BaseEntity<Long> {
     private Boolean inviteGroup;
     @Column(name = "is_online")
     private Boolean oline;
-    @Column(name = "is_clear_msg")
-    private Boolean clearMsg;
-    private Integer clearMsgDate;
+    @Column(name = "is_global_chat")
+    private Boolean globalChat;
 
     public ImUserSetting(Long userId) {
         setId(userId);
@@ -56,24 +55,16 @@ public class ImUserSetting extends BaseEntity<Long> {
         this.oline = oline;
     }
 
-    public Boolean getClearMsg() {
-        return clearMsg;
+    public Boolean getGlobalChat() {
+        return globalChat;
     }
 
-    public void setClearMsg(Boolean clearMsg) {
-        this.clearMsg = clearMsg;
-    }
-
-    public Integer getClearMsgDate() {
-        return clearMsgDate;
-    }
-
-    public void setClearMsgDate(Integer clearMsgDate) {
-        this.clearMsgDate = clearMsgDate;
+    public void setGlobalChat(Boolean globalChat) {
+        this.globalChat = globalChat;
     }
 
     public static ImUserSetting of(Long userId) {
-        ImUserSetting userSetting = new ImUserSetting(false, true, true, true, 30);
+        ImUserSetting userSetting = new ImUserSetting(false, true, true, false);
         Date now = new Date();
         userSetting.setCreated(now);
         userSetting.setUpdated(now);

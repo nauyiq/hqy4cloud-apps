@@ -96,7 +96,7 @@ public class RedisArticleStatisticsServer implements ArticleStatisticsServer {
         boolean isRead;
         RScoredSortedSet<Long> cache = getBlogStatusCache(accountId);
         Double score = cache.getScore(articleId);
-        if (!cache.contains(articleId) || Objects.isNull(score) || score.equals(READ_LIKE_SCORE)) {
+        if (!cache.contains(articleId) || Objects.isNull(score)) {
             likeStatus = false;
             isRead = false;
         } else if (score.equals(ONLY_LIKE_SCORE)) {
@@ -104,6 +104,9 @@ public class RedisArticleStatisticsServer implements ArticleStatisticsServer {
             isRead = false;
         } else if (score.equals(ONLY_READ_SCORE)) {
             likeStatus = false;
+            isRead = true;
+        }  else if (score.equals(READ_LIKE_SCORE)) {
+            likeStatus = true;
             isRead = true;
         } else {
             throw new UnsupportedOperationException("Unsupported statics score = " + score);

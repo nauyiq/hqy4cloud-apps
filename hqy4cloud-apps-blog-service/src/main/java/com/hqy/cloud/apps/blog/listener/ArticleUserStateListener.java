@@ -4,9 +4,7 @@ import cn.hutool.core.map.MapUtil;
 import com.hqy.cloud.apps.blog.entity.ArticleUserState;
 import com.hqy.cloud.apps.blog.listener.message.ArticleStateKafkaMessage;
 import com.hqy.cloud.apps.blog.service.tk.ArticleUserStateTkService;
-import com.hqy.cloud.id.service.RemoteLeafService;
-import com.hqy.cloud.id.struct.ResultStruct;
-import com.hqy.cloud.rpc.nacos.client.RPCClient;
+import com.hqy.cloud.foundation.id.DistributedIdGen;
 import com.hqy.cloud.util.JsonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,10 +57,9 @@ public class ArticleUserStateListener {
             }
         }
         //批量新增或修改入库.
-        RemoteLeafService service = RPCClient.getRemoteService(RemoteLeafService.class);
         List<ArticleUserState> states = doingMessageMap.keySet()
                 .stream()
-                .map(message -> new ArticleUserState(getId(service), message.getArticleId(), message.getAccountId(), message.getStatus()))
+                .map(message -> new ArticleUserState(DistributedIdGen.getSnowflakeId(), message.getArticleId(), message.getAccountId(), message.getStatus()))
                 .collect(Collectors.toList());
         try {
             boolean result = stateTkService.insertOrUpdate(states);
@@ -77,16 +74,6 @@ public class ArticleUserStateListener {
 
     }
 
-    private Long getId(RemoteLeafService service) {
-        try {
-            ResultStruct resultStruct = service.getSnowflakeNextId();
-            return resultStruct.result ? resultStruct.id : null;
-        } catch (Throwable cause) {
-            return null;
-        }
-
-
-    }
 
     @Slf4j
     @Component(value = "articleUserStateErrorHandler")

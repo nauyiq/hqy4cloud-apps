@@ -82,8 +82,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
         imUserSetting.setOline(setting.getIsOnline());
         imUserSetting.setInviteGroup(setting.getIsInviteGroup());
         imUserSetting.setPrivateChat(setting.getIsPrivateChat());
-        imUserSetting.setClearMsg(setting.getIsClearMsg());
-        imUserSetting.setClearMsgDate(setting.getClearMessageDate());
+        imUserSetting.setGlobalChat(setting.getIsGlobalChat());
         return userSettingTkService.updateSelective(imUserSetting) ? R.ok() : R.failed();
     }
 

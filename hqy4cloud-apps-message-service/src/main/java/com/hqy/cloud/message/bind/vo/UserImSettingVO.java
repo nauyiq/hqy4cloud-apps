@@ -30,27 +30,23 @@ public class UserImSettingVO {
     private Boolean isOnline;
 
     /**
-     * 是否允许自动清除聊天记录
+     * 是否允许全局im消息
      */
-    private Boolean isClearMsg;
+    private Boolean isGlobalChat;
 
-    /**
-     * 聊天记录保留天数.
-     */
-    private Integer clearMessageDate;
+
 
     public static UserImSettingVO of(ImUserSetting imUserSetting) {
         UserImSettingVO vo = new UserImSettingVO();
         vo.setIsPrivateChat(imUserSetting.getPrivateChat());
         vo.setIsInviteGroup(imUserSetting.getInviteGroup());
         vo.setIsOnline(imUserSetting.getOline());
-        vo.setIsClearMsg(imUserSetting.getClearMsg());
-        vo.setClearMessageDate(imUserSetting.getClearMsgDate());
+        vo.setIsGlobalChat(imUserSetting.getGlobalChat());
         return vo;
     }
 
     public static UserImSettingVO of() {
-        return new UserImSettingVO(false, true, true, true, 30);
+        return new UserImSettingVO(false, true, true, false);
     }
 
 
