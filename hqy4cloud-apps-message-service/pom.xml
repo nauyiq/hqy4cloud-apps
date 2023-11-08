@@ -104,7 +104,7 @@
     </dependencies>
 
     <build>
-        <finalName>message-netty-service</finalName>
+        <finalName>${artifactId}</finalName>
         <plugins>
             <!-- 打包jar文件时，配置manifest文件，加入lib包的jar依赖 -->
             <plugin>

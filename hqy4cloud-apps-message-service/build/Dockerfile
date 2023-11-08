@@ -2,8 +2,8 @@ FROM registry.cn-shenzhen.aliyuncs.com/hqy-parent-all/jdk:17
 MAINTAINER hongqy<759428167@qq.com>
 
 # set environment
-ENV BASE_DIR="/hqy4cloud/hqy4cloud-apps-blog-service" \
-    JAVA_JAR="hqy4cloud-apps-blog-service.jar" \
+ENV BASE_DIR="/hqy4cloud/hqy4cloud-apps-message-service" \
+    JAVA_JAR="hqy4cloud-apps-message-service.jar" \
     JAVA_HOME="/usr/local/java/jdk-17.0.9" \
     JAVA="${JAVA_HOME}/bin/java" \
     JVM_XMS="512m" \
@@ -27,6 +27,6 @@ RUN mkdir -p logs \
     && chmod +x bin/* \
     && chmod +x target/*
 
-EXPOSE 8787
+EXPOSE 8099 9099 18099
 
 ENTRYPOINT ["bin/start.sh"]

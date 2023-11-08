@@ -38,7 +38,7 @@ public class ArticleUserStateListener {
 
     @KafkaListener(id = "article-user-state-consumer-group", containerFactory = "batchFactory",
             errorHandler = "articleUserStateErrorHandler", concurrency = "3", topicPartitions = {
-            @TopicPartition(topic = BLOG_STATE_TOPIC, partitions = {"0", "1", "2"})
+            @TopicPartition(topic = BLOG_STATE_TOPIC, partitions = {"0"})
     })
     public void process(List<ConsumerRecord<String, String>> messages, Acknowledgment acknowledgment) {
         if (CollectionUtils.isEmpty(messages)) {
