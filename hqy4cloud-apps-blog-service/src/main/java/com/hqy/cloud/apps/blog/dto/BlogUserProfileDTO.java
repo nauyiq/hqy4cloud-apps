@@ -16,6 +16,7 @@ public class BlogUserProfileDTO {
     private String nickname;
     private String birthday;
     private String intro;
+    private Integer sex;
 
     public BlogUserProfileDTO() {
     }

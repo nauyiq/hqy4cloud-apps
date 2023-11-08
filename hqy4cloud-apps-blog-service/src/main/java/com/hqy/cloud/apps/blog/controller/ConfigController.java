@@ -16,13 +16,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 @RequestMapping("/blog")
 public class ConfigController {
-
     private final ConfigRequestService configRequestService;
 
     @GetMapping("/aboutMe")
     public R<String> getAboutMe() {
         return configRequestService.getAboutMe();
     }
+
 
 
 }

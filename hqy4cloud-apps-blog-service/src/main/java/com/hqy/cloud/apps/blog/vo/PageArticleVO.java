@@ -2,6 +2,7 @@ package com.hqy.cloud.apps.blog.vo;
 
 import cn.hutool.core.date.DateUtil;
 import com.hqy.cloud.apps.blog.dto.PageArticleDTO;
+import com.hqy.cloud.apps.blog.dto.StatisticsDTO;
 import lombok.*;
 
 /**
@@ -30,12 +31,13 @@ public class PageArticleVO {
     private String created;
 
 
-    public PageArticleVO(PageArticleDTO article) {
+    public PageArticleVO(PageArticleDTO article, StatisticsDTO statistics) {
         this.id = article.getId().toString();
         this.title = article.getTitle();
         this.description = article.getDescription();
         this.cover = article.getCover();
         this.type = article.getType();
         this.created = DateUtil.formatDateTime(article.getCreated());
+        this.statistics = new StatisticsVO(statistics);
     }
 }

@@ -6,7 +6,7 @@ import com.hqy.cloud.apps.blog.vo.ParentArticleCommentVO;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.common.result.ResultCode;
-import com.hqy.web.global.BaseController;
+import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
@@ -37,6 +37,9 @@ public class CommentController extends BaseController {
     @PostMapping("/article/comment")
     public R<Boolean> publishComment(@RequestBody @Valid PublishCommentDTO publishComment, HttpServletRequest request) {
         Long accessAccountId = getAccessAccountId(request);
+        if (accessAccountId == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
         // 二级评论.
         if (publishComment.getLevel() == 2) {
             if (StringUtils.isBlank(publishComment.getParentId())) {

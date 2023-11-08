@@ -1,7 +1,7 @@
 package com.hqy.cloud.apps.blog.entity;
 
 import com.google.common.base.Objects;
-import com.hqy.cloud.tk.model.BaseEntity;
+import com.hqy.cloud.db.tk.model.BaseEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,6 +25,8 @@ public class Config extends BaseEntity<Integer> {
      * 关于我
      */
     private String aboutMe;
+    private String chatTitle;
+    private String chatgptModels;
 
     @Override
     public String toString() {

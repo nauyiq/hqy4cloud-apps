@@ -42,11 +42,43 @@ public enum AppsResultCode implements Result {
      */
     NOT_FOUND_TYPE(5006, "Type not exist."),
 
+    /**
+     * 该用户不是您的好友
+     */
+    IM_NOT_FRIEND(10001, "The user is not your friend."),
+
+    /**
+     * 当前群聊已经存在
+     */
+    IM_GROUP_EXIST(10002, "The group already exist."),
+
+    /**
+     * 当前群聊不存在
+     */
+    IM_GROUP_NOT_EXIST(10003, "The group not exist."),
+
+    /**
+     * 群聊成员已满
+     */
+    IM_GROUP_MEMBER_COUNT_LIMITED(10004, "The im group is full."),
+
+    /**
+     * 用户不是群聊成员
+     */
+    IM_NOT_GROUP_MEMBER(10005, "The user is not group member."),
+
+    /**
+     * 转发的聊天不能超过五个
+     */
+    IM_FORWARD_SIZE_MAX(10006, "No more than five chats can be forwarded.")
+
+
+
     ;
 
-    public int code;
+    public final int code;
 
-    public String message;
+    public final String message;
 
 
     AppsResultCode(int code, String message) {
@@ -80,11 +112,11 @@ public enum AppsResultCode implements Result {
 
     @Override
     public String getMessage() {
-        return null;
+        return this.message;
     }
 
     @Override
     public int getCode() {
-        return 0;
+        return this.code;
     }
 }

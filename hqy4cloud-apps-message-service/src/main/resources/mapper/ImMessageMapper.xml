@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.hqy.cloud.message.tk.mapper.ImMessageMapper">
+
+
+    <select id="getMessageUnread" resultType="com.hqy.cloud.message.bind.dto.MessageUnreadDTO">
+        SELECT COUNT(is_read) unread,`to`, `from` FROM t_im_message
+        WHERE
+        (
+        <foreach collection="ids" item="id" open="(" close=")" separator="OR">
+            `from` = #{id}
+        </foreach>
+        ) AND is_read  = 0 AND `to` = #{to}
+        GROUP BY `from`
+    </select>
+
+    <insert id="insertMessages">
+        INSERT INTO t_im_message
+        (
+         id,message_id,is_group,`from`,`to`,`type`,content,is_read,`status`,created,updated
+        ) VALUES
+        <foreach collection="messages" item="message"  separator=",">
+            (
+             #{message.id},
+             #{message.messageId},
+             #{message.group},
+             #{message.from},
+             #{message.to},
+             #{message.type},
+             #{message.content},
+             #{message.read},
+             #{message.status},
+             #{message.created},
+             #{message.updated}
+            )
+        </foreach>
+    </insert>
+
+    <update id="updateMessagesRead">
+        UPDATE t_im_message SET is_read = 1 WHERE id IN
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
+
+</mapper>

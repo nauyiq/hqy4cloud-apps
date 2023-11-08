@@ -1,0 +1,22 @@
+version: "3.0"
+services:
+  message:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: message-service
+    restart: always
+    privileged: true
+    ports:
+      - 8099:8099
+      - 9099:9099
+      - 18099:18099
+    environment:
+      JVM_XMS: 512m
+      JVM_XMX: 1024m
+      JVM_XMN: 256m
+      JAVA_OPT_EXT: "-DNACOS_PASSWORD=nacos. -DNACOS_SERVER=172.0.0.1:8848"
+    volumes:
+      - /hongqy/docker/hqy4cloud/hqy4cloud-apps-message-service/logs:/hqy4cloud/hqy4cloud-apps-message-service/logs
+
+

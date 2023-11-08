@@ -6,7 +6,7 @@ import com.hqy.cloud.apps.blog.vo.PageArticleVO;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.util.AssertUtil;
-import com.hqy.web.global.BaseController;
+import com.hqy.cloud.web.common.BaseController;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -25,7 +25,7 @@ import static com.hqy.cloud.common.result.ResultCode.ERROR_PARAM_UNDEFINED;
 @RestController
 @RequestMapping("/admin/blog")
 @RequiredArgsConstructor
-public class AdminArticleController extends BaseController{
+public class AdminArticleController extends BaseController {
 
     private final ArticleRequestService articleRequestService;
 

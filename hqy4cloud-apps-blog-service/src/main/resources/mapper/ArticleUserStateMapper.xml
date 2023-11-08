@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.hqy.cloud.apps.blog.mapper.ArticleUserStateMapper">
+
+
+    <insert id="insertOrUpdate">
+        INSERT INTO t_article_user_state
+        (
+            `id`,
+            `article_id`,
+            `account_id`,
+            `state`,
+            `created`,
+            `updated`
+        ) VALUES
+        <foreach collection="states" item="state" separator=",">
+            (
+             #{state.id},
+             #{state.articleId},
+             #{state.accountId},
+             #{state.state},
+             now(),
+             now()
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        `state` = VALUES(`state`)
+    </insert>
+
+
+</mapper>

@@ -1,9 +1,6 @@
 package com.hqy.cloud.apps.blog.vo;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.builder.ToStringBuilder;
+import lombok.*;
 
 import java.util.Date;
 
@@ -14,6 +11,8 @@ import java.util.Date;
  * @date 2022/9/27 17:35
  */
 @Data
+@Builder
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccountProfileVO {
@@ -21,19 +20,10 @@ public class AccountProfileVO {
     private String id;
     private String username;
     private String nickname;
+    private String email;
+    private String phone;
     private String avatar;
     private String intro;
     private Date birthday;
 
-    @Override
-    public String toString() {
-        return new ToStringBuilder(this)
-                .append("id", id)
-                .append("username", username)
-                .append("nickname", nickname)
-                .append("avatar", avatar)
-                .append("intro", intro)
-                .append("birthday", birthday)
-                .toString();
-    }
 }

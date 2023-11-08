@@ -1,6 +1,6 @@
 package com.hqy.cloud.apps.blog.service.request;
 
-import com.hqy.cloud.apps.blog.service.StatisticsTkService;
+import com.hqy.cloud.apps.blog.service.tk.StatisticsTkService;
 
 /**
  * StatisticRequestService.

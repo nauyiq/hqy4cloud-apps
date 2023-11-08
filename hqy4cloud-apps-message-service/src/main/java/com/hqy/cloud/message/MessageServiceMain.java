@@ -13,13 +13,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
+import tk.mybatis.spring.annotation.MapperScan;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 /**
- *
  * 基于netty的socket.io服务 <br>
  * @author qiyuan.hong
  * @date 2022-03-23 22:08
@@ -27,6 +25,7 @@ import java.util.UUID;
 @Slf4j
 @SpringBootApplication
 @EnableDiscoveryClient
+@MapperScan(basePackages = {"com.hqy.cloud.message.tk.mapper"})
 @Import(SpringContextHolder.class)
 public class MessageServiceMain {
 
@@ -43,21 +42,12 @@ public class MessageServiceMain {
         private final SocketIoMessagePushService socketIoMessagePushService;
         @Override
         public List<RPCService> getRpcServices() {
-            return Arrays.asList(socketIoMessagePushService);
+            return List.of(socketIoMessagePushService);
         }
     }
 
 
     private static void initializeOnlineOfflineListener(SocketIOServer server) {
-        server.addConnectListener(client -> {
-            UUID sessionId = client.getSessionId();
-            log.info("@@@ 新连接上线: sessionId = {}", sessionId);
-        });
-
-        server.addDisconnectListener(client -> {
-            UUID sessionId = client.getSessionId();
-            log.info("@@@ 旧连接断开: sessionId = {}", sessionId);
-        });
     }
 
 

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.hqy.cloud.message.tk.mapper.ImFriendMapper">
+
+
+    <select id="queryFriends" resultType="com.hqy.cloud.message.tk.entity.ImFriend">
+        SELECT id,user_id,remark,`index`,is_notice notice,is_top top,`status`
+        FROM t_im_friend
+        WHERE id = #{id} AND `deleted` = 0 AND user_id IN
+        <foreach collection="userIds" item="userId" separator="," open="(" close=")">
+            #{userId}
+        </foreach>
+    </select>
+
+    <resultMap id="ContactResultMap" type="com.hqy.cloud.message.bind.dto.ContactsDTO">
+        <result column="unread" property="unread"/>
+        <collection property="contacts" ofType="com.hqy.cloud.message.tk.entity.ImFriend">
+            <result column="id" property="id"/>
+            <result column="userId" property="userId"/>
+            <result column="remark" property="remark"/>
+            <result column="index" property="index"/>
+            <result column="isNotice" property="notice"/>
+            <result column="isTop" property="top"/>
+            <result column="status" property="status"/>
+            <result column="created" property="created"/>
+        </collection>
+    </resultMap>
+
+    <select id="queryUserContacts" resultMap="ContactResultMap">
+        SELECT
+            c.id,
+            c.user_id userId,
+            c.remark,
+            c.index,
+            c.is_notice isNotice,
+            c.is_top isTop,
+            c.status,
+            c.created,
+            a.unread
+        FROM `t_im_friend` c,
+             (SELECT COUNT(*) unread FROM `t_im_friend_application` WHERE user_id = #{id} AND status IS NULL) a
+        WHERE c.id = #{id} AND c.deleted = 0
+    </select>
+
+    <update id="removeFriend">
+        UPDATE t_im_friend SET `deleted` = 1
+        WHERE (id = #{from} AND user_id = #{to}) OR (id = #{to} AND user_id = #{from})
+    </update>
+
+    <update id="updateImFriend">
+        UPDATE t_im_friend
+        <set>
+            updated = now()
+            <if test="friend.remark != null">
+                ,remark = #{friend.remark}
+            </if>
+            <if test="friend.top != null">
+                ,is_top = #{friend.top}
+            </if>
+            <if test="friend.notice != null">
+                ,is_notice = #{friend.notice}
+            </if>
+        </set>
+        WHERE id = #{friend.id} AND user_id = #{friend.userId}
+    </update>
+
+
+</mapper>

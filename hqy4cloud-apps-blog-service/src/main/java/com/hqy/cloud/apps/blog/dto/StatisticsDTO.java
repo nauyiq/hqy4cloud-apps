@@ -1,7 +1,7 @@
 package com.hqy.cloud.apps.blog.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.hqy.cloud.apps.blog.statistics.StatisticsType;
+import com.hqy.cloud.apps.blog.service.statistics.StatisticsType;
 import lombok.*;
 
 import java.io.Serializable;
@@ -18,7 +18,6 @@ import java.io.Serializable;
 @EqualsAndHashCode
 @AllArgsConstructor
 public class StatisticsDTO implements Serializable {
-
 
     private Long id;
     private Integer visits;
