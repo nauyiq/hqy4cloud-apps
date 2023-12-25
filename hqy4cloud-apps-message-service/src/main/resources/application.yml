@@ -28,3 +28,4 @@ spring:
       - nacos:application-@profiles.active@.yaml
       - nacos:@artifactId@.yaml
       - nacos:@artifactId@-kafka.yaml
+      - nacos:shardingshpere-apps-message.yaml

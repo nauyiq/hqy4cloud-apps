@@ -32,7 +32,7 @@ public class ArticleElasticServiceImpl extends ElasticServiceImpl<Long, ArticleD
         if (StringUtils.isNotBlank(describe)) {
             queryBuilder.withQuery(q -> q.matchPhrase(m -> m.field("intro").query(describe)));
         }
-        queryBuilder.withSort(Sort.by(Sort.Direction.DESC,"id"));
+        queryBuilder.withSort(Sort.by(Sort.Direction.DESC,"created"));
         return this.pageQueryByBuilder(current, size, queryBuilder);
     }
 

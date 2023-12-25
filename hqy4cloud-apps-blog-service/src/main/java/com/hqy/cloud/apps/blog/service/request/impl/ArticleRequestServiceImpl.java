@@ -101,15 +101,8 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         PageResult<ArticleDoc> result = articleElasticService.queryPage(title, describe, current, size);
         List<ArticleDoc> resultList = result.getResultList();
         if (CollectionUtils.isEmpty(resultList)) {
-            // es为空时尝试从db去取
-            PageInfo<Article> pageInfo = blogDbOperationService.articleTkService().pageArticles(title, describe, current, size);
-            if (CollectionUtils.isEmpty(pageInfo.getList())) {
-                return R.ok(new PageResult<>());
-            }
-            resultList = pageInfo.getList().stream().map(ArticleConverter.CONVERTER::convertDoc).collect(Collectors.toList());
-            result = new PageResult<>(pageInfo.getPageNum(), pageInfo.getTotal(), pageInfo.getPages(), resultList);
+            return R.ok();
         }
-
         //转换VO
         Map<Integer, Type> typesMap = getTypesMap();
         List<PageArticleVO> articleVoList = resultList.stream().map(ArticleConverter.CONVERTER::convert)

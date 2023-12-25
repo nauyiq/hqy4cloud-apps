@@ -77,6 +77,9 @@ public class AccountController extends BaseController {
     @GetMapping("/user/profile")
     public R<AccountProfileVO> getUserProfile(HttpServletRequest request) {
         Long accountId = getAccessAccountId(request);
+        if (accountId == null) {
+            return R.failed(ResultCode.NOT_LOGIN);
+        }
         return userRequestService.getUserProfile(accountId);
     }
 
