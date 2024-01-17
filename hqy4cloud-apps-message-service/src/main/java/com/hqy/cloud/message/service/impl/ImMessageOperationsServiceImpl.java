@@ -4,7 +4,6 @@ import cn.hutool.core.convert.Convert;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.StrUtil;
-import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.apps.commom.constants.AppsConstants;
 import com.hqy.cloud.foundation.id.DistributedIdGen;
 import com.hqy.cloud.message.bind.dto.ForwardMessageDTO;
@@ -16,7 +15,6 @@ import com.hqy.cloud.message.bind.event.support.PrivateChatEvent;
 import com.hqy.cloud.message.bind.event.support.ReadMessagesEvent;
 import com.hqy.cloud.message.bind.event.support.UndoMessageEvent;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
-import com.hqy.cloud.message.bind.vo.UserInfoVO;
 import com.hqy.cloud.message.cache.ImUnreadCacheService;
 import com.hqy.cloud.message.common.im.enums.ImMessageType;
 import com.hqy.cloud.message.es.document.ImMessageDoc;
@@ -33,16 +31,15 @@ import com.hqy.cloud.message.tk.service.ImGroupMemberTkService;
 import com.hqy.cloud.message.tk.service.ImMessageTkService;
 import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.util.spring.SpringContextHolder;
-import com.hqy.cloud.web.common.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -192,7 +189,7 @@ public class ImMessageOperationsServiceImpl implements ImMessageOperationsServic
         ImMessageDoc messageDoc = new ImMessageDoc(imMessage);
         template.execute(new TransactionCallbackWithoutResult() {
             @Override
-            protected void doInTransactionWithoutResult(@NotNull TransactionStatus status) {
+            protected void doInTransactionWithoutResult(@Nonnull TransactionStatus status) {
                 try {
                     AssertUtil.isTrue(messageTkService.insert(imMessage), "Failed execute to insert message bt send im message.");
                     imMessageElasticService.save(messageDoc);

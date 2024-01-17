@@ -12,13 +12,6 @@ import java.util.List;
 public interface ImEventListener {
 
     /**
-     * 用户上下线事件
-     * @param event {@link ContactOnlineOfflineEvent}
-     * @return      result
-     */
-    boolean onContactOnlineOffline(ContactOnlineOfflineEvent event);
-
-    /**
      * im私聊事件
      * @param event {@link PrivateChatEvent}
      * @return      result.

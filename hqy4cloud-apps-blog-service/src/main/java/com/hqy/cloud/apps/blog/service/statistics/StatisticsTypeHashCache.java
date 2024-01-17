@@ -1,7 +1,7 @@
 package com.hqy.cloud.apps.blog.service.statistics;
 
 import com.hqy.cloud.common.base.project.MicroServiceConstants;
-import com.hqy.cloud.foundation.cache.redis.key.support.RedisNamedKey;
+import com.hqy.cloud.foundation.redis.key.support.RedisNamedKey;
 
 import java.util.List;
 

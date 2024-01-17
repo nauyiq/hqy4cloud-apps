@@ -6,7 +6,6 @@ import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.common.result.ResultCode;
-import com.hqy.cloud.foundation.common.authentication.AuthenticationRequestContext;
 import com.hqy.cloud.message.bind.dto.ForwardMessageDTO;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.dto.MessageUnreadDTO;
@@ -14,8 +13,8 @@ import com.hqy.cloud.message.bind.dto.MessagesRequestParamDTO;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.service.request.ImMessageRequestService;
 import com.hqy.cloud.util.JsonUtil;
+import com.hqy.cloud.util.authentication.AuthenticationRequestContext;
 import com.hqy.cloud.web.common.BaseController;
-import jodd.util.StringUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -24,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Collection;
 import java.util.List;
 
 /**

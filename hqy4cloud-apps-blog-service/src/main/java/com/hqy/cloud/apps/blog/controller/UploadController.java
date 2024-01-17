@@ -5,7 +5,7 @@ import com.hqy.cloud.account.service.RemoteAccountProfileService;
 import com.hqy.cloud.apps.blog.vo.UploadFileVO;
 import com.hqy.cloud.apps.commom.constants.AppsConstants;
 import com.hqy.cloud.common.bind.R;
-import com.hqy.cloud.rpc.nacos.client.RPCClient;
+import com.hqy.cloud.rpc.starter.client.RpcClient;
 import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.util.file.FileValidateContext;
 import com.hqy.cloud.web.common.BaseController;
@@ -15,7 +15,6 @@ import com.hqy.cloud.web.upload.UploadFileService;
 import com.hqy.cloud.web.upload.UploadResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.util.RequestUtil;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -66,7 +65,7 @@ public class UploadController extends BaseController {
         if (!result.isResult()) {
             return R.failed(result.getMessage(), INVALID_UPLOAD_FILE.code);
         }
-        RemoteAccountProfileService accountProfileService = RPCClient.getRemoteService(RemoteAccountProfileService.class);
+        RemoteAccountProfileService accountProfileService = RpcClient.getRemoteService(RemoteAccountProfileService.class);
         accountProfileService.updateAccountAvatar(id, result.getPath());
         return R.ok(new UploadFileVO(result.getPath(), result.getRelativePath()));
     }

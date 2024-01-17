@@ -30,15 +30,14 @@ import com.hqy.cloud.message.tk.service.ImFriendApplicationTkService;
 import com.hqy.cloud.message.tk.service.ImFriendTkService;
 import com.hqy.cloud.message.tk.service.ImGroupTkService;
 import com.hqy.cloud.message.tk.service.ImUserSettingTkService;
-import com.hqy.cloud.rpc.nacos.client.RPCClient;
+import com.hqy.cloud.rpc.starter.client.RpcClient;
 import com.hqy.cloud.util.AssertUtil;
-import com.hqy.cloud.util.thread.ParentExecutorService;
+import com.hqy.cloud.util.ProjectExecutors;
 import com.hqy.cloud.web.common.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -140,7 +139,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
 
     @Override
     public R<List<UserInfoVO>> searchImUsers(Long id, String name) {
-        RemoteAccountProfileService profileService = RPCClient.getRemoteService(RemoteAccountProfileService.class);
+        RemoteAccountProfileService profileService = RpcClient.getRemoteService(RemoteAccountProfileService.class);
         List<AccountProfileStruct> profiles = profileService.getAccountProfilesByName(name);
         List<UserInfoVO> vos;
         if (CollectionUtils.isEmpty(profiles)) {
@@ -232,13 +231,12 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
             vos.add(vo);
         }
         if (CollectionUtils.isNotEmpty(unreadApplications)) {
-            ParentExecutorService.getInstance().execute(() ->
+            ProjectExecutors.getInstance().execute(() ->
                     imFriendOperationsService.updateApplicationStatus(userId, unreadApplications.parallelStream().map(ImFriendApplication::getId).toList(),  ImFriendApplication.NOT_VERIFY));
         }
         return R.ok(vos);
     }
 
-    @NotNull
     private List<Long> getUserIds(Long userId, List<ImFriendApplication> applications) {
         List<Long> ids = applications.parallelStream().map(ImFriendApplication::getApply).filter(id -> !id.equals(userId)).toList();
         List<Long> userIds = applications.parallelStream().map(ImFriendApplication::getReceive).filter(id -> !id.equals(userId)).toList();
@@ -279,7 +277,7 @@ public class ImUserRequestServiceImpl implements ImUserRequestService {
             unread++;
             if (result && StringUtils.isNotBlank(add.getRemark())) {
                 //新增系统消息
-                ParentExecutorService.getInstance().execute(() -> messageOperationsService.addSystemMessage(id, userId, add.getRemark(), false));
+                ProjectExecutors.getInstance().execute(() -> messageOperationsService.addSystemMessage(id, userId, add.getRemark(), false));
             }
         }
         if (result) {

@@ -2,7 +2,7 @@ package com.hqy.cloud.message.cache.support;
 
 import cn.hutool.core.util.StrUtil;
 import com.hqy.cloud.common.base.lang.StringConstants;
-import com.hqy.cloud.foundation.cache.redis.support.SmartRedisManager;
+import com.hqy.cloud.foundation.redis.support.SmartRedisManager;
 import com.hqy.cloud.message.cache.ImCache;
 import com.hqy.cloud.message.cache.ImRelationshipCacheService;
 import lombok.extern.slf4j.Slf4j;

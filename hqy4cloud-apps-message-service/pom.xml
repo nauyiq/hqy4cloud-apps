@@ -12,12 +12,19 @@
 
     <artifactId>hqy4cloud-apps-message-service</artifactId>
 
-    <properties>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-    </properties>
-
     <dependencies>
+        <dependency>
+            <groupId>com.hqy.cloud</groupId>
+            <artifactId>hqy4cloud-registry-nacos-starter</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.hqy.cloud</groupId>
+            <artifactId>hqy4cloud-netty-socket-socketio-springboot-autoconfigure</artifactId>
+            <version>${revision}</version>
+        </dependency>
+
         <dependency>
             <groupId>com.hqy.cloud</groupId>
             <artifactId>hqy4cloud-apps-message-service-api</artifactId>
@@ -28,17 +35,6 @@
             <groupId>com.hqy.cloud</groupId>
             <artifactId>hqy4cloud-apps-common-core</artifactId>
             <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.hqy.cloud</groupId>
-            <artifactId>hqy4cloud-netty-socketio-springboot-starter</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.alibaba.cloud</groupId>
-            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
         </dependency>
 
         <dependency>

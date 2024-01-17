@@ -5,7 +5,6 @@ import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.base.lang.StringConstants;
-import com.hqy.cloud.common.bind.FileResponse;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.common.result.ResultCode;
@@ -28,9 +27,8 @@ import com.hqy.cloud.message.tk.entity.ImMessage;
 import com.hqy.cloud.message.tk.service.ImConversationTkService;
 import com.hqy.cloud.message.tk.service.ImMessageTkService;
 import com.hqy.cloud.message.tk.service.ImUserSettingTkService;
-import com.hqy.cloud.util.JsonUtil;
+import com.hqy.cloud.util.ProjectExecutors;
 import com.hqy.cloud.util.file.FileValidateContext;
-import com.hqy.cloud.util.thread.ParentExecutorService;
 import com.hqy.cloud.web.common.AccountRpcUtil;
 import com.hqy.cloud.web.common.UploadResult;
 import com.hqy.cloud.web.upload.UploadFileService;
@@ -103,7 +101,7 @@ public class ImMessageRequestServiceImpl implements ImMessageRequestService {
         List<ImMessageVO> messages = convertMessages(resultList, profileMap, ids, imConversation);
         // setting messages read.
         if (resultList.parallelStream().filter(doc -> doc.getTo().equals(id)).anyMatch(doc -> doc.getRead() != null && !doc.getRead())) {
-            ParentExecutorService.getInstance().execute(() -> messageOperationsService.readMessages(imConversation));
+            ProjectExecutors.getInstance().execute(() -> messageOperationsService.readMessages(imConversation));
         }
         return R.ok(new PageResult<>(result.getCurrentPage(), params.getLimit(), total, messages));
     }

@@ -1,12 +1,10 @@
 package com.hqy.cloud.apps.blog;
 
-import com.hqy.cloud.util.spring.ProjectContextInfo;
-import com.hqy.cloud.util.spring.SpringContextHolder;
+import com.hqy.cloud.registry.config.deploy.EnableDeployClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.context.annotation.Import;
 import tk.mybatis.spring.annotation.MapperScan;
 
 /**
@@ -18,13 +16,12 @@ import tk.mybatis.spring.annotation.MapperScan;
 @Slf4j
 @EnableDiscoveryClient
 @SpringBootApplication
-@Import(SpringContextHolder.class)
+@EnableDeployClient
 @MapperScan(basePackages = {"com.hqy.cloud.apps.blog.mapper"})
 public class BlogServiceMain {
 
     public static void main(String[] args) {
         SpringApplication.run(BlogServiceMain.class, args);
-        ProjectContextInfo.startPrintf();
     }
 
 

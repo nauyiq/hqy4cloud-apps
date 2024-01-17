@@ -14,13 +14,11 @@ import com.hqy.cloud.message.es.document.ImMessageDoc;
 import com.hqy.cloud.message.es.service.ImMessageElasticService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.client.elc.NativeQuery;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
-import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.stereotype.Service;
 
@@ -53,7 +51,6 @@ public class ImMessageElasticServiceImpl extends ElasticServiceImpl<Long, ImMess
         return pageQueryByBuilder(params.getPage(), params.getLimit(), queryBuilder);
     }
 
-    @NotNull
     private NativeQueryBuilder getImMessageNativeQueryBuilder(Long from, Long removeTime, Long deleteTime, MessagesRequestParamDTO params) {
         Long to = params.getToContactId();
         //构建查询条件.

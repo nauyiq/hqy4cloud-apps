@@ -2,13 +2,11 @@ package com.hqy.cloud.message.cache.support;
 
 import cn.hutool.core.map.MapUtil;
 import com.hqy.cloud.common.base.lang.StringConstants;
-import com.hqy.cloud.foundation.cache.redis.support.RedisManager;
+import com.hqy.cloud.foundation.redis.support.RedisManager;
 import com.hqy.cloud.message.cache.ImCache;
 import com.hqy.cloud.message.cache.ImUnreadCacheService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.dao.DataAccessException;
-import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.stereotype.Service;
 

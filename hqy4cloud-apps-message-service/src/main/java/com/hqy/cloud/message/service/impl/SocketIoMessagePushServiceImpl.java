@@ -1,7 +1,8 @@
 package com.hqy.cloud.message.service.impl;
 
 import com.hqy.cloud.message.service.SocketIoMessagePushService;
-import com.hqy.cloud.socketio.starter.service.AbstractThriftSocketIoPushService;
+import com.hqy.cloud.netty.socketio.SocketIoSocketServer;
+import com.hqy.cloud.netty.socketio.thrift.AbstractThriftSocketIoPushService;
 import org.springframework.stereotype.Service;
 
 /**
@@ -12,5 +13,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class SocketIoMessagePushServiceImpl extends AbstractThriftSocketIoPushService implements SocketIoMessagePushService {
 
-
+    protected SocketIoMessagePushServiceImpl(SocketIoSocketServer socketServer) {
+        super(socketServer);
+    }
 }

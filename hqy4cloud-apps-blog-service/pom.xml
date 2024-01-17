@@ -13,10 +13,10 @@
     <artifactId>hqy4cloud-apps-blog-service</artifactId>
 
     <dependencies>
-        <!--nacos-config-->
         <dependency>
-            <groupId>com.alibaba.cloud</groupId>
-            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+            <groupId>com.hqy.cloud</groupId>
+            <artifactId>hqy4cloud-registry-nacos-starter</artifactId>
+            <version>${revision}</version>
         </dependency>
 
         <dependency>
@@ -42,7 +42,6 @@
             <artifactId>hqy4cloud-common-db-shardingsphere</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-
 
         <dependency>
             <groupId>com.hqy.cloud</groupId>

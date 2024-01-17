@@ -1,8 +1,8 @@
 package com.hqy.cloud.message.cache;
 
 import com.hqy.cloud.common.base.project.MicroServiceConstants;
-import com.hqy.cloud.foundation.cache.redis.key.RedisKey;
-import com.hqy.cloud.foundation.cache.redis.key.support.RedisNamedKey;
+import com.hqy.cloud.foundation.redis.key.RedisKey;
+import com.hqy.cloud.foundation.redis.key.support.RedisNamedKey;
 
 /**
  * using redis cache.

@@ -18,7 +18,7 @@ import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
 import com.hqy.cloud.foundation.common.account.AccountAuthRandomCodeServer;
 import com.hqy.cloud.foundation.common.account.AccountRandomCodeServer;
-import com.hqy.cloud.rpc.nacos.client.RPCClient;
+import com.hqy.cloud.rpc.starter.client.RpcClient;
 import com.hqy.cloud.rpc.thrift.struct.CommonResultStruct;
 import com.hqy.cloud.service.EmailRemoteService;
 import com.hqy.cloud.web.common.AccountRpcUtil;
@@ -63,20 +63,20 @@ public class UserRequestServiceImpl implements UserRequestService {
                 .nickname(profile.getNickname())
                 .intro(profile.getIntro())
                 .sex(profile.getSex()).build();
-        RemoteAccountProfileService remoteService = RPCClient.getRemoteService(RemoteAccountProfileService.class);
+        RemoteAccountProfileService remoteService = RpcClient.getRemoteService(RemoteAccountProfileService.class);
         boolean update = remoteService.uploadAccountProfile(struct);
         return update ? R.ok() : R.failed();
     }
 
     @Override
     public R<Boolean> sendEmailCode(String usernameOrEmail) {
-        RemoteAccountService remoteService = RPCClient.getRemoteService(RemoteAccountService.class);
+        RemoteAccountService remoteService = RpcClient.getRemoteService(RemoteAccountService.class);
         AccountStruct account = remoteService.getAccountByUsernameOrEmail(usernameOrEmail);
         if (Objects.isNull(account) || Objects.isNull(account.id)) {
             return R.failed(USER_NOT_FOUND);
         }
         String code = randomCodeServer.randomCode(StrUtil.EMPTY, account.email, 6);
-        EmailRemoteService emailRemoteService = RPCClient.getRemoteService(EmailRemoteService.class);
+        EmailRemoteService emailRemoteService = RpcClient.getRemoteService(EmailRemoteService.class);
         emailRemoteService.sendVerifyCodeEmail(usernameOrEmail, code);
         return R.ok();
     }
@@ -89,7 +89,7 @@ public class UserRequestServiceImpl implements UserRequestService {
             return R.failed(VERIFY_CODE_ERROR);
         }
         //RPC注册账号
-        RemoteAccountService accountRemoteService = RPCClient.getRemoteService(RemoteAccountService.class);
+        RemoteAccountService accountRemoteService = RpcClient.getRemoteService(RemoteAccountService.class);
         CommonResultStruct commonResultStruct = accountRemoteService.registryAccount(new RegistryAccountStruct(registry.getUsername(), registry.getEmail(), registry.getPassword()));
         if (!commonResultStruct.isResult()) {
             return R.failed(commonResultStruct.message, commonResultStruct.code);
@@ -100,7 +100,7 @@ public class UserRequestServiceImpl implements UserRequestService {
     @Override
     public R<Boolean> sendRegistryEmail(String email) {
         //判断邮箱是否被注册
-        RemoteAccountService service = RPCClient.getRemoteService(RemoteAccountService.class);
+        RemoteAccountService service = RpcClient.getRemoteService(RemoteAccountService.class);
         Long id = service.getAccountIdByUsernameOrEmail(email);
         if (Objects.nonNull(id)) {
             return R.failed(ResultCode.EMAIL_EXIST);
@@ -108,7 +108,7 @@ public class UserRequestServiceImpl implements UserRequestService {
         // 生成验证码
         String code = randomCodeServer.randomCode(StrUtil.EMPTY, email, 6);
         //RPC 发送验证码
-        EmailRemoteService emailRemoteService = RPCClient.getRemoteService(EmailRemoteService.class);
+        EmailRemoteService emailRemoteService = RpcClient.getRemoteService(EmailRemoteService.class);
         emailRemoteService.sendRegistryEmail(email, code);
         if (log.isDebugEnabled()) {
             log.debug("Send registry email code: {} to {}.", code, email);
@@ -118,7 +118,7 @@ public class UserRequestServiceImpl implements UserRequestService {
 
     @Override
     public R<Boolean> resetPassword(ForgetPasswordDTO passwordDTO) {
-        RemoteAccountService remoteService = RPCClient.getRemoteService(RemoteAccountService.class);
+        RemoteAccountService remoteService = RpcClient.getRemoteService(RemoteAccountService.class);
         String email = passwordDTO.getUsernameOrEmail();
         if (!Validator.isEmail(email)) {
             //query account
@@ -141,7 +141,7 @@ public class UserRequestServiceImpl implements UserRequestService {
 
     @Override
     public R<Boolean> updatePassword(Long accountId, String oldPassword, String newPassword) {
-        RemoteAccountService remoteService = RPCClient.getRemoteService(RemoteAccountService.class);
+        RemoteAccountService remoteService = RpcClient.getRemoteService(RemoteAccountService.class);
         CommonResultStruct commonResultStruct = remoteService.updateAccountPasswordByIdAndOldPassword(accountId, oldPassword, newPassword);
         if (!commonResultStruct.isResult()) {
             return R.failed(commonResultStruct.message, commonResultStruct.code);

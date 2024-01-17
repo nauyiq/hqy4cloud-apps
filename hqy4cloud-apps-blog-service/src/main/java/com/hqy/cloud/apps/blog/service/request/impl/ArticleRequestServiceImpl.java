@@ -26,7 +26,7 @@ import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.foundation.id.DistributedIdGen;
 import com.hqy.cloud.util.AssertUtil;
-import com.hqy.cloud.util.thread.ParentExecutorService;
+import com.hqy.cloud.util.ProjectExecutors;
 import com.hqy.cloud.web.common.AccountRpcUtil;
 import com.hqy.mq.kafka.server.KafkaMessageProducer;
 import lombok.RequiredArgsConstructor;
@@ -154,7 +154,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
                 return null;
             }
             ArticleDoc doc = ArticleConverter.CONVERTER.convertDoc(article);
-            ParentExecutorService.getInstance().execute(() -> articleElasticService.save(doc));
+            ProjectExecutors.getInstance().execute(() -> articleElasticService.save(doc));
             return doc;
         });
 
