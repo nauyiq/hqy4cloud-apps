@@ -54,7 +54,7 @@ public class ArticleDoc implements ElasticDocument<Long> {
     private Boolean status;
 
     @Field(type = FieldType.Boolean)
-    private Boolean deleted;
+    private Boolean deleted = false;
 
     @Field(type = FieldType.Date, format = DateFormat.custom, pattern = "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis")
     private Date created;

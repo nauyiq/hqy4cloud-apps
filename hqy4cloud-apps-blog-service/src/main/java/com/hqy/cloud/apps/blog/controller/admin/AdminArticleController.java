@@ -30,7 +30,7 @@ public class AdminArticleController extends BaseController {
     private final ArticleRequestService articleRequestService;
 
     @GetMapping("/article/page")
-    public R<PageResult<PageArticleVO>> pageAdminArticles(String title, String describe, Integer current, Integer size) {
+    public R<PageResult<PageArticleVO>> pageAdminArticles(@RequestParam(value = "title", required = false)String title, @RequestParam(value = "description", required = false) String describe, Integer current, Integer size) {
         current = current == null ? 1 : current;
         size = size == null ? 10 : size;
         return articleRequestService.adminPageArticles(title, describe, current, size);

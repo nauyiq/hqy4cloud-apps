@@ -63,10 +63,10 @@
             a.last_message_type `lastMessageType`,
             a.last_message_content `lastMessageContent`,
             a.last_message_time `lastMessageTime`,
-            a.deleted `deleted`,
+            a.`deleted` `deleted`,
             f.user_id friendId,
             f.remark remark,
-            f.index `index`,
+            f.`index` `index`,
             g.*
         FROM `t_im_conversation` a
             LEFT JOIN `t_im_friend` f ON a.`user_id` = f.`id` AND a.contact_id = f.user_id AND f.deleted = 0
@@ -80,7 +80,7 @@
                     g.is_invite groupInvite,
                     g.notice groupNotice,
                     g.created groupCreated,
-                    m.role groupRole
+                    m.`role` groupRole
                 FROM `t_im_group` g LEFT JOIN t_im_group_member m on g.id = m.group_id
                 WHERE m.user_id = #{userId}
             ) g ON a.`contact_id` = g.groupId

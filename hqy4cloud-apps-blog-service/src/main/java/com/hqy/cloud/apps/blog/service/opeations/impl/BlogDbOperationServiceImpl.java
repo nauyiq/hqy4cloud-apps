@@ -3,7 +3,10 @@ package com.hqy.cloud.apps.blog.service.opeations.impl;
 import com.hqy.cloud.apps.blog.entity.Article;
 import com.hqy.cloud.apps.blog.entity.Comment;
 import com.hqy.cloud.apps.blog.service.opeations.BlogDbOperationService;
-import com.hqy.cloud.apps.blog.service.tk.*;
+import com.hqy.cloud.apps.blog.service.tk.ArticleTkService;
+import com.hqy.cloud.apps.blog.service.tk.CommentTkService;
+import com.hqy.cloud.apps.blog.service.tk.ConfigTkService;
+import com.hqy.cloud.apps.blog.service.tk.TypeTkService;
 import com.hqy.cloud.util.AssertUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,10 +29,8 @@ import java.util.Objects;
 public class BlogDbOperationServiceImpl implements BlogDbOperationService {
 
     private final TransactionTemplate transactionTemplate;
-    private final LikedTkService likedTkService;
     private final ArticleTkService articleTkService;
     private final CommentTkService commentTkService;
-    private final TagsTkService tagsTkService;
     private final TypeTkService typeTkService;
     private final ConfigTkService configTkService;
 
@@ -60,11 +61,6 @@ public class BlogDbOperationServiceImpl implements BlogDbOperationService {
     }
 
     @Override
-    public LikedTkService likedTkService() {
-        return likedTkService;
-    }
-
-    @Override
     public ArticleTkService articleTkService() {
         return articleTkService;
     }
@@ -72,11 +68,6 @@ public class BlogDbOperationServiceImpl implements BlogDbOperationService {
     @Override
     public ConfigTkService configTkService() {
         return configTkService;
-    }
-
-    @Override
-    public TagsTkService tagsTkService() {
-        return tagsTkService;
     }
 
     @Override

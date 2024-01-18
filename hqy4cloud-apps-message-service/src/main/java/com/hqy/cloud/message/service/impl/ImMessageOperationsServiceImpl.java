@@ -48,7 +48,6 @@ import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.*;
 
 /**
  * ImMessageOperationsService.
- *
  * @author qiyuan.hong
  * @date 2023-08-20 21:41
  */

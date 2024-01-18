@@ -1,5 +1,7 @@
 package com.hqy.cloud.apps.blog.es.service.impl;
 
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
+import co.elastic.clients.elasticsearch._types.query_dsl.QueryBuilders;
 import com.hqy.cloud.apps.blog.es.document.ArticleDoc;
 import com.hqy.cloud.apps.blog.es.service.ArticleElasticService;
 import com.hqy.cloud.common.result.PageResult;
@@ -10,6 +12,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.elasticsearch.client.elc.ElasticsearchTemplate;
 import org.springframework.data.elasticsearch.client.elc.NativeQueryBuilder;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author qiyuan.hong
@@ -26,13 +31,16 @@ public class ArticleElasticServiceImpl extends ElasticServiceImpl<Long, ArticleD
     @Override
     public PageResult<ArticleDoc> queryPage(String title, String describe, Integer current, Integer size) {
         NativeQueryBuilder queryBuilder = new NativeQueryBuilder();
+        List<Query> mustQueries = new ArrayList<>(2);
+        mustQueries.add(QueryBuilders.term(m -> m.field("deleted").value(Boolean.FALSE)));
         if (StringUtils.isNotBlank(title)) {
-            queryBuilder.withQuery(q -> q.matchPhrase(m -> m.field("title").query(title)));
+            mustQueries.add(QueryBuilders.matchPhrase(m -> m.field("title").query(title)));
         }
         if (StringUtils.isNotBlank(describe)) {
-            queryBuilder.withQuery(q -> q.matchPhrase(m -> m.field("intro").query(describe)));
+            mustQueries.add(QueryBuilders.matchPhrase(m -> m.field("intro").query(describe)));
         }
         queryBuilder.withSort(Sort.by(Sort.Direction.DESC,"created"));
+        queryBuilder.withQuery(q -> q.bool(b -> b.must(mustQueries)));
         return this.pageQueryByBuilder(current, size, queryBuilder);
     }
 

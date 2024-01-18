@@ -2,7 +2,9 @@ package com.hqy.cloud.apps.blog.service.opeations;
 
 import com.hqy.cloud.apps.blog.entity.Article;
 import com.hqy.cloud.apps.blog.service.tk.ArticleTkService;
-import com.hqy.cloud.apps.blog.service.tk.*;
+import com.hqy.cloud.apps.blog.service.tk.CommentTkService;
+import com.hqy.cloud.apps.blog.service.tk.ConfigTkService;
+import com.hqy.cloud.apps.blog.service.tk.TypeTkService;
 
 /**
  * BlogDbOperationService.
@@ -18,11 +20,6 @@ public interface BlogDbOperationService {
      * @return         result.
      */
     boolean deleteArticle(Article article);
-
-
-    LikedTkService likedTkService();
-
-    TagsTkService tagsTkService();
 
     TypeTkService typeTkService();
 

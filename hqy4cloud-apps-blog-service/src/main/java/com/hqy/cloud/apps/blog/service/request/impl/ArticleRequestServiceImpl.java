@@ -101,7 +101,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
         PageResult<ArticleDoc> result = articleElasticService.queryPage(title, describe, current, size);
         List<ArticleDoc> resultList = result.getResultList();
         if (CollectionUtils.isEmpty(resultList)) {
-            return R.ok();
+            return R.ok(new PageResult<>());
         }
         //转换VO
         Map<Integer, Type> typesMap = getTypesMap();
