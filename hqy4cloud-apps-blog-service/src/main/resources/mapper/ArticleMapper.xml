@@ -17,7 +17,7 @@
         FROM t_article a
         <where>
             <if test="status != null">
-                `status` = 1
+                `status` = 1 AND `deleted` = 0
             </if>
             <if test="type != null">
                 AND `type` = #{type}
