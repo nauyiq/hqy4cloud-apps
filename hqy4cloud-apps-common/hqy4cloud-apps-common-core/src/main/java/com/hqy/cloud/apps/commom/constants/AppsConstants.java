@@ -12,6 +12,7 @@ public interface AppsConstants {
         String UPLOAD_IMAGE_FOLDER = "/files/blog/image";
         String UPLOAD_IMAGE_MUSIC = "/files/blog/music";
         String BLOG_STATE_TOPIC = "blog-user-state-topic";
+        int DEFAULT_COMMENT_TABLE_COUNT = 4;
     }
 
 

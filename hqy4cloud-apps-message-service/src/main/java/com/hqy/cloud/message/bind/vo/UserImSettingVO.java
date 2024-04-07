@@ -1,9 +1,10 @@
 package com.hqy.cloud.message.bind.vo;
 
-import com.hqy.cloud.message.tk.entity.ImUserSetting;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.Size;
 
 /**
  * @author qiyuan.hong
@@ -15,41 +16,27 @@ import lombok.NoArgsConstructor;
 public class UserImSettingVO {
 
     /**
-     * 是否允许陌生人发消息
+     * 聊天昵称
      */
-    private Boolean isPrivateChat;
+    @Size(max = 30)
+    private String nickname;
 
     /**
      * 是否允许邀请加入群聊
      */
     private Boolean isInviteGroup;
 
-    /**
-     * 是否显示在线状态
-     */
-    private Boolean isOnline;
 
     /**
-     * 是否允许全局im消息
+     * 是否允许同步设置到账号设置
      */
-    private Boolean isGlobalChat;
+    private Boolean isSyncSetting;
 
 
-
-    public static UserImSettingVO of(ImUserSetting imUserSetting) {
-        UserImSettingVO vo = new UserImSettingVO();
-        vo.setIsPrivateChat(imUserSetting.getPrivateChat());
-        vo.setIsInviteGroup(imUserSetting.getInviteGroup());
-        vo.setIsOnline(imUserSetting.getOline());
-        vo.setIsGlobalChat(imUserSetting.getGlobalChat());
-        return vo;
-    }
-
-    public static UserImSettingVO of() {
-        return new UserImSettingVO(false, true, true, false);
-    }
-
-
+    /**
+     * 是否可以通过账号名搜索到你
+     */
+    private Boolean isQueryAccount;
 
 
 

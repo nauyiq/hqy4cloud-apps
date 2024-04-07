@@ -1,37 +1,28 @@
 package com.hqy.cloud.message.bind;
 
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.lang.Validator;
 import cn.hutool.extra.pinyin.PinyinUtil;
-import com.hqy.cloud.account.struct.AccountProfileStruct;
-import com.hqy.cloud.apps.commom.constants.AppsConstants;
-import com.hqy.cloud.message.bind.event.support.AddGroupEvent;
-import com.hqy.cloud.message.bind.vo.GroupMemberVO;
-import com.hqy.cloud.message.bind.vo.UserInfoVO;
-import com.hqy.cloud.message.common.im.enums.ImMessageType;
-import com.hqy.cloud.message.es.document.ImMessageDoc;
-import com.hqy.cloud.message.tk.entity.ImGroup;
-import com.hqy.cloud.message.tk.entity.ImGroupMember;
+import com.hqy.cloud.message.bind.dto.ImMessageEventContentDTO;
+import com.hqy.cloud.message.bind.enums.EventMessageType;
+import com.hqy.cloud.util.JsonUtil;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.*;
 
 /**
  * @author qiyuan.hong
  * @version 1.0
- * @date 2023/8/16 14:54
+ * @date 2023/8/16
  */
+@Slf4j
 @UtilityClass
 public class ConvertUtil {
     public static final String DEFAULT_INDEX = "#";
 
-    public String getIndex(String displayName) {
+    public String getIndex(boolean isGroup, String displayName) {
+        if (isGroup) {
+            return ImLanguageContext.getValue(PropertiesConstants.GROUP_INDEX_KEY);
+        }
         if (StringUtils.isBlank(displayName)) {
             return DEFAULT_INDEX;
         }
@@ -40,63 +31,78 @@ public class ConvertUtil {
         return Validator.isLetter(fistChatStr) ? (PinyinUtil.getFirstLetter(fistChar) + "").toUpperCase() : "#";
     }
 
-    public List<AddGroupEvent> newAddGroupEvent(List<ImGroupMember> groupMembers, ImGroup group) {
-        return groupMembers.stream().map(groupMember -> {
-            Long userId = groupMember.getUserId();
-            return AddGroupEvent.builder()
-                    .id(userId.toString())
-                    .avatar(group.getAvatar())
-                    .isGroup(true)
-                    .isNotice(groupMember.getNotice())
-                    .isTop(groupMember.getTop())
-                    .unread(0)
-                    .role(groupMember.getRole())
-                    .invite(group.getInvite())
-                    .notice(group.getNotice())
-                    .creator(group.getCreator().toString()).build();
-        }).collect(Collectors.toList());
-    }
 
-    public List<GroupMemberVO> convertGroupMembers(List<ImGroupMember> groupMembers, Map<Long, AccountProfileStruct> infos) {
-        return groupMembers.parallelStream().map(member -> {
-            Long userId = member.getUserId();
-            String displayName = member.getDisplayName();
-            if (userId == null || !infos.containsKey(userId)) {
-                return null;
-            }
-            GroupMemberVO vo = new GroupMemberVO(member.getUserId().toString(), member.getRole(), DateUtil.formatDateTime(member.getCreated()));
-            AccountProfileStruct struct = infos.get(userId);
-            UserInfoVO userInfoVO = new UserInfoVO(userId.toString(), struct.username, struct.nickname, struct.avatar,
-                    StringUtils.isEmpty(displayName) ? struct.nickname : displayName);
-            vo.setUserInfo(userInfoVO);
-            return vo;
-        }).filter(Objects::nonNull).collect(Collectors.toList());
+    public String convertMessageEventContent(Long userId, Long sender, Integer type, String content, boolean isGroup) {
+        return convertMessageEventContent(userId, sender, type, content, isGroup, ImLanguageContext.Language.ZH_CH);
     }
 
 
-
-
-    public String getMessageContent(Long id, String editor, ImMessageDoc doc) {
-        String type = doc.getType();
-        Long from = doc.getFrom();
-        if (ImMessageType.EVENT.type.equals(type)) {
-            return getEventMessageContent(id, editor, from, doc.getGroup(), doc.getContent());
-        } else if (ImMessageType.isFileType(type)) {
-            return doc.getPath();
+    /**
+     * 根据消息类型转义消息内容
+     * @param userId   用户id
+     * @param sender   发送人
+     * @param type     消息类型
+     * @param content  内容
+     * @param language 语言类型
+     * @return         转义后的消息内容
+     */
+    public String convertMessageEventContent(Long userId, Long sender, Integer type, String content, boolean isGroup, ImLanguageContext.Language language) {
+        if (!EventMessageType.isEventType(type)) {
+            return content;
         }
-        return doc.getContent();
-    }
+        EventMessageType messageType = EventMessageType.getType(type);
+        if (messageType == null) {
+            return content;
+        }
 
-    public String getEventMessageContent(Long id, String editor, Long from, boolean isGroup, String content) {
-        if (id.equals(from)) {
-            content = content.replace(REPLACE, YOU);
-        } else if (AppsConstants.Message.IM_UNDO_MESSAGE_CONTENT.equals(content) && !isGroup){
-            content = content.replace(REPLACE, TARGET);
-        } else {
-            content = content.replace(REPLACE, editor);
+        String key = messageType.translateKey;
+
+        // 好友消息单独处理
+        if (messageType == EventMessageType.FRIEND) {
+            if (sender.equals(userId)) {
+                // 发送人等于自己
+                content = ImLanguageContext.getValue(key, language);
+            }
+            return content;
+        }
+
+        if (messageType == EventMessageType.ADD_FRIEND_NOTICE) {
+            return ImLanguageContext.getValue(key, language);
+        }
+
+
+        if (StringUtils.isNotBlank(key)) {
+            // 需要翻译内容
+            try {
+                ImMessageEventContentDTO eventContentDTO = JsonUtil.toBean(content, ImMessageEventContentDTO.class);
+                Long operatorId = eventContentDTO.getOperatorId();
+                String operatorName = eventContentDTO.getOperatorName();
+                String value = ImLanguageContext.getValue(key, language);
+                if (sender.equals(operatorId)) {
+                    content = getReplaceValue(value, ImLanguageContext.getYouValue(language));
+                } else {
+                    content = isGroup ? getReplaceValue(value, operatorName) : getReplaceValue(value, ImLanguageContext.getTargetValue(language));
+                }
+            } catch (Throwable cause) {
+                log.error(cause.getMessage(), cause);
+            }
         }
         return content;
     }
+
+    public String getReplaceValue(String source, String value) {
+        if (source.contains(Constants.REPLACE)) {
+            return source.replace(Constants.REPLACE, value);
+        }
+        return value + source;
+    }
+
+
+
+
+
+
+
 
 
 }

@@ -18,7 +18,7 @@ public class QuartzImMessageHistorySchedulerTimerConfiguration {
     public static final String ID = "ImMessage-history";
 
 
-    @Bean
+    /*@Bean
     public JobDetail jobDetail() {
         return JobBuilder.newJob(ImMessageHistoryJob.class)
                 .withIdentity(QuartzImMessageHistorySchedulerTimerConfiguration.ID)
@@ -35,7 +35,7 @@ public class QuartzImMessageHistorySchedulerTimerConfiguration {
                 .withIdentity(ID.concat("-trigger"))
                 .withSchedule(cron)
                 .build();
-    }
+    }*/
 
 
 

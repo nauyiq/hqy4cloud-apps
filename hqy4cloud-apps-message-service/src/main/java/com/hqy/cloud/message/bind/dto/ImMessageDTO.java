@@ -1,11 +1,11 @@
 package com.hqy.cloud.message.bind.dto;
 
-import com.hqy.cloud.apps.commom.constants.AppsConstants;
+import cn.hutool.core.lang.UUID;
+import com.hqy.cloud.message.bind.enums.ImMessageState;
+import com.hqy.cloud.message.bind.enums.MessageType;
 import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.bind.vo.UserInfoVO;
-import com.hqy.cloud.message.common.im.enums.ImMessageType;
-import com.hqy.cloud.message.tk.entity.ImMessage;
-import jodd.util.StringUtil;
+import com.hqy.cloud.message.db.entity.PrivateMessage;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -20,17 +20,12 @@ import org.apache.commons.lang3.StringUtils;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ImMessageDTO extends ImMessageVO {
-
     private Long conversationId;
 
-    public boolean checkParams() {
-        if (StringUtil.isBlank(getToContactId()) || !ImMessageType.isEnabled(getType())) {
-            return false;
-        }
-        if (!ImMessageType.isFileType(getType()) && StringUtil.isBlank(getContent())) {
-            return false;
-        }
-        return true;
+    public boolean checkParamsIsUndefined() {
+        return StringUtils.isAnyBlank(getToContactId(), getContent(), getType()) ||
+                getIsGroup() == null || getFromUser() == null;
+
     }
 
     public Long getConversationId() {
@@ -42,17 +37,31 @@ public class ImMessageDTO extends ImMessageVO {
     }
 
 
-    public ImMessageDTO(ImMessage message) {
+    public ImMessageDTO(PrivateMessage message, UserInfoVO infoVO) {
         setId(message.getMessageId());
         setMessageId(message.getId().toString());
-        setIsGroup(message.getGroup());
-        setIsRead(message.getRead());
-        setFromUser(new UserInfoVO(message.getFrom().toString()));
-        setToContactId(message.getTo().toString());
+        setIsGroup(false);
+        setIsRead(message.getIsRead());
+        setFromUser(infoVO);
+        setToContactId(message.getReceive().toString());
         setContent(message.getContent());
-        setStatus(message.getStatus() ? AppsConstants.Message.IM_MESSAGE_SUCCESS : AppsConstants.Message.IM_MESSAGE_FAILED);
-        setType(message.getType());
+        setStatus(ImMessageState.getState(message.getStatus()));
+        setType(MessageType.getMessageType(message.getType()));
+        setMessageType(message.getType());
         setSendTime(message.getCreated().getTime());
     }
+
+    public ImMessageDTO(Long messageId, Boolean group, UserInfoVO fromUser, String content, Long contactId, String type) {
+        setId(UUID.fastUUID().toString());
+        setMessageId(messageId.toString());
+        setIsGroup(group);
+        setFromUser(fromUser);
+        setIsRead(true);
+        setContent(content);
+        setType(type);
+        setToContactId(contactId.toString());
+        setStatus(ImMessageState.SUCCESS.name);
+    }
+
 
 }

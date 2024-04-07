@@ -21,8 +21,13 @@ public class MessageUnreadDTO {
     private Boolean isGroup;
     private Integer unread = 0;
 
-    public boolean isEnabled() {
-        return conversationId != null || (userId != null && toContactId != null);
+    public boolean enabled() {
+        if (isGroup == null) {
+            return false;
+        }
+        return conversationId != null || toContactId != null;
     }
+
+
 
 }

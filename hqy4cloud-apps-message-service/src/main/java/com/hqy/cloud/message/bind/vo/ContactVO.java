@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.bind.vo;
 
-import com.hqy.cloud.message.bind.dto.FriendContactDTO;
+import com.hqy.cloud.message.bind.ConvertUtil;
+import com.hqy.cloud.message.bind.dto.ContactDTO;
 import com.hqy.cloud.message.bind.dto.GroupContactDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,7 +11,7 @@ import lombok.NoArgsConstructor;
 /**
  * @author qiyuan.hong
  * @version 1.0
- * @date 2023/8/21 13:49
+ * @date 2023/8/21
  */
 @Data
 @Builder
@@ -49,32 +50,34 @@ public class ContactVO {
     private Boolean isTop;
 
     /**
-     * 是否允许群邀请
+     * 群聊创建者
      */
-    private Boolean isInvite;
+    private String creator;
 
     /**
      * 排序index
      */
     private String index;
 
-    public ContactVO(FriendContactDTO contact) {
-        this.id = contact.getId().toString();
-        this.displayName = contact.getRemark();
-        this.avatar = contact.getAvatar();
-        this.isGroup = false;
-        this.isNotice = contact.getIsNotice();
-        this.isTop = contact.getIsTop();
-        this.isInvite = false;
-        this.index = contact.getIndex();
-    }
 
     public ContactVO(GroupContactDTO contact) {
         this.id = contact.getGroupId().toString();
         this.displayName = contact.getName();
         this.avatar = contact.getGroupAvatar();
         this.isGroup = true;
-        this.isInvite = contact.getGroupInvite();
         this.index = contact.getGroupIndex();
     }
+
+    public static ContactVO of(ContactDTO contact) {
+        return ContactVO.builder()
+                .id(contact.getContactId().toString())
+                .displayName(contact.getDisplayName())
+                .avatar(contact.getAvatar())
+                .isGroup(contact.getIsGroup())
+                .isTop(contact.getIsTop())
+                .creator(contact.getCreator() == null ? null : contact.getCreator().toString())
+                .isNotice(contact.getIsNotice())
+                .index(ConvertUtil.getIndex(contact.getIsGroup(), contact.getDisplayName())).build();
+    }
+
 }

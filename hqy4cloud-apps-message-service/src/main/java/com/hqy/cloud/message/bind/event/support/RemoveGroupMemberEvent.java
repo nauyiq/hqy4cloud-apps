@@ -1,7 +1,6 @@
 package com.hqy.cloud.message.bind.event.support;
 
 import com.hqy.cloud.message.bind.event.ImEvent;
-import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.util.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,8 +21,8 @@ public class RemoveGroupMemberEvent implements ImEvent {
     private List<String> users;
     private Payload payload;
 
-    public static RemoveGroupMemberEvent of(List<String> users, String groupId, String userId, ImMessageVO messageVO) {
-        return new RemoveGroupMemberEvent(users, new Payload(groupId, userId, messageVO));
+    public static RemoveGroupMemberEvent of(List<String> users, String groupId, String userId) {
+        return new RemoveGroupMemberEvent(users, new Payload(groupId, userId));
     }
 
     public String message() {
@@ -41,7 +40,6 @@ public class RemoveGroupMemberEvent implements ImEvent {
     public static class Payload {
         private String groupId;
         private String userId;
-        private ImMessageVO message;
     }
 
 }

@@ -1,0 +1,6 @@
+com.hqy.cloud.message.server.support.convertor.TextMessageConvertor
+com.hqy.cloud.message.server.support.convertor.FileMessageConvertor
+com.hqy.cloud.message.server.support.convertor.UndoMessageConvertor
+com.hqy.cloud.message.server.support.convertor.AddFriendMessageConvertor
+com.hqy.cloud.message.server.support.convertor.AddFriendNoticeMessageConvertor
+com.hqy.cloud.message.server.support.convertor.EventsMessageConvertor

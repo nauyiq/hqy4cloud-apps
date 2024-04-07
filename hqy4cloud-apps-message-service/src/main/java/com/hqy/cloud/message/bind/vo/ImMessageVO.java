@@ -5,6 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -42,13 +45,21 @@ public class ImMessageVO {
     private UserInfoVO fromUser;
 
     /**
+     * 接收人用户信息
+     */
+    private UserInfoVO contactUser;
+
+
+    /**
      * 联系人/群 id
      */
+    @NotEmpty
     private String toContactId;
 
     /**
      * 内容
      */
+    @NotEmpty
     private String content;
 
     /**
@@ -59,7 +70,13 @@ public class ImMessageVO {
     /**
      * 消息类型
      */
+    @NotEmpty
     private String type;
+
+    /**
+     * 消息类型
+     */
+    private Integer messageType;
 
     /**
      * 文件大小

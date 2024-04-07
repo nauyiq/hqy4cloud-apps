@@ -35,6 +35,11 @@ public class CommentTkServiceImpl extends BaseTkServiceImpl<Comment, Long> imple
     private final CommentMapper commentMapper;
 
     @Override
+    public int manualInsert(Comment comment) {
+        return commentMapper.manualInsert(comment);
+    }
+
+    @Override
     public List<Comment> selectParentComments(Long articleId) {
         if (articleId == null) {
             return Collections.emptyList();

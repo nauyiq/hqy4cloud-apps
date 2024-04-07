@@ -4,6 +4,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
 /**
  * @author qiyuan.hong
  * @version 1.0
@@ -22,6 +25,7 @@ public class FriendDTO {
     /**
      * 添加的好友用户id
      */
+    @NotNull
     private Long userId;
 
     /**
@@ -32,7 +36,9 @@ public class FriendDTO {
     /**
      * 备注
      */
+    @Size(max = 30)
     private String remark;
+
 
     /**
      * accept or reject

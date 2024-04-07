@@ -4,6 +4,7 @@ import com.hqy.cloud.db.tk.model.BaseEntity;
 import lombok.*;
 
 import javax.persistence.Table;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -18,7 +19,7 @@ import java.util.Date;
 @EqualsAndHashCode(callSuper = true)
 @AllArgsConstructor
 @NoArgsConstructor
-public class Comment extends BaseEntity<Long> {
+public class Comment extends BaseEntity<Long> implements Serializable {
 
     /**
      * 博客id

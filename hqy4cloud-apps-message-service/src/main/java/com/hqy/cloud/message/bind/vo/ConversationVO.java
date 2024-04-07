@@ -1,15 +1,19 @@
 package com.hqy.cloud.message.bind.vo;
 
+import com.hqy.cloud.message.bind.dto.ConversationDTO;
+import com.hqy.cloud.message.bind.enums.MessageType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author qiyuan.hong
  * @version 1.0
  * @date 2023/8/11 14:01
  */
+@Slf4j
 @Data
 @Builder
 @NoArgsConstructor
@@ -67,11 +71,6 @@ public class ConversationVO {
     private Integer role;
 
     /**
-     * 群聊邀请确认
-     */
-    private Boolean invite;
-
-    /**
      * 群公告
      */
     private String notice;
@@ -101,6 +100,21 @@ public class ConversationVO {
      */
     private String lastContent;
 
+
+    public static ConversationVO of(ConversationDTO conversation) {
+        return ConversationVO.builder()
+                .id(conversation.getContactId().toString())
+                .conversationId(conversation.getId().toString())
+                .displayName(conversation.getDisplayName())
+                .avatar(conversation.getAvatar())
+                .isGroup(conversation.getIsGroup())
+                .isNotice(conversation.getIsNotice())
+                .unread(conversation.getUnread())
+                .role(conversation.getRole())
+                .notice(conversation.getNotice())
+                .type(conversation.getLastMessageType() == null ? null : MessageType.getMessageType(conversation.getLastMessageType()))
+                .lastContent(conversation.getLastMessageContent()).build();
+    }
 
 
 }

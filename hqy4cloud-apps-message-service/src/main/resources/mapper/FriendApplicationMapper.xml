@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hqy.cloud.message.db.mapper.FriendApplicationMapper">
+
+
+
+    <select id="queryApplicationByUserId" resultType="com.hqy.cloud.message.bind.dto.FriendApplicationDTO">
+        SELECT fa.id, fa.apply userId, fa.remark, fa.status, fa.created,
+               us.username, us.avatar, us.nickname
+        FROM t_im_friend_application fa INNER JOIN t_im_user_setting us ON fa.apply = us.id
+        WHERE fa.receive = #{userId} AND deleted = 0
+    </select>
+
+    <insert id="insertOrUpdate">
+        INSERT INTO t_im_friend_application
+        (
+         `apply`,`receive`,`remark`,`status`,`created`,`updated`
+        ) VALUES
+        <foreach collection="applications" item="application" separator=",">
+        (
+            #{application.apply},
+            #{application.receive},
+            #{application.remark},
+            #{application.status},
+            now(),
+            now()
+        )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        `status` = VALUES(`status`),
+        `updated` = now()
+    </insert>
+
+    <update id="updateApplicationsStatus">
+        UPDATE t_im_friend_application SET `status` = #{status} WHERE id IN
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="updateApplicationStatusByApplyAndReceive">
+        UPDATE t_im_friend_application SET `status` = #{status}, updated = now() WHERE apply = #{apply} AND receive = #{receiver}
+    </update>
+
+</mapper>

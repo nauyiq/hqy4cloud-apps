@@ -26,6 +26,13 @@ public interface ImEventListener {
     boolean onGroupChat(GroupChatEvent event);
 
     /**
+     * 群聊事件消息，基于不同的消息发给不同的人
+     * @param event 群聊事件消息事件
+     * @return      是否成功
+     */
+    boolean onMessageEventGroupChat(MessageEventGroupChatEvent event);
+
+    /**
      * im read messages event.
      * @param event {@link ReadMessagesEvent}
      * @return      result.

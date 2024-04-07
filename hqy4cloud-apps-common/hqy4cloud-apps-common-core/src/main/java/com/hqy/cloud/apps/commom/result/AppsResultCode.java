@@ -13,6 +13,11 @@ import com.hqy.cloud.common.result.ResultCode;
 public enum AppsResultCode implements Result {
 
     /**
+     * 成功
+     */
+    SUCCESS(0, "success"),
+
+    /**
      * 无效的文章类型.
      */
     INVALID_ARTICLE_TYPE(5001, "Invalid article type."),
@@ -70,9 +75,22 @@ public enum AppsResultCode implements Result {
     /**
      * 转发的聊天不能超过五个
      */
-    IM_FORWARD_SIZE_MAX(10006, "No more than five chats can be forwarded.")
+    IM_FORWARD_SIZE_MAX(10006, "No more than five chats can be forwarded."),
 
+    /**
+     * 拉黑了对方
+     */
+    IM_BLACKLIST_TO(10007, "You blocked each other."),
 
+    /**
+     * 对方拉黑了你
+     */
+    IM_BLACKLIST_FROM(10008, "They blocked you"),
+
+    /**
+     * 当前好友请求已经无效
+     */
+    IM_APPLICATION_INVALID(10009, "The friend application invalid."),
 
     ;
 
@@ -108,6 +126,10 @@ public enum AppsResultCode implements Result {
 
     public static DataResponse dataResponse(int code, String message) {
         return new DataResponse(false, message, code, null);
+    }
+
+    public boolean isSuccess() {
+        return this.equals(SUCCESS);
     }
 
     @Override

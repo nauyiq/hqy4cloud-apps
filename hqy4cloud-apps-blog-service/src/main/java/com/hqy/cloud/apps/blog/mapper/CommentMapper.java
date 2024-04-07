@@ -2,11 +2,14 @@ package com.hqy.cloud.apps.blog.mapper;
 
 import com.hqy.cloud.apps.blog.dto.ArticleCommentDTO;
 import com.hqy.cloud.apps.blog.entity.Comment;
+import com.hqy.cloud.db.common.CreateTableSql;
 import com.hqy.cloud.db.tk.BaseTkMapper;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * CommentDao.
@@ -38,4 +41,12 @@ public interface CommentMapper extends BaseTkMapper<Comment, Long> {
      * @return    行数
      */
     long deleteComments(@Param("ids") List<Long> ids);
+
+    @Insert("INSERT INTO t_comment(article_id,commenter,replier,content,level,parent,deleted,created,updated) VALUES" +
+            "(#{articleId}, #{commenter}, #{replier}, #{content}, #{level}, #{parent}, #{deleted}, #{created}, #{updated})")
+    int manualInsert(Comment comment);
+
+
+
+    Map<String, String> selectTableCreateSql(@Param("tableName") String t_comment);
 }

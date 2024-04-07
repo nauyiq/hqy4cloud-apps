@@ -15,6 +15,8 @@ import java.util.List;
  */
 public interface CommentTkService extends BaseTkService<Comment, Long> {
 
+    int manualInsert(Comment comment);
+
     /**
      * 查询父级评论列表
      * @param articleId 文章id

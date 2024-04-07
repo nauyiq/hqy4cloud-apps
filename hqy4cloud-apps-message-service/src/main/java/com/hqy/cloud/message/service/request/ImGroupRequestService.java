@@ -1,6 +1,5 @@
 package com.hqy.cloud.message.service.request;
 
-import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
@@ -11,7 +10,7 @@ import java.util.List;
 /**
  * @author qiyuan.hong
  * @version 1.0
- * @date 2023/8/14 17:38
+ * @date 2023/8/14
  */
 public interface ImGroupRequestService {
 
@@ -25,11 +24,12 @@ public interface ImGroupRequestService {
 
     /**
      * 修改群聊
-     * @param info       操作用户
+     * @param id        操作用户id
+     * @param username  操作用户名
      * @param editGroup {@link GroupDTO}
      * @return          R
      */
-    R<Boolean> editGroup(AuthenticationInfo info, GroupDTO editGroup);
+    R<Boolean> editGroup(Long id, String username, GroupDTO editGroup);
 
     /**
      * 获取群聊成员
@@ -47,13 +47,6 @@ public interface ImGroupRequestService {
      */
     R<Boolean> addGroupMember(Long id, GroupDTO group);
 
-    /**
-     * 修改群聊成员信息
-     * @param id          登录用户id
-     * @param groupMember {@link GroupMemberDTO}
-     * @return            R.
-     */
-    R<Boolean> editGroupMember(Long id, GroupMemberDTO groupMember);
 
     /**
      * 移除群聊成员

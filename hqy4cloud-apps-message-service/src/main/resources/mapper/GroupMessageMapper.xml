@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hqy.cloud.message.db.mapper.GroupMessageMapper">
+
+    <resultMap id="messageResultMap" type="com.hqy.cloud.message.bind.dto.ChatMessageDTO">
+        <result column="id" property="id"/>
+        <result column="message_id" property="messageId"/>
+        <result column="send" property="send"/>
+        <result column="group_id" property="toContactId"/>
+        <result column="type" property="type"/>
+        <result column="status" property="status"/>
+        <result column="content" property="content"/>
+        <result column="created" property="created"/>
+    </resultMap>
+
+    <select id="selectMessagesByGroupId" resultMap="messageResultMap">
+        SELECT id, message_id, send, group_id, `type`, status, content, created
+        FROM t_im_group_message WHERE group_id = #{groupId}
+        <if test="lastRemoveTime != null" >
+            AND created &gt;= #{lastRemoveTime}
+        </if>
+        ORDER BY created DESC
+    </select>
+
+    <select id="selectRemovedGroupMemberMessages" resultType="com.hqy.cloud.message.bind.dto.ChatMessageDTO">
+        SELECT id, message_id, send, group_id toContactId, `type`, status, content, created
+        FROM t_im_group_message WHERE group_id = #{groupId} AND created &lt;= #{exitGroupTime}
+        <if test="lastRemoveTime != null" >
+            AND created &gt;= #{lastRemoveTime}
+        </if>
+        ORDER BY created DESC
+    </select>
+
+    <select id="selectUnreadMessageIds" resultType="java.lang.Long">
+        SELECT id FROM t_im_group_message WHERE created > #{lastReadDate} AND group_id = #{groupId} AND send != #{userId} ORDER BY id DESC LIMIT #{maxUnread}
+    </select>
+
+
+
+    <update id="updateMessageContentAndType">
+        UPDATE t_im_group_message SET `type` = #{type}, content = #{content}, updated = now() WHERE id = #{id}
+    </update>
+
+</mapper>

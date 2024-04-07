@@ -3,6 +3,8 @@
 
 <mapper namespace="com.hqy.cloud.apps.blog.mapper.CommentMapper">
 
+
+
     <update id="deleteComments">
         UPDATE t_comment SET `deleted` = 1, `updated` = now()
         WHERE id IN
@@ -45,5 +47,14 @@
         ORDER BY created ASC, id ASC
     </select>
 
+    <select id="selectTableCreateSql" resultType="java.util.Map" parameterType="String">
+        SHOW CREATE TABLE ${tableName}
+    </select>
+
+
+    <resultMap id="selectTableCreateSqlResultMap" type="com.hqy.cloud.db.common.CreateTableSql">
+        <result column="Table" property="table"/>
+        <result column="Create Table" property="createTable"/>
+    </resultMap>
 
 </mapper>

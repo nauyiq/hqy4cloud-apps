@@ -1,6 +1,7 @@
 package com.hqy.cloud.message.bind.vo;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
  * @date 2023/8/15 10:32
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class GroupMemberVO {

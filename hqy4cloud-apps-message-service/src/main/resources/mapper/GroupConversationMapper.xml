@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hqy.cloud.message.db.mapper.GroupConversationMapper">
+
+    <select id="queryConversationsByGroupIdAndUserIds"
+            resultType="com.hqy.cloud.message.db.entity.GroupConversation">
+        SELECT id,user_id,group_id,is_notice notice,is_top top,`role`,display_name, last_message_type, last_message_content, last_message_time, created
+        FROM t_im_group_conversation WHERE group_id = #{groupId} AND user_id IN
+        <foreach collection="userIds" separator="," item="id" open="(" close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="queryConversationsByUserId" resultType="com.hqy.cloud.message.bind.dto.ConversationDTO">
+        SELECT
+            gc.id, gc.group_id contactId, gc.is_notice, gc.is_top, gc.role,
+            gc.last_message_type, gc.last_message_content, gc.last_message_time, gc.last_read_time,
+            g.avatar, g.notice, g.name display_name, g.creator
+        FROM `t_im_group_conversation` gc
+                 LEFT JOIN `t_im_group` g ON gc.group_id = g.id
+        WHERE gc.user_id = #{userId} AND gc.deleted = 0
+    </select>
+
+    <select id="queryConversationInfoByUserIdAndGroupId"
+            resultType="com.hqy.cloud.message.bind.dto.ConversationDTO">
+        SELECT
+            ( SELECT id FROM `t_im_group_conversation` WHERE group_id = #{groupId} AND user_id = #{userId}) id,
+            ( SELECT avatar FROM `t_im_group` WHERE id = #{groupId}) avatar,
+            group_id contact_id,
+            display_name,
+            `role`,
+            is_top,
+            is_notice
+        FROM t_im_group_member WHERE group_id = #{groupId} AND user_id = #{userId} AND deleted = 0
+    </select>
+
+    <select id="queryGroupUnreadByConversations" resultType="com.hqy.cloud.message.bind.dto.UnreadDTO">
+        <foreach collection="conversations" separator="UNION ALL" item="conversation">
+            SELECT IFNULL(group_id, #{conversation.contactId}) groupId, count(*) unread FROM t_im_group_message
+            WHERE created > #{conversation.lastReadDate} AND group_id = #{conversation.contactId} AND send != #{userId}
+        </foreach>
+    </select>
+
+
+
+
+    <insert id="insertOrUpdate">
+        INSERT INTO `t_im_group_conversation`
+        (user_id, group_id, `role`, display_name, last_message_type, last_message_content, last_message_time, last_remove_time, last_read_time, created, updated) VALUES
+        <foreach collection="conversations" item="conversation" separator=",">
+            (
+             #{conversation.userId},
+             #{conversation.groupId},
+             #{conversation.role},
+             #{conversation.displayName},
+             #{conversation.lastMessageType},
+             #{conversation.lastMessageContent},
+             #{conversation.lastMessageTime},
+             #{conversation.lastRemoveTime},
+             #{conversation.lastReadTime},
+             now(),
+             now()
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        `role` = VALUES(`role`),
+        `last_remove_time` =  VALUES(last_remove_time),
+        last_message_type = VALUES(last_message_type),
+        last_message_content = VALUES(last_message_content),
+        last_message_time = VALUES(last_message_time),
+        deleted = 0,
+        updated = now()
+    </insert>
+
+    <update id="updateGroupConversations">
+        UPDATE t_im_group_conversation SET
+        last_message_type = #{messageType},
+        last_message_content = #{content},
+        last_message_time = #{now},
+        deleted = 0,
+        updated = now()
+        WHERE group_id = #{groupId}  AND user_id IN
+        <foreach collection="groupMembers" open="(" close=")" item="id" separator=",">
+            #{id}
+        </foreach>
+    </update>
+
+    <update id="updateConversationTypeAndContent">
+        UPDATE t_im_group_conversation
+        SET last_message_type = #{type},
+            last_message_content = #{content},
+            updated = now()
+        WHERE group_id = #{groupId} AND deleted = 0
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+    </update>
+
+    <update id="updateGroupConversationRoleAndUpdated">
+        UPDATE t_im_group_conversation SET `role` = #{role}
+            <if test="updated != null" >
+            , updated = #{updated}
+            </if>
+        WHERE group_id = #{groupId}
+         <if test="userId != null">
+             AND user_id = #{userId}
+         </if>
+    </update>
+
+    <update id="removeGroupConversation">
+        UPDATE t_im_group_conversation SET deleted = 1,  updated = now() WHERE group_id = #{groupId}
+        <if test="userId != null">
+            AND user_id = #{userId}
+        </if>
+    </update>
+
+    <update id="updateConversationTopState">
+        UPDATE t_im_group_conversation SET is_top = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="updateConversationNoticeState">
+        UPDATE t_im_group_conversation SET is_notice = #{status} WHERE id = #{id}
+    </update>
+
+    <delete id="realRemoveGroupConversation">
+        DELETE FROM t_im_group_conversation WHERE group_id = #{groupId} AND user_id = #{userId}
+    </delete>
+
+</mapper>

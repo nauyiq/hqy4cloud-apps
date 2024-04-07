@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hqy.cloud.message.db.mapper.PrivateConversationMapper">
+
+
+    <select id="queryConversationInfoAndMessageUnreadCountByUserId" resultType="com.hqy.cloud.message.bind.dto.ConversationDTO">
+        SELECT pc.id, pc.contact_id, pc.is_notice, pc.is_top, pc.display_name,
+               pc.last_message_type, pc.last_message_content, pc.last_message_time,
+               s.avatar,c.unread
+        FROM t_im_private_conversation pc
+        LEFT JOIN t_im_user_setting s ON pc.contact_id = s.id
+        LEFT JOIN (
+                SELECT COUNT(*) unread, `send` FROM `t_im_private_message` WHERE receive = #{userId} AND is_read = 0 GROUP BY `send`
+            ) c ON c.send = pc.contact_id
+        WHERE pc.user_id = #{userId} AND pc.deleted = 0
+    </select>
+
+    <select id="queryIdByUniqueIndex" resultType="java.lang.Long">
+        SELECT id FROM t_im_private_conversation WHERE user_id = #{userId} AND contact_id = #{contactId}
+    </select>
+
+    <select id="queryConversationsByUserId" resultType="com.hqy.cloud.message.bind.dto.ConversationDTO">
+        SELECT pc.id, pc.contact_id, pc.is_notice, pc.is_top, pc.display_name,
+               pc.last_message_type, pc.last_message_content, pc.last_message_time,
+               s.avatar
+        FROM t_im_private_conversation pc LEFT JOIN t_im_user_setting s ON pc.contact_id = s.id
+        WHERE pc.user_id = #{userId} AND deleted = 0
+    </select>
+
+    <select id="queryConversationInfoByUserIdAndFriendId"
+            resultType="com.hqy.cloud.message.bind.dto.ConversationDTO">
+        SELECT
+            (SELECT id from `t_im_private_conversation` WHERE user_id = #{userId} AND contact_id = #{friendId}) id,
+            (SELECT avatar from `t_im_user_setting` where id = #{friendId}) avatar,
+            friend_id contact_id,
+            remark display_name,
+            is_top,
+            is_notice
+        FROM `t_im_friend_state` where user_id = #{userId} and friend_id = #{friendId} and deleted = 0
+    </select>
+
+    <select id="queryConversationsByUserIdAndFriendId"
+            resultType="com.hqy.cloud.message.db.entity.PrivateConversation">
+        SELECT id,user_id,contact_id,is_notice notice,is_top top,display_name,last_message_type,last_message_content,last_message_time,last_remove_time,created
+        FROM t_im_private_conversation WHERE (user_id = #{userId} AND contact_id = #{friendId}) or (user_id = #{friendId} AND contact_id = #{userId})
+    </select>
+
+
+
+    <insert id="insertOrUpdate">
+        INSERT INTO t_im_private_conversation
+        (
+        user_id,
+        contact_id,
+        is_notice,
+        is_top,
+        display_name,
+        last_remove_time,
+        last_message_type,
+        last_message_content,
+        last_message_time,
+        deleted,
+        created,
+        updated
+        ) VALUES
+        <foreach collection="conversations" item="conversation" separator="," >
+            (
+            #{conversation.userId},
+            #{conversation.contactId},
+            #{conversation.notice},
+            #{conversation.top},
+            #{conversation.displayName},
+            #{conversation.lastRemoveTime},
+            #{conversation.lastMessageType},
+            #{conversation.lastMessageContent},
+            #{conversation.lastMessageTime},
+            0,
+            now(),
+            now()
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        last_message_type = VALUES(last_message_type),
+        last_message_content = VALUES(last_message_content),
+        last_message_time =  VALUES(last_message_time),
+        deleted = 0,
+        updated = now()
+    </insert>
+
+    <insert id="duplicateUpdateTypeAndContent">
+        INSERT INTO t_im_private_conversation
+        (
+        user_id,
+        contact_id,
+        last_message_type,
+        last_message_content
+        ) VALUES
+        <foreach collection="conversations" item="conversation" separator="," >
+            (
+            #{conversation.userId},
+            #{conversation.contactId},
+            #{conversation.lastMessageType},
+            #{conversation.lastMessageContent}
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        last_message_type = VALUES(last_message_type),
+        last_message_content = VALUES(last_message_content),
+        updated = now()
+    </insert>
+
+    <update id="removeConversation">
+        UPDATE `t_im_private_conversation` SET last_remove_time = now(), deleted = 1, updated = now() WHERE user_id = #{userId} AND contact_id = #{contactId}
+    </update>
+
+    <update id="updateConversationDisplayName">
+        UPDATE `t_im_private_conversation` SET `display_name` = #{displayName}, updated = now()
+        WHERE user_id = #{userId} AND contact_id = #{contactId}
+    </update>
+
+    <update id="updateConversationUndoMessage">
+        UPDATE `t_im_private_conversation` SET `last_message_type` = 6, last_message_content = "", updated = now()
+        WHERE (user_id = #{userId} AND contact_id = #{contactId})
+    </update>
+
+    <update id="updateConversationTopState">
+        UPDATE `t_im_private_conversation` SET is_top = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="updateConversationNoticeState">
+        UPDATE `t_im_private_conversation` SET is_notice = #{status} WHERE id = #{id}
+    </update>
+
+</mapper>

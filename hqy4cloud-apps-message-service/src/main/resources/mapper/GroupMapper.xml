@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hqy.cloud.message.db.mapper.GroupMapper">
+
+    <update id="deleteGroup">
+        UPDATE t_im_group SET deleted = 1, updated = now() WHERE id = #{groupId}
+    </update>
+
+</mapper>

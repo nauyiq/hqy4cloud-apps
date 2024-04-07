@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hqy.cloud.message.db.mapper.FriendRelationshipMapper">
+
+    <select id="queryIdsByUserIdAndFriendId" resultType="java.lang.Long">
+        SELECT id FROM t_im_friend_relationship
+        WHERE (apply = #{userId} AND receive = #{anotherId} AND deleted = 0) OR (apply = #{anotherId} AND receive = #{userId} AND deleted = 0)
+    </select>
+
+    <resultMap id="friendRelationshipsMap" type="com.hqy.cloud.message.bind.dto.FriendRelationshipDTO">
+        <result column="apply" property="apply"/>
+        <result column="receive" property="receive"/>
+        <collection property="id" column="id" ofType="java.lang.Long"/>
+    </resultMap>
+
+    <select id="queryIdsByUserIdAndFriendIds"
+            resultType="com.hqy.cloud.message.db.entity.FriendRelationship">
+        SELECT apply, receive FROM t_im_friend_relationship
+        WHERE
+            deleted = 0 AND
+            ( apply = #{userId} AND receive IN
+            <foreach collection="friendIds" separator="," open="(" close=")" item="id">
+                #{id}
+            </foreach>
+            )
+           OR
+            ( receive = #{userId} AND apply IN
+            <foreach collection="friendIds" separator="," open="(" close=")" item="id">
+                #{id}
+            </foreach>
+            )
+    </select>
+
+
+    <insert id="insertOrUpdate">
+        INSERT INTO t_im_friend_relationship
+        (
+        `apply`,`receive`, `deleted`, `created`,`updated`
+        ) VALUES
+        <foreach collection="relationships" item="relationship" separator=",">
+        (
+            #{relationship.apply},
+            #{relationship.receive},
+            0,
+            now(),
+            now()
+        )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        `deleted` = 0,
+        `updated` = now()
+    </insert>
+
+    <update id="removeRelationShip">
+        UPDATE `t_im_friend_relationship` SET deleted = 1, updated = now()
+        WHERE (`apply` = #{userId} AND `receive` = #{friendId} ) OR (`apply` = #{friendId} AND `receive` = #{userId} )
+    </update>
+
+</mapper>

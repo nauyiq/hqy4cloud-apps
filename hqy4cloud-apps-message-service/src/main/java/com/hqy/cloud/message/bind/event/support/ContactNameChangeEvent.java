@@ -1,6 +1,5 @@
 package com.hqy.cloud.message.bind.event.support;
 
-import cn.hutool.core.util.StrUtil;
 import com.hqy.cloud.message.bind.event.ImEvent;
 import com.hqy.cloud.util.JsonUtil;
 import lombok.AllArgsConstructor;
@@ -23,12 +22,8 @@ public class ContactNameChangeEvent implements ImEvent {
     private Payload payload;
 
     public static ContactNameChangeEvent of(boolean isGroup, List<String> users, String contact, String displayName) {
-        return new ContactNameChangeEvent(isGroup, users, new Payload(contact, displayName, isGroup, StrUtil.EMPTY));
+        return new ContactNameChangeEvent(isGroup, users, new Payload(contact, displayName));
     }
-    public static ContactNameChangeEvent of(boolean isGroup, List<String> users, String contact, String displayName, String editor) {
-        return new ContactNameChangeEvent(isGroup, users, new Payload(contact, displayName, isGroup, editor));
-    }
-
 
     @Override
     public String name() {
@@ -46,7 +41,5 @@ public class ContactNameChangeEvent implements ImEvent {
     public static class Payload {
         private String contactId;
         private String displayName;
-        private Boolean isGroup;
-        private String editor;
     }
 }

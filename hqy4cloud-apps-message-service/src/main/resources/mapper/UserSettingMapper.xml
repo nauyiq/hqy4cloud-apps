@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hqy.cloud.message.db.mapper.UserSettingMapper">
+
+
+    <select id="selectImNicknames" resultType="java.lang.String">
+        SELECT nickname FROM t_im_user_setting WHERE id IN
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectImUserByName" resultType="com.hqy.cloud.message.db.entity.UserSetting">
+        SELECT * FROM t_im_user_setting WHERE is_query_account = 1 AND (username = #{name} OR nickname = #{name})
+    </select>
+
+    <select id="selectFriendInfo" resultType="com.hqy.cloud.message.bind.dto.ImUserInfoDTO">
+        SELECT us.id,
+        us.username,
+        us.avatar,
+        us.nickname nickname,
+        fs.remark
+        FROM t_im_user_setting us LEFT JOIN t_im_friend_state fs ON us.id = fs.friend_id
+        WHERE fs.user_id = #{userId} AND fs.friend_id = #{friendId}
+    </select>
+
+    <select id="selectFriendInfoById" resultType="com.hqy.cloud.message.bind.dto.ImUserInfoDTO">
+        SELECT us.id,
+               us.username,
+               us.avatar,
+               us.nickname nickname,
+               fs.remark
+        FROM t_im_user_setting us LEFT JOIN t_im_friend_state fs ON us.id = fs.friend_id
+        WHERE fs.user_id = #{id} AND fs.friend_id = #{friendId}
+    </select>
+
+    <select id="selectFriendInfosByUserIdAndFriendId"
+            resultType="com.hqy.cloud.message.bind.dto.ImUserInfoDTO">
+        SELECT us.id,
+               us.username,
+               us.avatar,
+               us.nickname nickname,
+               fs.remark
+        FROM t_im_user_setting us LEFT JOIN t_im_friend_state fs ON us.id = fs.friend_id
+        WHERE (fs.user_id = #{userId} AND fs.friend_id = #{friendId}) OR (fs.user_id = #{friendId} AND fs.friend_id = #{userId})
+    </select>
+
+    <select id="selectNicknameById" resultType="java.lang.String">
+        SELECT nickname FROM t_im_user_setting WHERE id = #{id}
+    </select>
+
+    <select id="selectUsernames" resultType="com.hqy.cloud.message.db.entity.UserSetting">
+        SELECT id,username FROM t_im_user_setting WHERE id IN
+        <foreach collection="ids" separator="," open="(" close=")" item="id">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="selectAddGroupMembers" resultType="com.hqy.cloud.message.bind.dto.AddGroupMemberDTO">
+        SELECT u.id,u.username,u.avatar,u.nickname,u.intro,u.is_invite_group inviteGroup,u.status,
+               g.user_id userId
+        FROM t_im_user_setting u LEFT JOIN t_im_group_member g ON u.id = g.user_id AND g.group_id = #{groupId} AND g.deleted = 0
+        WHERE u.id IN
+        <foreach collection="userIds" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <update id="settingUserStatusEnabled">
+        UPDATE t_im_user_setting SET `status` = 1 WHERE id = #{id}
+    </update>
+
+</mapper>

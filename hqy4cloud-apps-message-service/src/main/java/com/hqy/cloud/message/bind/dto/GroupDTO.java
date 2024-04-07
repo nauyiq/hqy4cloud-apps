@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.Size;
 import java.util.List;
 
 /**
@@ -24,11 +25,13 @@ public class GroupDTO {
     /**
      * 群名
      */
+    @Size(max = 30)
     private String name;
 
     /**
      * 群公告
      */
+    @Size(max = 60)
     private String notice;
 
     /**

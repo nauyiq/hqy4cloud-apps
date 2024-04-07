@@ -12,6 +12,7 @@ import com.hqy.cloud.apps.blog.converter.Converter;
 import com.hqy.cloud.apps.blog.dto.AccountRegistryDTO;
 import com.hqy.cloud.apps.blog.dto.BlogUserProfileDTO;
 import com.hqy.cloud.apps.blog.dto.ForgetPasswordDTO;
+import com.hqy.cloud.apps.blog.service.opeations.UserInfoOperationsService;
 import com.hqy.cloud.apps.blog.service.request.UserRequestService;
 import com.hqy.cloud.apps.blog.vo.AccountProfileVO;
 import com.hqy.cloud.common.bind.R;
@@ -41,6 +42,7 @@ import static com.hqy.cloud.common.result.ResultCode.VERIFY_CODE_ERROR;
 @RequiredArgsConstructor
 public class UserRequestServiceImpl implements UserRequestService {
 
+    private final UserInfoOperationsService userInfoOperationsService;
     private final AccountRandomCodeServer randomCodeServer = new AccountAuthRandomCodeServer();
 
     @Override
@@ -88,13 +90,14 @@ public class UserRequestServiceImpl implements UserRequestService {
         if (!randomCodeServer.isExist(StrUtil.EMPTY, registry.getEmail(), registry.getCode())) {
             return R.failed(VERIFY_CODE_ERROR);
         }
-        //RPC注册账号
+        /*//RPC注册账号
         RemoteAccountService accountRemoteService = RpcClient.getRemoteService(RemoteAccountService.class);
         CommonResultStruct commonResultStruct = accountRemoteService.registryAccount(new RegistryAccountStruct(registry.getUsername(), registry.getEmail(), registry.getPassword()));
         if (!commonResultStruct.isResult()) {
             return R.failed(commonResultStruct.message, commonResultStruct.code);
-        }
-        return R.ok();
+        }*/
+
+        return userInfoOperationsService.registryAccount(registry) ? R.ok() : R.failed();
     }
 
     @Override

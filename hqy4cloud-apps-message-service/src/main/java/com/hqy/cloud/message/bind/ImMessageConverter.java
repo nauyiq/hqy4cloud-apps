@@ -2,12 +2,11 @@ package com.hqy.cloud.message.bind;
 
 import com.hqy.cloud.account.struct.AccountProfileStruct;
 import com.hqy.cloud.common.base.converter.CommonConverter;
+import com.hqy.cloud.message.bind.dto.ImUserSettingInfoDTO;
+import com.hqy.cloud.message.bind.vo.UserImSettingVO;
 import com.hqy.cloud.message.bind.vo.UserInfoVO;
-import com.hqy.cloud.message.tk.entity.ImMessage;
-import com.hqy.cloud.message.tk.entity.ImMessageHistory;
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.NullValuePropertyMappingStrategy;
+import com.hqy.cloud.message.db.entity.UserSetting;
+import org.mapstruct.*;
 import org.mapstruct.factory.Mappers;
 
 /**
@@ -24,7 +23,22 @@ public interface ImMessageConverter {
     @Mapping(target = "id", source = "id", qualifiedByName = "longToString")
     UserInfoVO convert(AccountProfileStruct struct);
 
-    @Mapping(target = "imMessageId", source = "id")
-    ImMessageHistory convert(ImMessage message);
+    @Mappings({
+            @Mapping(source = "inviteGroup", target = "isInviteGroup"),
+            @Mapping(source = "syncSetting", target = "isSyncSetting"),
+            @Mapping(source = "queryAccount", target = "isQueryAccount")
+    })
+    UserImSettingVO convert(UserSetting userSetting);
 
+
+    AccountProfileStruct convertProfileStruct(UserSetting userSetting);
+
+    @Mappings({
+            @Mapping(source = "isInviteGroup", target = "inviteGroup"),
+            @Mapping(source = "isSyncSetting", target = "syncSetting"),
+            @Mapping(source = "isQueryAccount", target = "queryAccount")
+    })
+    void update(UserImSettingVO setting, @MappingTarget UserSetting userSetting);
+
+    void update(ImUserSettingInfoDTO setting, @MappingTarget UserSetting userSetting);
 }

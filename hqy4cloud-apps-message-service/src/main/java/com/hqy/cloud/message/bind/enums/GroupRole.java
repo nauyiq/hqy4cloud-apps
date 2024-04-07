@@ -32,9 +32,9 @@ public enum GroupRole {
     ;
 
     public final String name;
-    public final int role;
+    public final Integer role;
 
-    GroupRole(String name, int role) {
+    GroupRole(String name, Integer role) {
         this.name = name;
         this.role = role;
     }

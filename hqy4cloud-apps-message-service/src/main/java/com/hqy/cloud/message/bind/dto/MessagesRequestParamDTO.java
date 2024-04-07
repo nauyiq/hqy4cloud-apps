@@ -20,6 +20,7 @@ public class MessagesRequestParamDTO {
     private Integer limit = 20;
     private String type;
     private String keywords;
+
     private Long toContactId;
     private Long conversationId;
     private Boolean isGroup;

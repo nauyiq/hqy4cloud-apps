@@ -1,14 +1,17 @@
 package com.hqy.cloud.message.server.support;
 
+import cn.hutool.core.util.StrUtil;
 import com.hqy.cloud.common.base.project.MicroServiceConstants;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.event.support.*;
+import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import com.hqy.cloud.message.server.ImEventListener;
 import com.hqy.cloud.message.service.SocketIoMessagePushService;
 import com.hqy.cloud.netty.socketio.thrift.SocketIoThriftDiscovery;
 import com.hqy.cloud.util.JsonUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -30,9 +33,9 @@ public class SocketIoImEventListener implements ImEventListener {
 
     @Override
     public boolean onPrivateChat(PrivateChatEvent event) {
-        ImMessageDTO messageDTO = event.getMessageDTO();
-        String to = messageDTO.getToContactId();
-        return socketIoThriftDiscovery.pushEvent(MicroServiceConstants.MESSAGE_NETTY_SERVICE, to, event.name(), JsonUtil.toJson(messageDTO),
+        ImMessageVO message = event.getMessage();
+        String to = message.getToContactId();
+        return socketIoThriftDiscovery.pushEvent(MicroServiceConstants.MESSAGE_NETTY_SERVICE, to, event.name(), JsonUtil.toJson(message),
                 SocketIoMessagePushService.class, true);
     }
 
@@ -40,8 +43,24 @@ public class SocketIoImEventListener implements ImEventListener {
     public boolean onGroupChat(GroupChatEvent event) {
         Set<String> ids = event.getIds();
         String message = JsonUtil.toJson(event.getMessage());
-        return socketIoThriftDiscovery.pushEvent(MicroServiceConstants.MESSAGE_NETTY_SERVICE, ids, event.name(), JsonUtil.toJson(message),
-                SocketIoMessagePushService.class, true);
+        return socketIoThriftDiscovery.pushEvent(MicroServiceConstants.MESSAGE_NETTY_SERVICE, ids, event.name(), message, SocketIoMessagePushService.class, true);
+    }
+
+    @Override
+    public boolean onMessageEventGroupChat(MessageEventGroupChatEvent event) {
+        Map<Long, ImMessageDTO> messages = event.messages();
+        if (MapUtils.isEmpty(messages)) {
+            return false;
+        }
+        messages.forEach((key, value) -> {
+            try {
+                socketIoThriftDiscovery.pushEvent(MicroServiceConstants.MESSAGE_NETTY_SERVICE, key.toString(), event.name(), JsonUtil.toJson(value),
+                        SocketIoMessagePushService.class, true);
+            } catch (Throwable cause) {
+                log.error(cause.getMessage(), cause);
+            }
+        });
+        return true;
     }
 
     @Override
@@ -80,7 +99,7 @@ public class SocketIoImEventListener implements ImEventListener {
     @Override
     public boolean onAddFriendApplicationEvent(FriendApplicationEvent event) {
         return socketIoThriftDiscovery.pushEvent(MicroServiceConstants.MESSAGE_NETTY_SERVICE, event.getTo(), event.name(),
-                event.message(), SocketIoMessagePushService.class,  true);
+                StrUtil.EMPTY, SocketIoMessagePushService.class,  true);
     }
 
     @Override

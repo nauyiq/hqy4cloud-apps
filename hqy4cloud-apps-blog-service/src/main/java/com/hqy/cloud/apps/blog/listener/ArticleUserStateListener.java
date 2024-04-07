@@ -4,6 +4,7 @@ import cn.hutool.core.map.MapUtil;
 import com.hqy.cloud.apps.blog.entity.ArticleUserState;
 import com.hqy.cloud.apps.blog.listener.message.ArticleStateKafkaMessage;
 import com.hqy.cloud.apps.blog.service.tk.ArticleUserStateTkService;
+import com.hqy.cloud.common.base.project.MicroServiceConstants;
 import com.hqy.cloud.foundation.id.DistributedIdGen;
 import com.hqy.cloud.util.JsonUtil;
 import lombok.RequiredArgsConstructor;
@@ -59,7 +60,7 @@ public class ArticleUserStateListener {
         //批量新增或修改入库.
         List<ArticleUserState> states = doingMessageMap.keySet()
                 .stream()
-                .map(message -> new ArticleUserState(DistributedIdGen.getSnowflakeId(), message.getArticleId(), message.getAccountId(), message.getStatus()))
+                .map(message -> new ArticleUserState(DistributedIdGen.getSnowflakeId(MicroServiceConstants.BLOG_SERVICE), message.getArticleId(), message.getAccountId(), message.getStatus()))
                 .collect(Collectors.toList());
         try {
             boolean result = stateTkService.insertOrUpdate(states);

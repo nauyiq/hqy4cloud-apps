@@ -4,6 +4,7 @@ import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.base.AuthenticationInfo;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
+import com.hqy.cloud.message.bind.Constants;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.bind.vo.GroupMemberVO;
@@ -17,17 +18,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.List;
 
 import static com.hqy.cloud.common.result.ResultCode.ERROR_PARAM_UNDEFINED;
 import static com.hqy.cloud.common.result.ResultCode.NOT_LOGIN;
-import static com.hqy.cloud.message.tk.entity.ImGroupMember.MAX_MEMBERS;
 
 /**
  * 群聊相关API
  * @author qiyuan.hong
  * @version 1.0
- * @date 2023/8/14 17:33
+ * @date 2023/8/14
  */
 @Slf4j
 @RestController
@@ -43,7 +44,7 @@ public class ImGroupController extends BaseController {
      * @return R.
      */
     @PostMapping("/group")
-    public R<Boolean> createGroup(HttpServletRequest request, @RequestBody GroupDTO createGroup) {
+    public R<Boolean> createGroup(HttpServletRequest request, @Valid @RequestBody GroupDTO createGroup) {
         Long accountId = getAccessAccountId(request);
         if (accountId == null) {
             return R.failed(ResultCode.NOT_LOGIN);
@@ -54,7 +55,7 @@ public class ImGroupController extends BaseController {
         if (CollectionUtils.isEmpty(userIds) || userIds.size() <= 1) {
             return R.failed(ERROR_PARAM_UNDEFINED);
         }
-        if (userIds.size() >= MAX_MEMBERS - 1) {
+        if (userIds.size() >= Constants.GROUP_MAX_MEMBERS - 1) {
             return R.failed(AppsResultCode.IM_GROUP_MEMBER_COUNT_LIMITED);
         }
         return requestService.createGroup(accountId, createGroup);
@@ -75,7 +76,7 @@ public class ImGroupController extends BaseController {
         if (editGroup.getGroupId() == null || StringUtils.isAllBlank(editGroup.getName(), editGroup.getNotice())) {
             return R.failed(ERROR_PARAM_UNDEFINED);
         }
-        return requestService.editGroup(info, editGroup);
+        return requestService.editGroup(info.getId(), info.getName(), editGroup);
     }
 
     /**
@@ -114,26 +115,6 @@ public class ImGroupController extends BaseController {
         return requestService.addGroupMember(id, group);
     }
 
-    /**
-     * 修改群聊成员信息
-     * @param request     HttpServletRequest
-     * @param groupMember {@link GroupMemberDTO}
-     * @return R.
-     */
-    @PutMapping("/group/member")
-    public R<Boolean> editGroupMembers(HttpServletRequest request, @RequestBody GroupMemberDTO groupMember) {
-        Long id = getAccessAccountId(request);
-        if (id == null) {
-            return R.failed(ResultCode.NOT_LOGIN);
-        }
-        if (groupMember == null || !groupMember.isEnable()) {
-            return R.failed(ERROR_PARAM_UNDEFINED);
-        }
-        if (StringUtils.isBlank(groupMember.getDisplayName()) || groupMember.getRole() == null) {
-            return R.ok();
-        }
-        return requestService.editGroupMember(id, groupMember);
-    }
 
     /**
      * 移除群聊用户
@@ -149,6 +130,9 @@ public class ImGroupController extends BaseController {
         }
         if (groupMember == null || !groupMember.isEnable()) {
             return R.failed(ERROR_PARAM_UNDEFINED);
+        }
+        if (id.equals(groupMember.getId())) {
+            return R.failed(ResultCode.ERROR_PARAM);
         }
         return requestService.removeGroupMember(id, groupMember);
     }

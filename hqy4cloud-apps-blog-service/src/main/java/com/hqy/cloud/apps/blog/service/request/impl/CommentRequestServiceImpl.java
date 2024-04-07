@@ -20,19 +20,23 @@ import com.hqy.cloud.apps.blog.vo.ArticleCommentVO;
 import com.hqy.cloud.apps.blog.vo.ChildArticleCommentVO;
 import com.hqy.cloud.apps.blog.vo.ParentArticleCommentVO;
 import com.hqy.cloud.common.base.lang.StringConstants;
+import com.hqy.cloud.common.base.project.MicroServiceConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.foundation.id.DistributedIdGen;
+import com.hqy.cloud.util.MathUtil;
 import com.hqy.cloud.web.common.AccountRpcUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.hqy.cloud.apps.commom.constants.AppsConstants.Blog.DEFAULT_COMMENT_TABLE_COUNT;
 import static com.hqy.cloud.apps.commom.result.AppsResultCode.ARTICLE_NOT_FOUND;
 import static com.hqy.cloud.apps.commom.result.AppsResultCode.COMMENT_NOT_FOUND;
 import static com.hqy.cloud.common.result.ResultCode.LIMITED_AUTHORITY;
@@ -49,6 +53,9 @@ public class CommentRequestServiceImpl implements CommentRequestService {
 
     private final BlogDbOperationService blogDbOperationService;
     private final StatisticsTypeHashCache<Long, StatisticsDTO> statisticsTypeHashCache;
+
+    @Value("${spring.shardingsphere.sharding.tables.t_comment.count:4}")
+    private int commentTableCount = DEFAULT_COMMENT_TABLE_COUNT;
 
     @Override
     public R<PageResult<AdminPageCommentsVO>> getPageComments(Long articleId, String content, Integer pageNumber, Integer pageSize) {
@@ -142,10 +149,10 @@ public class CommentRequestServiceImpl implements CommentRequestService {
             return R.failed(ARTICLE_NOT_FOUND);
         }
         // 入库
-        long id = DistributedIdGen.getSnowflakeId();
-        Comment comment = new Comment(id, articleId, accessAccountId, Convert.toLong(publishComment.getReplier()),
+//        long id = genCommentId(articleId);
+        Comment comment = new Comment(null, articleId, accessAccountId, Convert.toLong(publishComment.getReplier()),
                 publishComment.getContent(), publishComment.getLevel(), Convert.toLong(publishComment.getParentId()));
-        if (!blogDbOperationService.commentTkService().insert(comment)) {
+        if (blogDbOperationService.commentTkService().manualInsert(comment) <= 0) {
             return R.failed();
         }
         // 评论数 + 1
@@ -172,6 +179,16 @@ public class CommentRequestServiceImpl implements CommentRequestService {
         statisticsTypeHashCache.increment(comment.getArticleId(), StatisticsType.COMMENTS, -1);
         return R.ok();
     }
+
+    private long genCommentId(Long articleId) {
+        // 获取雪花id
+        long snowflakeId = DistributedIdGen.getSnowflakeId(MicroServiceConstants.BLOG_SERVICE);
+        // 根据文章id进行获取基因后缀
+        String fetchGene = MathUtil.fetchGene(articleId, commentTableCount);
+        return MathUtil.newIdWithGene(snowflakeId, fetchGene);
+    }
+
+
 
     private AdminPageCommentsVO convert(Comment comment, Map<Long, AccountProfileStruct> map) {
         return new AdminPageCommentsVO(comment.getId().toString(), comment.getArticleId().toString(), comment.getContent(), getShowName(comment.getCommenter(), map),

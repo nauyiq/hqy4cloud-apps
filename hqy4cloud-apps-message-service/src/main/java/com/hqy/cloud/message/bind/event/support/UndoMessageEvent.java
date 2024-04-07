@@ -2,16 +2,13 @@ package com.hqy.cloud.message.bind.event.support;
 
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.event.ImEvent;
-import com.hqy.cloud.message.tk.entity.ImMessage;
 import com.hqy.cloud.util.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
 import java.util.List;
-
-import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_PRIVATE_TO_UNDO_MESSAGE_CONTENT;
-import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_TO_UNDO_MESSAGE_CONTENT;
 
 /**
  * @author qiyuan.hong
@@ -23,16 +20,17 @@ import static com.hqy.cloud.apps.commom.constants.AppsConstants.Message.IM_TO_UN
 @AllArgsConstructor
 public class UndoMessageEvent implements ImEvent {
     private List<String> users;
-    private ImMessageDTO message;
+    private Payload payload;
 
-    public static UndoMessageEvent of(List<String> users, String undoAccount, ImMessage message) {
-        ImMessageDTO messageDTO = new ImMessageDTO(message);
-        if (message.getGroup()) {
-            messageDTO.setContent(undoAccount + IM_TO_UNDO_MESSAGE_CONTENT);
-        } else {
-            messageDTO.setContent(IM_PRIVATE_TO_UNDO_MESSAGE_CONTENT);
-        }
-        return new UndoMessageEvent(users, messageDTO);
+    public static UndoMessageEvent of(List<String> users, boolean isGroup, Long contactId, Long id, String messageId, String content, Date created) {
+        ImMessageDTO messageDTO = new ImMessageDTO();
+        messageDTO.setId(messageId);
+        messageDTO.setMessageId(id.toString());
+        messageDTO.setContent(content);
+        messageDTO.setIsGroup(isGroup);
+        messageDTO.setSendTime(created.getTime());
+        Payload payload = new Payload(contactId.toString(), messageDTO);
+        return new UndoMessageEvent(users, payload);
     }
 
     @Override
@@ -41,10 +39,19 @@ public class UndoMessageEvent implements ImEvent {
     }
 
     public String message() {
-        return JsonUtil.toJson(message);
+        return JsonUtil.toJson(payload);
     }
 
     public boolean isGroup() {
-        return message.getIsGroup();
+        return payload.message.getIsGroup();
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    private static class Payload {
+        private String contactId;
+        private ImMessageDTO message;
+    }
+
 }

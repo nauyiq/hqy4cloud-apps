@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hqy.cloud.message.db.mapper.PrivateMessageMapper">
+
+    <resultMap id="messageResultMap" type="com.hqy.cloud.message.bind.dto.ChatMessageDTO">
+        <result column="id" property="id"/>
+        <result column="message_id" property="messageId"/>
+        <result column="send" property="send"/>
+        <result column="receive" property="toContactId"/>
+        <result column="type" property="type"/>
+        <result column="status" property="status"/>
+        <result column="is_read" property="isRead"/>
+        <result column="content" property="content"/>
+        <result column="created" property="created"/>
+    </resultMap>
+
+    <select id="selectMessages" resultMap="messageResultMap">
+        SELECT id,message_id,send,receive,`type`,status,is_read,content,created FROM t_im_private_message
+        WHERE
+            (
+            send = #{userId} AND receive = #{contactId}
+            <if test="lastRemoveTime != null" >
+            AND created &gt; #{lastRemoveTime}
+            </if>
+            )
+           OR
+            (
+            send = #{contactId} AND receive = #{userId}
+            <if test="lastRemoveTime != null" >
+                AND created &gt; #{lastRemoveTime}
+            </if>
+            )
+            ORDER BY created DESC
+    </select>
+
+    <select id="selectUnreadMessageIds" resultType="java.lang.Long">
+        SELECT id FROM t_im_private_message WHERE receive = #{userId} AND send = #{contactId} AND is_read = 0
+    </select>
+
+    <update id="readMessages">
+        UPDATE t_im_private_message SET is_read = 1, updated = now() WHERE id IN
+        <foreach collection="ids" item="id" separator="," open="(" close=")">
+            #{id}
+        </foreach>
+    </update>
+
+
+</mapper>

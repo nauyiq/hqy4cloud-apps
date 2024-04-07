@@ -1,7 +1,7 @@
 package com.hqy.cloud.message.bind.event.support;
 
-import com.hqy.cloud.message.bind.dto.ImMessageDTO;
 import com.hqy.cloud.message.bind.event.ImEvent;
+import com.hqy.cloud.message.bind.vo.ImMessageVO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PrivateChatEvent implements ImEvent {
-    private ImMessageDTO messageDTO;
+    private ImMessageVO message;
 
     @Override
     public String name() {

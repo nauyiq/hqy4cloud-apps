@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hqy.cloud.message.db.mapper.GroupMemberMapper">
+
+    <select id="selectIdByGroupIdAndUserId" resultType="java.lang.Long">
+        SELECT id FROM t_im_group_member WHERE group_id = #{groupId} AND user_id = #{userId} AND deleted = 0
+    </select>
+
+    <select id="getGroupMemberIds" resultType="java.lang.Long">
+        SELECT user_id FROM t_im_group_member WHERE group_id = #{groupId} AND deleted = 0;
+    </select>
+
+    <select id="getGroupMemberUserInfo" resultType="com.hqy.cloud.message.bind.dto.ImUserInfoDTO">
+        SELECT us.id,
+               us.username,
+               us.nickname,
+               us.avatar,
+               gm.display_name remark
+        FROM t_im_group_member gm INNER JOIN t_im_user_setting us ON gm.user_id = us.id
+        WHERE gm.group_id = #{groupId} AND gm.user_id IN
+        <foreach collection="groupMemberIds" separator="," item="memberId" open="(" close=")">
+            #{memberId}
+        </foreach>
+    </select>
+
+    <select id="queryContactsByUserId" resultType="com.hqy.cloud.message.bind.dto.ContactDTO">
+        SELECT gm.id, gm.user_id, gm.group_id contact_id, g.name displayName, gm.is_top, gm.is_notice, g.creator
+        FROM `t_im_group_member` gm INNER JOIN `t_im_group` g ON gm.group_id = g.id
+        WHERE gm.user_id = #{userId} AND gm.deleted = 0
+    </select>
+
+    <select id="getGroupMemberInfoNotUsingDeleted" resultType="com.hqy.cloud.message.bind.dto.GroupMemberDTO">
+        SELECT gm.user_id id, gm.group_id, gm.role, gm.display_name, gm.deleted,
+               g.name groupName, g.avatar groupAvatar, g.is_invite groupInvite, g.creator groupCreator, g.notice
+        FROM `t_im_group_member` gm LEFT JOIN t_im_group g ON gm.group_id = g.id
+        WHERE gm.user_id = #{userId} AND gm.group_id = #{groupId}
+    </select>
+
+    <select id="queryGroupMembers" resultType="com.hqy.cloud.message.bind.dto.GroupMemberInfoDTO">
+        SELECT gm.user_id, gm.role, gm.display_name, gm.created,
+               us.avatar, us.nickname
+        FROM `t_im_group_member` gm LEFT JOIN t_im_user_setting us ON gm.user_id = us.id
+        WHERE gm.group_id = #{groupId} AND gm.deleted = 0
+    </select>
+
+    <resultMap id="GroupMemberIdsMap" type="com.hqy.cloud.message.bind.dto.GroupMemberIdsDTO">
+        <result column="groupId" property="groupId"/>
+        <result column="userId" property="groupMembers" javaType="java.lang.Long"/>
+    </resultMap>
+
+    <select id="getGroupMembers" resultType="com.hqy.cloud.message.bind.dto.GroupMemberIdsDTO">
+        SELECT group_id groupId, user_id userId FROM t_im_group_member
+        WHERE group_id IN
+        <foreach collection="groupIds" separator="," open="(" close="）" item="groupId">
+            #{groupId}
+        </foreach>
+        AND deleted = 0;
+    </select>
+
+    <insert id="insertOrUpdate">
+        INSERT INTO t_im_group_member ( group_id, user_id, display_name,`role`, deleted, created, updated ) VALUES
+        <foreach collection="members" item="member" separator=",">
+            (
+            #{member.groupId},
+            #{member.userId},
+            #{member.displayName},
+            #{member.role},
+            0,
+            now(),
+            now()
+            )
+        </foreach>
+        ON DUPLICATE KEY UPDATE
+        `role` = VALUES(`role`),
+        display_name = VALUES(`display_name`),
+        deleted = 0,
+        updated = now()
+    </insert>
+
+    <update id="removeMember">
+        UPDATE t_im_group_member SET deleted = 1, `role` = 4 WHERE group_id = #{groupId}
+        <if test="userId != null">
+            AND user_id = #{userId}
+        </if>
+    </update>
+
+    <update id="updateTopState">
+        UPDATE t_im_group_member SET is_top = #{status} WHERE group_id = #{groupId} AND user_id = #{userId}
+    </update>
+
+    <update id="updateNoticeState">
+        UPDATE t_im_group_member SET is_notice = #{status} WHERE group_id = #{groupId} AND user_id = #{userId}
+    </update>
+
+    <delete id="realRemoveMember">
+        DELETE FROM t_im_group_member WHERE group_id = #{groupId} AND user_id = #{userId}
+    </delete>
+
+</mapper>

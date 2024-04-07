@@ -1,7 +1,6 @@
 package com.hqy.cloud.message.bind.event.support;
 
 import com.hqy.cloud.message.bind.event.ImEvent;
-import com.hqy.cloud.util.JsonUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,27 +17,14 @@ import lombok.NoArgsConstructor;
 public class FriendApplicationEvent implements ImEvent {
 
     private String to;
-    private Payload payload;
 
-    public static FriendApplicationEvent of(String to, int unread) {
-        return new FriendApplicationEvent(to, new Payload(unread));
+    public static FriendApplicationEvent of(String to) {
+        return new FriendApplicationEvent(to);
     }
-
-    public String message() {
-        return JsonUtil.toJson(payload);
-    }
-
 
     @Override
     public String name() {
         return "friendApplication";
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class Payload {
-        private Integer unread;
     }
 
 }

@@ -22,6 +22,7 @@ import com.hqy.cloud.apps.blog.vo.ArticleDetailVO;
 import com.hqy.cloud.apps.blog.vo.PageArticleVO;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.base.lang.StringConstants;
+import com.hqy.cloud.common.base.project.MicroServiceConstants;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.PageResult;
 import com.hqy.cloud.foundation.id.DistributedIdGen;
@@ -61,7 +62,7 @@ public class ArticleRequestServiceImpl implements ArticleRequestService {
             return R.failed(INVALID_ARTICLE_TYPE);
         }
         //insert article to db.
-        long id = DistributedIdGen.getSnowflakeId();
+        long id = DistributedIdGen.getSnowflakeId(MicroServiceConstants.BLOG_SERVICE);
         Date date = new Date();
         Article article = new Article(id, articleDTO.getTitle(), articleDTO.getDescription(), articleDTO.getCover(), articleDTO.getContent(), articleDTO.getType(),
                 articleDTO.getMusicUrl(), articleDTO.getMusicName(), articleDTO.getAuthor(), articleDTO.getStatus(), date);

@@ -18,6 +18,7 @@ import java.util.List;
 public class ForwardMessageDTO {
 
     private Long messageId;
+    private Boolean isGroup;
     private List<Forward> forwards;
 
     @Data

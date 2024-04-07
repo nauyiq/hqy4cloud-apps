@@ -101,5 +101,6 @@
     <logger name="io.lettuce" level="WARN"/>
     <logger name="org.elasticsearch" level="INFO"/>
     <logger name="org.apache" level="INFO"/>
+<!--    <logger name="druid.sql" level="INFO"/>-->
 
 </configuration>

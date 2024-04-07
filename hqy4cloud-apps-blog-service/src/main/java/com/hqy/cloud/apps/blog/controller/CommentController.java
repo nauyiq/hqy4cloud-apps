@@ -28,7 +28,9 @@ public class CommentController extends BaseController {
     private final CommentRequestService commentRequestService;
 
     @GetMapping("/comments/{articleId}")
-    public R<PageResult<ParentArticleCommentVO>> getArticleComments(@PathVariable("articleId") Long articleId, Integer pageNumber, Integer pageSize) {
+    public R<PageResult<ParentArticleCommentVO>> getArticleComments(@PathVariable("articleId") Long articleId,
+                                                                    Integer pageNumber,
+                                                                    Integer pageSize) {
         pageNumber = pageNumber == null ? 1 : pageNumber;
         pageSize = pageSize == null ? 10 : pageSize;
         return commentRequestService.getArticlePageComments(articleId, pageNumber, pageSize);

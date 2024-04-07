@@ -20,8 +20,8 @@ public class GroupNoticeEvent implements ImEvent {
     private List<String> userIds;
     private Payload payload;
 
-    public static GroupNoticeEvent of(List<String> userIds, String groupId, String notice, String editor) {
-        return new GroupNoticeEvent(userIds, new Payload(groupId, notice, editor));
+    public static GroupNoticeEvent of(List<String> userIds, String groupId, String notice) {
+        return new GroupNoticeEvent(userIds, new Payload(groupId, notice));
     }
 
 
@@ -40,7 +40,6 @@ public class GroupNoticeEvent implements ImEvent {
     public static class Payload {
         private String groupId;
         private String notice;
-        private String editor;
     }
 
 }
