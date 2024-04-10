@@ -1,11 +1,9 @@
 package com.hqy.cloud.apps.blog.controller;
 
 import cn.hutool.core.io.file.FileNameUtil;
-import com.hqy.cloud.account.service.RemoteAccountProfileService;
 import com.hqy.cloud.apps.blog.vo.UploadFileVO;
 import com.hqy.cloud.apps.commom.constants.AppsConstants;
 import com.hqy.cloud.common.bind.R;
-import com.hqy.cloud.rpc.starter.client.RpcClient;
 import com.hqy.cloud.util.AssertUtil;
 import com.hqy.cloud.util.file.FileValidateContext;
 import com.hqy.cloud.web.common.BaseController;
@@ -65,8 +63,7 @@ public class UploadController extends BaseController {
         if (!result.isResult()) {
             return R.failed(result.getMessage(), INVALID_UPLOAD_FILE.code);
         }
-        RemoteAccountProfileService accountProfileService = RpcClient.getRemoteService(RemoteAccountProfileService.class);
-        accountProfileService.updateAccountAvatar(id, result.getPath());
+
         return R.ok(new UploadFileVO(result.getPath(), result.getRelativePath()));
     }
 

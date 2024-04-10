@@ -16,10 +16,31 @@ import javax.validation.constraints.Size;
 public class UserImSettingVO {
 
     /**
+     * 用户id
+     */
+    private String id;
+
+    /**
+     * 用户名
+     */
+    private String username;
+
+    /**
      * 聊天昵称
      */
     @Size(max = 30)
     private String nickname;
+
+    /**
+     * 用户头像
+     */
+    private String avatar;
+
+    /**
+     * 简介
+     */
+    private String intro;
+
 
     /**
      * 是否允许邀请加入群聊

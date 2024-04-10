@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.service.transactional.impl;
 
+import com.hqy.cloud.foundation.common.account.AccountAvatarUtil;
 import com.hqy.cloud.message.bind.Constants;
 import com.hqy.cloud.message.bind.dto.ImUserInfoDTO;
 import com.hqy.cloud.message.db.entity.UserSetting;
@@ -29,7 +30,8 @@ public class TccAddImUserServiceImpl implements TccAddImUserService {
     @TwoPhaseBusinessAction(name = Constants.SEATA_TRANSACTION_ADD_IM_USER, useTCCFence = true)
     public boolean addImUser(@BusinessActionContextParameter(Constants.SEATA_TCC_IM_USER_CONTEXT) ImUserInfoDTO userInfo) {
         try {
-            UserSetting userSetting = new UserSetting(userInfo.getUsername(), userInfo.getAvatar(), userInfo.getNickname(), userInfo.getRemark());
+            UserSetting userSetting = new UserSetting(userInfo.getUsername(),
+                    AccountAvatarUtil.extractAvatar(userInfo.getAvatar()), userInfo.getNickname(), userInfo.getRemark());
             userSetting.setId(userInfo.getId());
             userSetting.setStatus(false);
             return iUserSettingService.save(userSetting);

@@ -2,6 +2,7 @@ package com.hqy.cloud.message.service.impl;
 
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
+import com.hqy.cloud.foundation.common.account.AccountAvatarUtil;
 import com.hqy.cloud.message.bind.ImMessageConverter;
 import com.hqy.cloud.message.bind.dto.ImUserSettingInfoDTO;
 import com.hqy.cloud.message.bind.vo.UserCardVO;
@@ -41,6 +42,7 @@ public class ImUserSettingRequestServiceImpl implements ImUserSettingRequestServ
             return R.failed(ResultCode.USER_NOT_FOUND);
         }
         UserImSettingVO vo = ImMessageConverter.CONVERTER.convert(userSetting);
+        vo.setAvatar(AccountAvatarUtil.getAvatar(userSetting.getAvatar()));
         return R.ok(vo);
     }
 
@@ -50,7 +52,9 @@ public class ImUserSettingRequestServiceImpl implements ImUserSettingRequestServ
         if (userSetting == null) {
             return R.failed(ResultCode.USER_NOT_FOUND);
         }
-        ImMessageConverter.CONVERTER.update(setting, userSetting);
+        userSetting.setInviteGroup(setting.getIsInviteGroup());
+        userSetting.setQueryAccount(setting.getIsQueryAccount());
+        userSetting.setSyncSetting(setting.getIsSyncSetting());
         boolean update = iUserSettingService.updateById(userSetting);
         return update ? R.ok() : R.failed(ResultCode.SYSTEM_BUSY);
     }
@@ -62,6 +66,7 @@ public class ImUserSettingRequestServiceImpl implements ImUserSettingRequestServ
             return R.failed(ResultCode.USER_NOT_FOUND);
         }
         ImMessageConverter.CONVERTER.update(userInfo, userSetting);
+        userSetting.setAvatar(AccountAvatarUtil.extractAvatar(userInfo.getAvatar()));
         boolean result;
         // 判断是否开启同步聊天设置.
         Boolean syncSetting = userSetting.getSyncSetting();
@@ -80,7 +85,8 @@ public class ImUserSettingRequestServiceImpl implements ImUserSettingRequestServ
         if (userSetting == null) {
             return R.failed(ResultCode.USER_NOT_FOUND);
         }
-        UserCardVO userCardVO = new UserCardVO(friendId.toString(), userSetting.getUsername(), userSetting.getNickname(), userSetting.getAvatar(), userSetting.getIntro());
+        UserCardVO userCardVO = new UserCardVO(friendId.toString(), userSetting.getUsername(), userSetting.getNickname(),
+                AccountAvatarUtil.getAvatar(userSetting.getAvatar()), userSetting.getIntro());
         if (imUserRelationshipService.isFriend(userId, friendId)) {
             // 是好友, 查询好友状态表
             FriendState state = iFriendStateService.getByUserIdAndFriendId(userId, friendId);
@@ -96,7 +102,8 @@ public class ImUserSettingRequestServiceImpl implements ImUserSettingRequestServ
             return R.ok(Collections.emptyList());
         }
         List<UserInfoVO> userInfos = userSettings.stream().map(userSetting ->
-                new UserInfoVO(userSetting.getId().toString(), userSetting.getUsername(), userSetting.getNickname(), userSetting.getAvatar())).toList();
+                new UserInfoVO(userSetting.getId().toString(), userSetting.getUsername(), userSetting.getNickname(),
+                        AccountAvatarUtil.getAvatar(userSetting.getAvatar()))).toList();
         return R.ok(userInfos);
     }
 }

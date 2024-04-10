@@ -1,5 +1,6 @@
 package com.hqy.cloud.message.server;
 
+import com.hqy.cloud.foundation.common.account.AccountAvatarUtil;
 import com.hqy.cloud.message.bind.dto.ChatMessageDTO;
 import com.hqy.cloud.message.bind.dto.ConversationDTO;
 import com.hqy.cloud.message.bind.dto.ImMessageDTO;
@@ -85,7 +86,7 @@ public class MessageFactory {
                 .lastSendTime(conversation.getLastMessageTime() == null ? null : conversation.getLastMessageTime())
                 .isNotice(conversation.getIsNotice())
                 .isTop(conversation.getIsTop())
-                .avatar(conversation.getAvatar())
+                .avatar(AccountAvatarUtil.getAvatar(conversation.getAvatar()))
                 .unread(conversation.getUnread() == null ? 0 : conversation.getUnread()).build();
         if (isGroup) {
             vo.setIsGroup(true);
@@ -114,7 +115,7 @@ public class MessageFactory {
                 .id(conversation.getContactId().toString())
                 .conversationId(conversation.getId().toString())
                 .displayName(contactInfo.getDisplayName())
-                .avatar(contactInfo.getAvatar())
+                .avatar(AccountAvatarUtil.getAvatar(contactInfo.getAvatar()))
                 .isGroup(false)
                 .unread(unread)
                 .isNotice(conversation.getNotice())

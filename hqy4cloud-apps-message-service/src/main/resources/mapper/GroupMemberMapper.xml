@@ -24,7 +24,7 @@
     </select>
 
     <select id="queryContactsByUserId" resultType="com.hqy.cloud.message.bind.dto.ContactDTO">
-        SELECT gm.id, gm.user_id, gm.group_id contact_id, g.name displayName, gm.is_top, gm.is_notice, g.creator
+        SELECT gm.id, gm.user_id, gm.group_id contact_id, g.name displayName, gm.is_top, gm.is_notice, g.creator, g.avatar
         FROM `t_im_group_member` gm INNER JOIN `t_im_group` g ON gm.group_id = g.id
         WHERE gm.user_id = #{userId} AND gm.deleted = 0
     </select>

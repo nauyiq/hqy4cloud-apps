@@ -4,6 +4,7 @@ import cn.hutool.core.date.DateUtil;
 import com.hqy.cloud.apps.commom.result.AppsResultCode;
 import com.hqy.cloud.common.bind.R;
 import com.hqy.cloud.common.result.ResultCode;
+import com.hqy.cloud.foundation.common.account.AccountAvatarUtil;
 import com.hqy.cloud.message.bind.dto.GroupDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberDTO;
 import com.hqy.cloud.message.bind.dto.GroupMemberInfoDTO;
@@ -22,6 +23,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -46,21 +48,18 @@ public class ImGroupRequestServiceImpl implements ImGroupRequestService {
     @Override
     public R<Boolean> createGroup(Long creator, GroupDTO createGroup) {
         // 判断输入的用户ids是否都是好友.
-        List<Long> friendIds = createGroup.getUserIds().stream().distinct().toList();
-        if (!userRelationshipService.allFriend(creator, friendIds)) {
+        List<Long> userIds = createGroup.getUserIds();
+        if (!userRelationshipService.allFriend(creator, userIds)) {
             return R.failed(AppsResultCode.IM_NOT_FRIEND);
         }
-        friendIds.add(creator);
         // 查找用户信息
+        List<Long> friendIds = new ArrayList<>(userIds);
+        friendIds.add(creator);
         List<UserSetting> userSettings = userSettingService
                 .listByIds(new HashSet<>(friendIds));
         if (CollectionUtils.isEmpty(userSettings) || userSettings.size() != friendIds.size()) {
             return R.failed(ResultCode.USER_NOT_FOUND);
         }
-        /*userSettings = userSettings.stream().filter(u -> Boolean.TRUE.equals(u.getInviteGroup()) || u.getInviteGroup() == null).toList();
-        if (CollectionUtils.isEmpty(userSettings)) {
-
-        }*/
         return groupService.createGroup(creator, createGroup, userSettings) ? R.ok() : R.failed();
     }
 
@@ -93,7 +92,8 @@ public class ImGroupRequestServiceImpl implements ImGroupRequestService {
                 .userId(groupMember.getUserId().toString())
                 .role(groupMember.getRole())
                 .userInfo(new UserInfoVO(groupMember.getUserId().toString(),
-                        StringUtils.isBlank(groupMember.getDisplayName()) ? groupMember.getNickname() : groupMember.getDisplayName(), groupMember.getAvatar()))
+                        StringUtils.isBlank(groupMember.getDisplayName()) ? groupMember.getNickname() : groupMember.getDisplayName(),
+                        AccountAvatarUtil.getAvatar(groupMember.getAvatar())))
                 .created(DateUtil.formatDateTime(groupMember.getCreated())).build()).toList();
         return R.ok(vos);
     }

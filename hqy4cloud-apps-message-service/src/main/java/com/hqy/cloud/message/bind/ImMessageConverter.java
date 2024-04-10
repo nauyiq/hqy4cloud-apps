@@ -24,6 +24,7 @@ public interface ImMessageConverter {
     UserInfoVO convert(AccountProfileStruct struct);
 
     @Mappings({
+            @Mapping(source = "id", target = "id", qualifiedByName = "longToString"),
             @Mapping(source = "inviteGroup", target = "isInviteGroup"),
             @Mapping(source = "syncSetting", target = "isSyncSetting"),
             @Mapping(source = "queryAccount", target = "isQueryAccount")
